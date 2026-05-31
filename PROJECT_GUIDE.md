@@ -2,6 +2,8 @@
 
 > Single source of truth for building **PadelNote**, the Padel scoring app for iPhone and Apple Watch, with HealthKit integration and App Store submission. Refer to this file at the start of every work session.
 
+> **Learning context:** This project is also a hands-on tutorial. Every architectural and product decision is an opportunity to understand *why*, not just *what*. Explanations for all decisions (tech stack choices, rule presets, UI patterns, App Store strategy) are documented in [`DECISIONS.md`](./DECISIONS.md). Read that file alongside this one when you want the reasoning behind a choice.
+
 **Project name:** PadelNote
 **Working bundle ID:** `com.yourname.padelnote` *(replace `yourname` with your Apple Developer Team identifier when registering the app)*
 **Tagline (draft):** *"Keep score. Keep history. Keep playing."*
@@ -79,6 +81,7 @@ enum Team { case a, b }
 enum GamePointStyle {
     case advantage     // classic tennis: deuce → advantage → game
     case goldenPoint   // sudden death at 40-40 ("punto de oro")
+    case starPoint // after two deuces get to goldenPoint
 }
 
 enum TieBreakStyle {
@@ -256,16 +259,9 @@ In **Signing & Capabilities** for both iOS and watchOS targets, add:
 
 ---
 
-## 12. Decisions Still Needed (fill in before coding)
+## 12. Decisions
 
-| # | Decision | Default recommendation | Your choice |
-|---|---|---|---|
-| 0 | App name | — | **PadelNote** ✅ |
-| 1 | Minimum OS targets | iOS 17 / watchOS 10 | OK ✅ |
-| 2 | Bundle identifier | `com.yourname.padelnote` | _____ (replace `yourname` with your Apple Developer Team prefix) |
-| 3 | Default rule preset | Best-of-3, 6 games, classic tie-break at 6-6, super tie-break (10) for deciding set, Golden Point ON | OK ✅ |
-| 4 | Languages at launch | English only | EN + ES recommended |
-| 5 | CloudKit sync in v1? | Defer to v1.1 | defer to v1.1 ✅ |
+All decisions — made and still pending — are tracked and explained in [`DECISIONS.md`](./DECISIONS.md). That file records the *what*, the *why*, and the *trade-offs considered* for each choice. Update it whenever a new decision is made.
 
 ---
 
