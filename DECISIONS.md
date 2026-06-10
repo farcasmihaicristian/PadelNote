@@ -224,4 +224,27 @@ Each entry follows this structure:
 
 ---
 
-*Last updated: May 2026*
+## D-11 — Star Point: a third game-point style
+
+**Decision:** Add a third `GamePointStyle` case, **`.starPoint`** — the game is played with classic advantage rules, but after **two deuces** in the same game it switches to sudden death (golden point).
+
+**Why:**
+- It's a middle ground between the two standard styles: advantage games can drag on indefinitely, while pure golden point can feel too abrupt to tennis-trained players.
+- Capping a game at two deuces keeps match duration predictable (a key reason clubs adopted golden point) while still rewarding teams that win a first or second deuce exchange.
+- It strengthens the rule-transparency differentiation pillar: PadelNote offers a rule variant most competitor apps don't model.
+- Engine-wise it's cheap: the state machine already tracks deuce; it only needs a per-game deuce counter.
+
+**Alternatives considered:**
+- Only advantage + golden point — simpler, but misses a real-world house-rule variant some clubs play.
+- Configurable deuce count (switch after N deuces) — more flexible but adds a numeric setting to the UI for marginal benefit. Can be revisited later if users ask.
+
+**Trade-offs:**
+- "Star Point" is not an officially standardized name/rule — the UI must explain it clearly the first time it's selected (same treatment as Golden Point, see D-03).
+- Slightly larger test surface: the engine needs dedicated tests for deuce #1 (advantage), deuce #2 (advantage), and deuce #3 onward (sudden death).
+- Default remains per D-03 (Golden Point ON); Star Point is opt-in.
+
+**Status:** ✅ Locked
+
+---
+
+*Last updated: June 2026*
