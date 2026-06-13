@@ -4,6 +4,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @State private var showMatchFlow = false
 
     private var recentMatches: [Match] {
         Array(matches.prefix(5))
@@ -14,7 +15,7 @@ struct HomeView: View {
             List {
                 Section {
                     Button {
-                        // Milestone 4: new match setup flow
+                        showMatchFlow = true
                     } label: {
                         Label(String(localized: "Start match"), systemImage: "plus.circle.fill")
                             .font(.headline)
@@ -51,6 +52,13 @@ struct HomeView: View {
                         Text(String(localized: "History"))
                     }
                     .accessibilityLabel(String(localized: "Match history"))
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showMatchFlow) {
+            NavigationStack {
+                NewMatchSetupView {
+                    showMatchFlow = false
                 }
             }
         }

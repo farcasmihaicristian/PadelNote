@@ -80,4 +80,19 @@ public final class Match {
     public func replayedState() -> MatchState {
         ScoringEngine.replay(events: enginePointEvents, rules: rules)
     }
+
+    public func scoreLine(afterPointCount count: Int) -> String {
+        let events = Array(enginePointEvents.prefix(count))
+        let state = ScoringEngine.replay(events: events, rules: rules)
+        return ScoreFormatter.matchScoreLine(in: state)
+    }
+
+    public func teamName(for team: Team) -> String {
+        switch team {
+        case .a:
+            teamAName ?? String(localized: "Team A")
+        case .b:
+            teamBName ?? String(localized: "Team B")
+        }
+    }
 }

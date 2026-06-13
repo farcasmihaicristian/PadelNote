@@ -1,4 +1,5 @@
 import PadelCore
+import SwiftData
 import SwiftUI
 
 struct MatchDetailView: View {
@@ -25,6 +26,34 @@ struct MatchDetailView: View {
                         LabeledContent(String(localized: "Set \(index + 1)")) {
                             Text(ScoreFormatter.formatSetScore(set))
                         }
+                    }
+                }
+            }
+
+            Section(String(localized: "Point timeline")) {
+                if match.sortedPoints.isEmpty {
+                    Text(String(localized: "No points recorded"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(match.sortedPoints, id: \.persistentModelID) { point in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(
+                                String(
+                                    localized: "Point \(point.sequence + 1) · \(match.teamName(for: point.team))"
+                                )
+                            )
+                            .font(.headline)
+
+                            Text(match.scoreLine(afterPointCount: point.sequence + 1))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(
+                            String(
+                                localized: "Point \(point.sequence + 1), \(match.teamName(for: point.team)), score \(match.scoreLine(afterPointCount: point.sequence + 1))"
+                            )
+                        )
                     }
                 }
             }
@@ -73,4 +102,5 @@ struct MatchDetailView: View {
             teamBName: "Chris & Dana"
         ))
     }
+    .modelContainer(PreviewData.container)
 }
