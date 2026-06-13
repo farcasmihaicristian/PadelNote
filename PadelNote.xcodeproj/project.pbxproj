@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		004A7AB72FDD802C005BD1B4 /* PadelNoteWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 004A7AB62FDD802C005BD1B4 /* PadelNoteWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		004A7AB72FDD802C005BD1B4 /* PadelNoteWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 004A7AB62FDD802C005BD1B4 /* PadelNoteWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		004A7ACB2FDD81CC005BD1B4 /* PadelCore in Frameworks */ = {isa = PBXBuildFile; productRef = 004A7ACA2FDD81CC005BD1B4 /* PadelCore */; };
-		004A7ACD2FDD81E9005BD1B4 /* PadelCore in Frameworks */ = {isa = PBXBuildFile; productRef = 004A7ACC2FDD81E9005BD1B4 /* PadelCore */; };
 		004A7ACF2FDD8202005BD1B4 /* PadelCore in Frameworks */ = {isa = PBXBuildFile; productRef = 004A7ACE2FDD8202005BD1B4 /* PadelCore */; };
 /* End PBXBuildFile section */
 
@@ -19,7 +18,7 @@
 			containerPortal = 004A7A902FDD7E58005BD1B4 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004A7AB52FDD802C005BD1B4;
-			remoteInfo = "PadelNoteWatch Watch App";
+			remoteInfo = PadelNoteWatch;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -30,7 +29,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				004A7AB72FDD802C005BD1B4 /* PadelNoteWatch Watch App.app in Embed Watch Content */,
+				004A7AB72FDD802C005BD1B4 /* PadelNoteWatch.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -39,8 +38,7 @@
 
 /* Begin PBXFileReference section */
 		004A7A982FDD7E58005BD1B4 /* PadelNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		004A7AAA2FDD802A005BD1B4 /* PadelNoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelNoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		004A7AB62FDD802C005BD1B4 /* PadelNoteWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PadelNoteWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		004A7AB62FDD802C005BD1B4 /* PadelNoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelNoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		004A7AD02FDD8363005BD1B4 /* PadelCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = PadelCore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -50,14 +48,9 @@
 			path = PadelNote;
 			sourceTree = "<group>";
 		};
-		004A7AAB2FDD802A005BD1B4 /* PadelNoteWatch */ = {
+		004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PadelNoteWatch;
-			sourceTree = "<group>";
-		};
-		004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "PadelNoteWatch Watch App";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -68,14 +61,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				004A7ACB2FDD81CC005BD1B4 /* PadelCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		004A7AA72FDD802A005BD1B4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				004A7ACD2FDD81E9005BD1B4 /* PadelCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,8 +80,7 @@
 			children = (
 				004A7AD02FDD8363005BD1B4 /* PadelCore */,
 				004A7A9A2FDD7E58005BD1B4 /* PadelNote */,
-				004A7AAB2FDD802A005BD1B4 /* PadelNoteWatch */,
-				004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch Watch App */,
+				004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch */,
 				004A7AC92FDD81CC005BD1B4 /* Frameworks */,
 				004A7A992FDD7E58005BD1B4 /* Products */,
 			);
@@ -106,8 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				004A7A982FDD7E58005BD1B4 /* PadelNote.app */,
-				004A7AAA2FDD802A005BD1B4 /* PadelNoteWatch.app */,
-				004A7AB62FDD802C005BD1B4 /* PadelNoteWatch Watch App.app */,
+				004A7AB62FDD802C005BD1B4 /* PadelNoteWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -129,10 +112,12 @@
 				004A7A942FDD7E58005BD1B4 /* Sources */,
 				004A7A952FDD7E58005BD1B4 /* Frameworks */,
 				004A7A962FDD7E58005BD1B4 /* Resources */,
+				004A7AC42FDD802D005BD1B4 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				004A7AB92FDD802C005BD1B4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				004A7A9A2FDD7E58005BD1B4 /* PadelNote */,
@@ -145,34 +130,9 @@
 			productReference = 004A7A982FDD7E58005BD1B4 /* PadelNote.app */;
 			productType = "com.apple.product-type.application";
 		};
-		004A7AA92FDD802A005BD1B4 /* PadelNoteWatch */ = {
+		004A7AB52FDD802C005BD1B4 /* PadelNoteWatch */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004A7AC52FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch" */;
-			buildPhases = (
-				004A7AA62FDD802A005BD1B4 /* Sources */,
-				004A7AA72FDD802A005BD1B4 /* Frameworks */,
-				004A7AA82FDD802A005BD1B4 /* Resources */,
-				004A7AC42FDD802D005BD1B4 /* Embed Watch Content */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				004A7AB92FDD802C005BD1B4 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				004A7AAB2FDD802A005BD1B4 /* PadelNoteWatch */,
-			);
-			name = PadelNoteWatch;
-			packageProductDependencies = (
-				004A7ACC2FDD81E9005BD1B4 /* PadelCore */,
-			);
-			productName = PadelNoteWatch;
-			productReference = 004A7AAA2FDD802A005BD1B4 /* PadelNoteWatch.app */;
-			productType = "com.apple.product-type.application";
-		};
-		004A7AB52FDD802C005BD1B4 /* PadelNoteWatch Watch App */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 004A7AC12FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch Watch App" */;
+			buildConfigurationList = 004A7AC12FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch" */;
 			buildPhases = (
 				004A7AB22FDD802C005BD1B4 /* Sources */,
 				004A7AB32FDD802C005BD1B4 /* Frameworks */,
@@ -183,14 +143,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch Watch App */,
+				004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch */,
 			);
-			name = "PadelNoteWatch Watch App";
+			name = PadelNoteWatch;
 			packageProductDependencies = (
 				004A7ACE2FDD8202005BD1B4 /* PadelCore */,
 			);
-			productName = "PadelNoteWatch Watch App";
-			productReference = 004A7AB62FDD802C005BD1B4 /* PadelNoteWatch Watch App.app */;
+			productName = PadelNoteWatch;
+			productReference = 004A7AB62FDD802C005BD1B4 /* PadelNoteWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -204,9 +164,6 @@
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					004A7A972FDD7E58005BD1B4 = {
-						CreatedOnToolsVersion = 26.5;
-					};
-					004A7AA92FDD802A005BD1B4 = {
 						CreatedOnToolsVersion = 26.5;
 					};
 					004A7AB52FDD802C005BD1B4 = {
@@ -232,21 +189,13 @@
 			projectRoot = "";
 			targets = (
 				004A7A972FDD7E58005BD1B4 /* PadelNote */,
-				004A7AA92FDD802A005BD1B4 /* PadelNoteWatch */,
-				004A7AB52FDD802C005BD1B4 /* PadelNoteWatch Watch App */,
+				004A7AB52FDD802C005BD1B4 /* PadelNoteWatch */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		004A7A962FDD7E58005BD1B4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		004A7AA82FDD802A005BD1B4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -270,13 +219,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004A7AA62FDD802A005BD1B4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		004A7AB22FDD802C005BD1B4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -289,7 +231,7 @@
 /* Begin PBXTargetDependency section */
 		004A7AB92FDD802C005BD1B4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 004A7AB52FDD802C005BD1B4 /* PadelNoteWatch Watch App */;
+			target = 004A7AB52FDD802C005BD1B4 /* PadelNoteWatch */;
 			targetProxy = 004A7AB82FDD802C005BD1B4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -348,7 +290,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -406,7 +348,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -490,15 +432,15 @@
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PadelNoteWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = PadelNote;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNoteWatch;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNote;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNoteWatch.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -509,7 +451,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -523,15 +465,15 @@
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PadelNoteWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = PadelNote;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNoteWatch;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNote;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNoteWatch.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -542,73 +484,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.5;
-			};
-			name = Release;
-		};
-		004A7AC62FDD802D005BD1B4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8C5FKN2L72;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PadelNoteWatch;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNoteWatch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		004A7AC72FDD802D005BD1B4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8C5FKN2L72;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PadelNoteWatch;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNoteWatch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -633,20 +509,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004A7AC12FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch Watch App" */ = {
+		004A7AC12FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004A7AC22FDD802D005BD1B4 /* Debug */,
 				004A7AC32FDD802D005BD1B4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		004A7AC52FDD802D005BD1B4 /* Build configuration list for PBXNativeTarget "PadelNoteWatch" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				004A7AC62FDD802D005BD1B4 /* Debug */,
-				004A7AC72FDD802D005BD1B4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -662,11 +529,6 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		004A7ACA2FDD81CC005BD1B4 /* PadelCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */;
-			productName = PadelCore;
-		};
-		004A7ACC2FDD81E9005BD1B4 /* PadelCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */;
 			productName = PadelCore;
