@@ -41,7 +41,7 @@
 		004A7A982FDD7E58005BD1B4 /* PadelNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		004A7AAA2FDD802A005BD1B4 /* PadelNoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelNoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		004A7AB62FDD802C005BD1B4 /* PadelNoteWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PadelNoteWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		004A7AC82FDD810C005BD1B4 /* PadelCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PadelCore; path = ../PadelCore; sourceTree = SOURCE_ROOT; };
+		004A7AD02FDD8363005BD1B4 /* PadelCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = PadelCore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -93,7 +93,7 @@
 		004A7A8F2FDD7E58005BD1B4 = {
 			isa = PBXGroup;
 			children = (
-				004A7AC82FDD810C005BD1B4 /* PadelCore */,
+				004A7AD02FDD8363005BD1B4 /* PadelCore */,
 				004A7A9A2FDD7E58005BD1B4 /* PadelNote */,
 				004A7AAB2FDD802A005BD1B4 /* PadelNoteWatch */,
 				004A7ABA2FDD802C005BD1B4 /* PadelNoteWatch Watch App */,
@@ -224,6 +224,9 @@
 			mainGroup = 004A7A8F2FDD7E58005BD1B4;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			packageReferences = (
+				004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */,
+			);
 			productRefGroup = 004A7A992FDD7E58005BD1B4 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -650,17 +653,27 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = PadelCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		004A7ACA2FDD81CC005BD1B4 /* PadelCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */;
 			productName = PadelCore;
 		};
 		004A7ACC2FDD81E9005BD1B4 /* PadelCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */;
 			productName = PadelCore;
 		};
 		004A7ACE2FDD8202005BD1B4 /* PadelCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 004A7AD12FDD8364005BD1B4 /* XCLocalSwiftPackageReference "PadelCore" */;
 			productName = PadelCore;
 		};
 /* End XCSwiftPackageProductDependency section */
