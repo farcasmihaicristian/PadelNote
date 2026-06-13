@@ -114,28 +114,181 @@ Deuce, advantage, golden point, tie-break entry at 6-6, set win at 7-5, super ti
 
 ## 4. Project / Xcode Setup
 
-1. Create a new Xcode project: **App** → name `Padel` (bundle id e.g. `com.yourname.padel`).
-2. Add a second target: **Watch App** (independent watchOS app on iOS 17+, not the legacy paired type).
-3. Share a Swift Package `PadelCore` containing:
-   - Scoring engine
-   - SwiftData models (`Match`, `MatchRules`, `PointEvent`)
-   - Shared formatters
-4. Both app targets depend on `PadelCore`. This keeps the engine testable on Mac without simulator.
+This section is a step-by-step walkthrough. Follow it exactly in order. The result is a compilable skeleton with no logic yet — a clean baseline to commit before writing any Swift.
 
-### Folder layout
+---
+
+### Step 4.1 — Create the iOS app project
+
+1. Open Xcode → **Create New Project** (or File → New → Project)
+2. Choose template: **iOS → App** → Next
+3. Fill in the options:
+   - **Product Name:** `PadelNote`
+   - **Team:** your Personal Team (free Apple ID is fine here)
+   - **Organization Identifier:** `com.yourname` *(placeholder — see DECISIONS.md D-02)*
+   - **Bundle Identifier:** auto-filled as `com.yourname.PadelNote` — leave it
+   - **Interface:** SwiftUI
+   - **Language:** Swift
+   - **Storage:** None *(SwiftData will be added via PadelCore, not the project template)*
+   - Uncheck "Include Tests" — tests will live in the PadelCore package instead
+4. Choose a save location — pick the root of this git repo (`E:\UDEMY\PadelNote` or wherever your local clone lives)
+5. **Uncheck "Create Git repository"** — the repo already exists
+
+> After this step you have one target: `PadelNote` (iOS). Xcode opens to `ContentView.swift`.
+
+---
+
+### Step 4.2 — Add the watchOS target
+
+1. File → New → **Target**
+2. Choose: **watchOS → Watch App** → Next
+3. Fill in:
+   - **Product Name:** `PadelNoteWatch`
+   - **Team:** same as above
+   - **Bundle Identifier:** auto-filled as `com.yourname.PadelNote.watchkitapp` — leave it
+   - **Interface:** SwiftUI
+   - **Language:** Swift
+   - Uncheck "Include Notification Scene" — not needed for v1
+4. Click **Finish**
+5. Xcode asks *"Activate 'PadelNoteWatch' scheme?"* → click **Activate**
+
+> You now have two app targets. In the scheme picker (top bar) you can switch between `PadelNote` (iPhone simulator) and `PadelNoteWatch` (Watch simulator).
+
+---
+
+### Step 4.3 — Create the PadelCore local Swift Package
+
+This package holds all shared logic — the scoring engine, data models, and formatters. Neither UI framework touches it.
+
+1. File → New → **Package**
+2. Name it: `PadelCore`
+3. Save location: **inside the project folder**, alongside `PadelNote.xcodeproj` — so the path ends up as `PadelNote/PadelCore/`
+4. When asked *"Add to:"* select your `PadelNote` project; *"Group:"* select the project root
+5. Click **Create**
+
+Xcode creates a default package with a `Sources/PadelCore/` folder and a `Tests/PadelCoreTests/` folder. Now restructure the source folder:
+
+6. In the Project navigator, expand `PadelCore → Sources → PadelCore`
+7. Delete the auto-generated `PadelCore.swift` file (move to Trash)
+8. Create three folders inside `Sources/PadelCore/`:
+   - Right-click `Sources/PadelCore` → New Group → `Model`
+   - Repeat → `Engine`
+   - Repeat → `Persistence`
+
+Your package layout should now be:
+
 ```
-Padel/
-├─ Padel.xcodeproj
-├─ PadelCore/             (Swift Package)
-│  ├─ Sources/PadelCore/
-│  │   ├─ Model/
-│  │   ├─ Engine/
-│  │   └─ Persistence/
-│  └─ Tests/PadelCoreTests/
-├─ PadelApp/              (iOS target)
-├─ PadelWatch/            (watchOS target)
-└─ Shared/                (asset catalog, etc.)
+PadelCore/
+├─ Package.swift
+├─ Sources/
+│  └─ PadelCore/
+│     ├─ Model/          (empty — Team, MatchRules, MatchState go here)
+│     ├─ Engine/         (empty — apply() function, undo logic go here)
+│     └─ Persistence/    (empty — SwiftData models go here)
+└─ Tests/
+   └─ PadelCoreTests/    (unit tests go here)
 ```
+
+---
+
+### Step 4.4 — Add PadelCore as a dependency of both targets
+
+The package is in the project but the two app targets don't use it yet.
+
+**For the iOS target:**
+1. Click the `PadelNote` project in the navigator → select the `PadelNote` target → **General** tab
+2. Scroll to **Frameworks, Libraries, and Embedded Content**
+3. Click **+** → select `PadelCore` from the list → **Add**
+
+**For the watchOS target:**
+1. Same Project → select `PadelNoteWatch` target → **General** tab
+2. **Frameworks, Libraries, and Embedded Content** → **+** → `PadelCore` → **Add**
+
+**Verify:**
+- In the scheme picker, select `PadelNote` → press **⌘B** (Build)
+- Switch to `PadelNoteWatch` → press **⌘B**
+- Both should build with zero errors
+
+---
+
+### Step 4.5 — Add HealthKit capability to both targets
+
+Do this now — HealthKit entitlements affect the app signature and are easy to forget later.
+
+**For each target (`PadelNote` and `PadelNoteWatch`):**
+1. Select the target → **Signing & Capabilities** tab
+2. Click **+ Capability** (top-left of that tab)
+3. Search for **HealthKit** → double-click to add
+4. Leave "Clinical Health Records" **unchecked**
+
+**For `PadelNoteWatch` only:**
+5. Click **+ Capability** again → **Background Modes**
+6. Check **Workout processing**
+
+---
+
+### Step 4.6 — Add Info.plist usage description keys
+
+Apple requires plain-English justifications for HealthKit access. Missing or vague strings are a top App Review rejection cause.
+
+1. In the Project navigator, select `PadelNote → Info` (the Info.plist for the iOS target)
+2. Hover over any row → click **+** to add a key
+3. Add:
+
+| Key | Value |
+|---|---|
+| `NSHealthShareUsageDescription` | `PadelNote reads your heart rate and calories during matches to show accurate workout stats.` |
+| `NSHealthUpdateUsageDescription` | `PadelNote saves your padel matches to Apple Health as workouts.` |
+
+4. Repeat for the `PadelNoteWatch` target's Info.plist (same keys, same values)
+
+---
+
+### Step 4.7 — Verify final project structure
+
+In the Xcode Project navigator you should see:
+
+```
+PadelNote/
+├─ PadelNote/               ← iOS app files
+│   ├─ PadelNoteApp.swift
+│   └─ ContentView.swift
+├─ PadelNoteWatch/          ← watchOS app files
+│   ├─ PadelNoteWatchApp.swift
+│   └─ ContentView.swift
+├─ PadelCore/               ← Swift Package
+│   ├─ Package.swift
+│   ├─ Sources/PadelCore/
+│   │   ├─ Model/
+│   │   ├─ Engine/
+│   │   └─ Persistence/
+│   └─ Tests/PadelCoreTests/
+└─ PadelNote.xcodeproj
+```
+
+---
+
+### Step 4.8 — First git commit
+
+Open Terminal inside the project folder and run:
+
+```bash
+git add .
+git commit -m "Project skeleton: iOS + watchOS targets, PadelCore package, HealthKit capabilities"
+```
+
+This is your clean baseline. Every future feature builds on top of it.
+
+---
+
+### What to do if something looks wrong
+
+| Problem | Fix |
+|---|---|
+| Package not visible in navigator | File → Add Package Dependencies → choose "Add Local" → point to the `PadelCore` folder |
+| Build error "No such module 'PadelCore'" | Check that PadelCore is listed under Frameworks for that target (Step 4.4) |
+| HealthKit capability shows a signing error | Make sure a Team is selected in Signing & Capabilities — even the free Personal Team works |
+| Two `ContentView.swift` files exist | That's correct — one per target. They are independent. |
 
 ---
 
