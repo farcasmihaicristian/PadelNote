@@ -3,6 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @State private var showMatchFlow = false
 
@@ -13,6 +14,23 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             List {
+                if let snapshot = syncCoordinator.liveSnapshot {
+                    Section {
+                        NavigationLink {
+                            WatchLiveMirrorView(snapshot: snapshot)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label(String(localized: "Live on Apple Watch"), systemImage: "applewatch")
+                                    .font(.headline)
+                                Text(snapshot.scoreLine)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .accessibilityLabel(String(localized: "Live match on Apple Watch, score \(snapshot.scoreLine)"))
+                    }
+                }
+
                 Section {
                     Button {
                         showMatchFlow = true
@@ -67,5 +85,6 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
+        .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
         .modelContainer(PreviewData.container)
 }

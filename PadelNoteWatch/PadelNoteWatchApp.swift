@@ -1,17 +1,18 @@
-//
-//  PadelNoteWatchApp.swift
-//  PadelNoteWatch
-//
-//  Created by Farcas Mihai on 13/06/2026.
-//
-
+import PadelCore
 import SwiftUI
 
 @main
 struct PadelNoteWatchApp: App {
+    @State private var coordinator = WatchMatchCoordinator(
+        workoutRecorder: HealthKitWorkoutRecorder(),
+        syncService: WatchConnectivityPublisher()
+    )
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                WatchStartView(coordinator: coordinator)
+            }
         }
     }
 }

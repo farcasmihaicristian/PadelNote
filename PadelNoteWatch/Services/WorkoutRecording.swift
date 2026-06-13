@@ -1,0 +1,15 @@
+import Foundation
+
+@MainActor
+protocol WorkoutRecording: AnyObject {
+    var isAuthorized: Bool { get }
+    var authorizationDenied: Bool { get }
+    var averageHeartRate: Double? { get }
+    var activeEnergyKilocalories: Double? { get }
+    var distanceMeters: Double? { get }
+    var elapsedDuration: TimeInterval { get }
+
+    func requestAuthorization() async
+    func start() async throws
+    func end() async throws
+}

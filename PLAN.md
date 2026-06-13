@@ -86,17 +86,27 @@ The heart of the app. Pure Swift, no Apple frameworks (convention §13, decision
 
 Watch is source of truth during a live match (D-07). Needs physical devices on the same network as the Mac for real testing.
 
-- [ ] 5.1 Watch **start screen**: last-used rules + "Start"
-- [ ] 5.2 Watch **live score screen**: two big tap zones (Team A top / Team B bottom), Digital Crown or button to undo — reuses the same `PadelCore` engine
-- [ ] 5.3 HealthKit authorization flow (`requestAuthorization(toShare:read:)`), graceful handling when denied (rejection risk §10)
-- [ ] 5.4 `HKWorkoutSession` + `HKLiveWorkoutBuilder` on the Watch: `.tennis` type with `HKMetadataKeyWorkoutBrandName = "Padel"` and `"sport" = "padel"` metadata (D-08); collect HR, active energy, distance
-- [ ] 5.5 Watch **end-of-match summary**: final score, duration, avg HR, "Save" → finalize workout
-- [ ] 5.6 WatchConnectivity (§7): `updateApplicationContext` for live score snapshots, `transferUserInfo` for the point log, final `Match` sent to phone on match end
-- [ ] 5.7 iPhone mirrors the live Watch score and persists the received match
-- [ ] 5.8 Wrap HealthKit/WatchConnectivity behind protocols so view models stay testable (§13)
+- [x] 5.1 Watch **start screen**: last-used rules + "Start"
+- [x] 5.2 Watch **live score screen**: two big tap zones (Team A top / Team B bottom), Digital Crown or button to undo — reuses the same `PadelCore` engine
+- [x] 5.3 HealthKit authorization flow (`requestAuthorization(toShare:read:)`), graceful handling when denied (rejection risk §10)
+- [x] 5.4 `HKWorkoutSession` + `HKLiveWorkoutBuilder` on the Watch: `.tennis` type with `HKMetadataKeyWorkoutBrandName = "Padel"` and `"sport" = "padel"` metadata (D-08); collect HR, active energy, distance
+- [x] 5.5 Watch **end-of-match summary**: final score, duration, avg HR, "Save" → finalize workout
+- [x] 5.6 WatchConnectivity (§7): `updateApplicationContext` for live score snapshots, `transferUserInfo` for the point log, final `Match` sent to phone on match end
+- [x] 5.7 iPhone mirrors the live Watch score and persists the received match
+- [x] 5.8 Wrap HealthKit/WatchConnectivity behind protocols so view models stay testable (§13)
 - [ ] 5.9 Real-device test: full match on the Watch → workout appears in Apple Health → match appears in iPhone history
 
 **Done when:** a match scored entirely from the wrist produces a HealthKit workout and a synced history entry on the phone.
+
+### Next step — real-device test (5.9)
+
+Simulator can exercise UI and scoring, but **HealthKit workouts and WatchConnectivity need physical devices** (per §5.9 above).
+
+1. Install both apps on paired iPhone + Watch (same WiFi as Mac for deploy)
+2. Open **PadelNote** on Watch → **Start** → grant Health access
+3. Score points — iPhone Home should show live mirror
+4. Finish match → **Save** on Watch
+5. Match should appear in iPhone history; workout should appear in Apple Health
 
 ---
 
