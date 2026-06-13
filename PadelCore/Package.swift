@@ -4,6 +4,11 @@ import PackageDescription
 
 let package = Package(
     name: "PadelCore",
+    platforms: [
+        .iOS(.v17),
+        .watchOS(.v10),
+        .macOS(.v14),
+    ],
     products: [
         .library(
             name: "PadelCore",
