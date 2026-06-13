@@ -382,7 +382,6 @@
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -418,7 +417,6 @@
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -456,7 +454,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PadelNoteWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PadelNote;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -494,7 +491,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PadelNoteWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PadelNote;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
