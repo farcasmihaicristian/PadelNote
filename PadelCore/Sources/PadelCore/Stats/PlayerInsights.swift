@@ -25,6 +25,31 @@ public struct PlayerSummary: Sendable, Hashable, Identifiable {
     }
 }
 
+public struct PartnerSummary: Sendable, Hashable, Identifiable {
+    public let id: UUID
+    public let displayName: String
+    public let matchCount: Int
+    public let wins: Int
+    public let losses: Int
+    public let winRate: Double?
+
+    public init(
+        id: UUID,
+        displayName: String,
+        matchCount: Int,
+        wins: Int,
+        losses: Int,
+        winRate: Double?
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.matchCount = matchCount
+        self.wins = wins
+        self.losses = losses
+        self.winRate = winRate
+    }
+}
+
 public struct PlayerInsights: Sendable, Hashable {
     public let playerID: UUID
     public let displayName: String

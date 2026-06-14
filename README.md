@@ -43,13 +43,16 @@
 | 9 | App Store submission | ⬜ Pending |
 | 10 | Post-launch (v1.1+) | ⬜ Backlog |
 
-**Latest tagged work:** `0.6b` — Milestone 6 (Insights screen, Settings Health/About, workout data on match detail, Spanish `Localizable.xcstrings`, Dynamic Type on live score).
+**Latest tagged work:** `0.6e` — four player names, player registry, per-player Insights, optional local ME profile (Settings), partner stats on player profiles.
 
 **Extras shipped on top of the original plan:**
 - HealthKit workouts under 10 minutes are discarded (avoids junk entries while testing).
 - Pull-to-refresh on Home re-syncs from the Watch.
 - Settings page stores default match rules; New Match setup pre-loads them.
-- Insights screen with win rate, average/longest duration, and golden-point conversion.
+- Insights: global overview, per-player stats, optional **You** section when a profile is set up.
+- Four optional player name fields (Side A/B × 2) with registry autocomplete.
+- Optional local ME profile — name + preferred court slot; no Apple ID required on Personal Team.
+- Link past matches to your profile after setup; partner win rates on each player profile.
 
 ---
 
@@ -61,7 +64,7 @@ The padel scoring category is crowded (Padely, Padel Tally, Padel Point, Padel S
 2. **Rule transparency** — Golden Point vs Advantage vs Star Point, classic vs super tie-break, configurable per match and explained in the UI.
 3. **No subscription for the core experience** — scoring + history + HealthKit are always free. Optional one-time IAP for advanced stats later.
 4. **Apple Watch first** — the Watch app is standalone and the canonical scoring surface.
-5. **Privacy-first** — no analytics SDKs in v1, no account required, data lives on-device (and your iCloud later, not ours).
+5. **Privacy-first** — no analytics SDKs in v1. Scoring and history work without any profile. Optional ME profile is stored on-device only (Sign in with Apple + iCloud sync deferred until Apple Developer enrollment — see [four-players plan](docs/plans/four-players-insights.md)).
 
 Keep these pillars visible in the App Store description, screenshots, and reviewer notes.
 
@@ -70,11 +73,11 @@ Keep these pillars visible in the App Store description, screenshots, and review
 ## 3. Product scope (v1)
 
 ### iPhone app
-- Start a new match with configurable rules: sets to win (best-of-1/3/5), games per set (default 6, tie-break at 6–6), tie-break style (classic 7 / super tie-break 10 for deciding set), deuce style (Golden Point / Advantage / Star Point), optional team names.
-- Live scoring screen.
+- Start a new match with configurable rules: sets to win (best-of-1/3/5), games per set (default 6, tie-break at 6–6), tie-break style (classic 7 / super tie-break 10 for deciding set), deuce style (Golden Point / Advantage / Star Point), optional **four player names** (Side A/B × 2) with autocomplete from past players.
+- Live scoring screen with player-aware side labels.
 - Match history list + detail view with point-by-point timeline.
-- Stats/Insights: win rate, average match duration, longest match, golden-point conversion.
-- Settings: default rules, HealthKit status, about.
+- Stats/Insights: global overview (matches, duration), **per-player** win rate and golden-point conversion, optional **You** shortcut when a profile is set up, browsable player list with partner stats.
+- Settings: default rules, optional **Account** profile setup, preferred court slot, HealthKit status, about.
 
 ### Apple Watch app
 - Start a match from the wrist, tap to add a point to either team, undo last point.
@@ -110,7 +113,8 @@ PadelNote/
 │  ├─ Views/               ← Home, NewMatchSetup, LiveMatch, MatchHistory,
 │  │                          MatchDetail, Stats, Settings, WatchLiveMirror, …
 │  ├─ Services/            ← PhoneConnectivityListener, PhoneSyncCoordinator,
-│  │                          MatchSyncListening, HealthKitAuthorizationChecker
+│  │                          MatchSyncListening, HealthKitAuthorizationChecker,
+│  │                          CurrentUserStore, AuthSessionStore
 │  ├─ Localizable.xcstrings ← EN + ES
 │  └─ PadelNoteApp.swift
 ├─ PadelNoteWatch/         ← watchOS app
@@ -122,9 +126,9 @@ PadelNote/
 │  ├─ Sources/PadelCore/
 │  │  ├─ Model/            ← Team, GamePointStyle, TieBreakStyle, MatchRules, MatchState, …
 │  │  ├─ Engine/           ← ScoringEngine, ScoreFormatter
-│  │  ├─ Persistence/      ← Match, StoredPointEvent, MatchPersistence, MatchFormatting, SampleMatchData
-│  │  ├─ Preferences/      ← MatchRulesPreferences
-│  │  ├─ Stats/            ← MatchStatistics, MatchInsights, MatchSummary
+│  │  ├─ Persistence/      ← Match, Player, AppUser, StoredPointEvent, MatchPersistence, …
+│  │  ├─ Preferences/      ← MatchRulesPreferences, MeProfilePreferences
+│  │  ├─ Stats/            ← MatchStatistics, PlayerInsights, MatchSummary
 │  │  └─ Sync/             ← LiveScoreSnapshot, MatchTransferPayload, SyncPayloadCodec
 │  └─ Tests/PadelCoreTests/
 └─ PadelNote.xcodeproj
@@ -177,12 +181,12 @@ struct MatchRules: Codable, Hashable {
 
 ### iPhone
 1. **Home** — Start match, Insights link, live Watch mirror banner, recent matches; History (top-left) and Settings (top-right) in the toolbar; pull-to-refresh.
-2. **New match setup** — rule pickers (pre-loaded from saved defaults) + optional team names.
-3. **Live match** — large score readouts, +1 per team, undo, end match.
+2. **New match setup** — rule pickers (pre-loaded from saved defaults) + four optional player name fields with autocomplete; ME name pre-filled when a profile is set up.
+3. **Live match** — large score readouts with player-aware side labels, +1 per team, undo, end match.
 4. **Match history** — list grouped by month.
 5. **Match detail** — final score, sets breakdown, duration, point-by-point timeline, and workout data (avg HR, calories, distance) when available.
-6. **Stats / Insights** — win rate, average/longest match, golden-point conversion.
-7. **Settings** — default rules, HealthKit status, about.
+6. **Stats / Insights** — Overview (matches, duration), per-player list, optional **You** section, partner stats on player detail.
+7. **Settings** — default rules, Account profile setup, preferred court slot, HealthKit status, about.
 
 ### Apple Watch
 1. **Start** — last rules used + Start.
@@ -218,6 +222,9 @@ Watch start/live/summary screens, HealthKit auth + `HKWorkoutSession`/`HKLiveWor
 **Milestone 6 — Stats, polish, localization**
 Insights screen, Settings (default rules + HealthKit status + about), workout metrics on match detail, dark mode / Dynamic Type / VoiceOver pass, Spanish `Localizable.xcstrings`.
 
+**Post-M6 — Four players + Insights (`0.6c`–`0.6e`)**
+Four player name fields on match setup and display; `Player` registry with stable IDs; Insights revamp (Overview + Players + optional You); local ME profile in Settings (name, preferred slot, past-match linking, New Match pre-fill); partner stats; 54+ PadelCore unit tests. Sign in with Apple and CloudKit deferred to M8+ — see [docs/plans/four-players-insights.md](docs/plans/four-players-insights.md).
+
 ### ⏭️ Next — Milestone 7: Branding
 - [ ] 7.1 App icon — 1024×1024 single-size asset catalog (no Apple logos, no padel-association logos).
 - [ ] 7.2 Launch screen.
@@ -228,6 +235,7 @@ Insights screen, Settings (default rules + HealthKit status + about), workout me
 ### ⬜ Milestone 8 — Apple Developer account + TestFlight
 - [ ] 8.1 Enroll in the Apple Developer Program — **Individual** (no D-U-N-S, fast).
 - [ ] 8.2 **Lock the bundle ID** (resolves D-02) and switch Xcode signing to the paid team.
+- [ ] 8.2b Enable **Sign in with Apple** capability + entitlement; set `AuthCapabilities.supportsSignInWithApple = true` (see four-players plan).
 - [ ] 8.3 Create the App Store Connect record (bundle ID, SKU, primary language, category Sports / Health & Fitness).
 - [ ] 8.4 Archive in Xcode → upload via Organizer.
 - [ ] 8.5 Internal TestFlight round on your iPhone + Watch.
@@ -268,6 +276,7 @@ Each decision: what was chosen, why, and status. `✅ Locked` · `⏳ Pending` �
 - **D-09 — No analytics SDK in v1.** Simplest privacy label, lowest review risk, aligns with privacy pillar. ✅ Locked for v1
 - **D-10 — Free app, optional one-time IAP later (no subscription).** Removes first-run friction; one-time IAP (advanced stats) planned for v1.2+. ✅ Locked for v1
 - **D-11 — Star Point (third deuce style).** Advantage for the first two deuces, then sudden death; caps game length while rewarding deuce wins. Default stays Golden Point; Star Point is opt-in. Kept the "Star Point" name, with a short "Deuce rules explained" note in Settings clarifying it means limited advantage (2 deuces only). ✅ Locked
+- **D-12 — Optional ME profile (local-first).** Scoring and history require no profile. ME personalization uses an on-device profile (name + linked `Player` record) via Settings. Sign in with Apple is the upgrade path after Apple Developer enrollment (M8); CloudKit sync follows in v1.1. ✅ Locked for v1
 
 > Record any new decision here with its rationale before moving on.
 
@@ -312,7 +321,7 @@ The Watch can disconnect in Xcode with `CoreDeviceError 4000 … enablePersonali
 5. **Assets** — 6.7" iPhone screenshots + Apple Watch screenshots; no device frames, no in-image marketing copy.
 6. **Build** — archive in Xcode → upload via Organizer.
 7. **TestFlight** — at least one internal round.
-8. **Reviewer notes** — explain padel rules and the "Tennis" workout type; no login/demo account needed.
+8. **Reviewer notes** — explain padel rules and the "Tennis" workout type; no login required (optional local profile only until SIWA ships).
 9. **Common rejection risks** — weak HealthKit usage strings; crash when permissions denied; Watch app non-functional without iPhone (document or support standalone); names/icons implying Apple endorsement; league logos you don't own.
 10. **Pricing** — Free in v1.
 11. **Submit** — ~24–48 h review for a clean first build.

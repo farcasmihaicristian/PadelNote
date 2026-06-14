@@ -63,6 +63,12 @@ public struct MatchRoster: Sendable, Hashable, Codable {
     public func contains(playerID: UUID) -> Bool {
         team(for: playerID) != nil
     }
+
+    public func partnerIDs(for playerID: UUID) -> [UUID] {
+        guard let team = team(for: playerID) else { return [] }
+        let side = team == .a ? sideA : sideB
+        return side.compactMap(\.id).filter { $0 != playerID }
+    }
 }
 
 public struct MatchPlayerSlotSelection: Sendable, Hashable {

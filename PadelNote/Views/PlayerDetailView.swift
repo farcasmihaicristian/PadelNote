@@ -6,9 +6,14 @@ struct PlayerDetailView: View {
     let player: Player
 
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @Query(sort: \Player.displayName) private var players: [Player]
 
     private var summaries: [MatchSummary] {
         matches.map(\.summary)
+    }
+
+    private var playerNameLookup: [UUID: String] {
+        Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0.displayName) })
     }
 
     private var insights: PlayerInsights {
@@ -16,6 +21,14 @@ struct PlayerDetailView: View {
             for: player.id,
             displayName: player.displayName,
             in: summaries
+        )
+    }
+
+    private var partnerSummaries: [PartnerSummary] {
+        MatchStatistics.partnerStats(
+            for: player.id,
+            in: summaries,
+            displayNames: playerNameLookup
         )
     }
 
@@ -92,6 +105,20 @@ struct PlayerDetailView: View {
                     }
                 }
 
+                if !partnerSummaries.isEmpty {
+                    Section(String(localized: "Partners")) {
+                        ForEach(partnerSummaries) { summary in
+                            if let partner = players.first(where: { $0.id == summary.id }) {
+                                NavigationLink {
+                                    PlayerDetailView(player: partner)
+                                } label: {
+                                    PartnerSummaryRowView(summary: summary)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if !recentMatches.isEmpty {
                     Section(String(localized: "Recent matches")) {
                         ForEach(recentMatches) { match in
@@ -107,6 +134,40 @@ struct PlayerDetailView: View {
         }
         .navigationTitle(player.displayName)
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct PartnerSummaryRowView: View {
+    let summary: PartnerSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(summary.displayName)
+                .font(.headline)
+
+            HStack(spacing: 12) {
+                Text(String(localized: "\(summary.matchCount) matches together"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                if let winRate = summary.winRate {
+                    Text(MatchFormatting.percentageText(for: winRate))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(rowAccessibilityLabel)
+    }
+
+    private var rowAccessibilityLabel: String {
+        if let winRate = summary.winRate {
+            return String(
+                localized: "\(summary.displayName), \(summary.matchCount) matches together, win rate \(MatchFormatting.percentageText(for: winRate))"
+            )
+        }
+        return String(localized: "\(summary.displayName), \(summary.matchCount) matches together")
     }
 }
 

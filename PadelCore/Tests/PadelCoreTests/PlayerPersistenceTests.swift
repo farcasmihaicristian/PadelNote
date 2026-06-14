@@ -1,0 +1,137 @@
+import Foundation
+import SwiftData
+import Testing
+@testable import PadelCore
+
+@Test @MainActor func saveCompletedMatchLinksPlayersInRoster() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    let events: [PointEvent] = (0..<6).flatMap { _ in
+        [PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a)]
+    }
+
+    let setup = MatchPlayerSetup(
+        sideAPlayer1: .init(name: "Alex"),
+        sideAPlayer2: .init(name: "Maria"),
+        sideBPlayer1: .init(name: "Chris"),
+        sideBPlayer2: .init(name: "Dana")
+    )
+
+    let match = MatchPersistence.saveCompletedMatch(
+        context: context,
+        rules: rules,
+        events: events,
+        startedAt: .now,
+        playerSetup: setup
+    )
+
+    #expect(match.isCompleted)
+    #expect(match.playerA1Name == "Alex")
+    #expect(match.playerA2Name == "Maria")
+    #expect(match.playerB1Name == "Chris")
+    #expect(match.playerB2Name == "Dana")
+    #expect(match.playerA1ID != nil)
+    #expect(match.playerA2ID != nil)
+    #expect(match.playerB1ID != nil)
+    #expect(match.playerB2ID != nil)
+
+    let players = try context.fetch(FetchDescriptor<Player>())
+    #expect(players.count == 4)
+    #expect(Set(players.map(\.displayName)) == Set(["Alex", "Maria", "Chris", "Dana"]))
+}
+
+@Test @MainActor func resolveRosterReusesExistingPlayerByName() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let existing = Player(displayName: "Alex", normalizedName: "alex")
+    context.insert(existing)
+    try context.save()
+
+    let roster = PlayerPersistence.resolveRoster(
+        context: context,
+        setup: MatchPlayerSetup(
+            sideAPlayer1: .init(name: "alex"),
+            sideAPlayer2: .init(name: "Maria"),
+            sideBPlayer1: .init(name: "Chris"),
+            sideBPlayer2: .init(name: "Dana")
+        )
+    )
+
+    #expect(roster.sideA[safe: 0]?.id == existing.id)
+    #expect(try context.fetch(FetchDescriptor<Player>()).count == 4)
+}
+
+@Test func partnerStatsAggregateSideWinRate() {
+    let alexID = UUID()
+    let mariaID = UUID()
+    let chrisID = UUID()
+    let danaID = UUID()
+
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    let winEvents: [PointEvent] = (0..<4).flatMap { _ in
+        [PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a)]
+    }
+    let lossEvents: [PointEvent] = (0..<4).flatMap { _ in
+        [PointEvent(team: .b), PointEvent(team: .b), PointEvent(team: .b), PointEvent(team: .b)]
+    }
+
+    let roster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: mariaID, playerA2Name: "Maria",
+        playerB1ID: chrisID, playerB1Name: "Chris",
+        playerB2ID: danaID, playerB2Name: "Dana"
+    )
+
+    let summaries = [
+        MatchSummary(
+            rules: rules,
+            events: winEvents,
+            winner: .a,
+            duration: 3600,
+            isCompleted: true,
+            roster: roster
+        ),
+        MatchSummary(
+            rules: rules,
+            events: lossEvents,
+            winner: .b,
+            duration: 3600,
+            isCompleted: true,
+            roster: roster
+        ),
+    ]
+
+    let names = [
+        alexID: "Alex",
+        mariaID: "Maria",
+        chrisID: "Chris",
+        danaID: "Dana",
+    ]
+
+    let alexPartners = MatchStatistics.partnerStats(for: alexID, in: summaries, displayNames: names)
+    let mariaPartner = alexPartners.first(where: { $0.id == mariaID })
+
+    #expect(alexPartners.count == 1)
+    #expect(mariaPartner?.matchCount == 2)
+    #expect(mariaPartner?.wins == 1)
+    #expect(mariaPartner?.losses == 1)
+    #expect(mariaPartner?.winRate == 0.5)
+}
+
+@MainActor
+private func makeContainer() throws -> ModelContainer {
+    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+    return try ModelContainer(
+        for: Match.self, StoredPointEvent.self, Player.self, AppUser.self,
+        configurations: configuration
+    )
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
+}

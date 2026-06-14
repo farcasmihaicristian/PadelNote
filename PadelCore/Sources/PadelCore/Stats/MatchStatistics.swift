@@ -86,6 +86,56 @@ public enum MatchStatistics {
             }
     }
 
+    public static func partnerStats(
+        for playerID: UUID,
+        in summaries: [MatchSummary],
+        displayNames: [UUID: String]
+    ) -> [PartnerSummary] {
+        let completed = summaries.filter { summary in
+            summary.isCompleted && summary.roster.contains(playerID: playerID)
+        }
+
+        var matchCounts: [UUID: Int] = [:]
+        var wins: [UUID: Int] = [:]
+        var losses: [UUID: Int] = [:]
+
+        for summary in completed {
+            let partners = summary.roster.partnerIDs(for: playerID)
+            guard !partners.isEmpty else { continue }
+
+            for partnerID in partners {
+                matchCounts[partnerID, default: 0] += 1
+
+                guard let winner = summary.winner,
+                      let team = summary.roster.team(for: playerID)
+                else { continue }
+
+                if winner == team {
+                    wins[partnerID, default: 0] += 1
+                } else {
+                    losses[partnerID, default: 0] += 1
+                }
+            }
+        }
+
+        return matchCounts.keys
+            .map { partnerID in
+                let decided = wins[partnerID, default: 0] + losses[partnerID, default: 0]
+                return PartnerSummary(
+                    id: partnerID,
+                    displayName: displayNames[partnerID] ?? String(localized: "Unknown player"),
+                    matchCount: matchCounts[partnerID, default: 0],
+                    wins: wins[partnerID, default: 0],
+                    losses: losses[partnerID, default: 0],
+                    winRate: decided == 0 ? nil : Double(wins[partnerID, default: 0]) / Double(decided)
+                )
+            }
+            .sorted {
+                if $0.matchCount != $1.matchCount { return $0.matchCount > $1.matchCount }
+                return $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+            }
+    }
+
     public static func playerInsights(
         for playerID: UUID,
         displayName: String,
