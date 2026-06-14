@@ -6,7 +6,7 @@ struct LiveMatchView: View {
     @Environment(\.modelContext) private var modelContext
 
     let rules: MatchRules
-    let playerNames: MatchPlayerNames
+    let playerSetup: MatchPlayerSetup
     var onFinished: () -> Void = {}
 
     @State private var session: ScoringSession
@@ -17,11 +17,11 @@ struct LiveMatchView: View {
 
     init(
         rules: MatchRules,
-        playerNames: MatchPlayerNames,
+        playerSetup: MatchPlayerSetup,
         onFinished: @escaping () -> Void = {}
     ) {
         self.rules = rules
-        self.playerNames = playerNames
+        self.playerSetup = playerSetup
         self.onFinished = onFinished
         _session = State(initialValue: ScoringSession(rules: rules))
     }
@@ -29,11 +29,11 @@ struct LiveMatchView: View {
     private var state: MatchState { session.state }
 
     private var sideALabel: String {
-        playerNames.sideLabel(for: .a)
+        playerSetup.playerNames.sideLabel(for: .a)
     }
 
     private var sideBLabel: String {
-        playerNames.sideLabel(for: .b)
+        playerSetup.playerNames.sideLabel(for: .b)
     }
 
     var body: some View {
@@ -170,7 +170,7 @@ struct LiveMatchView: View {
             rules: rules,
             events: session.events,
             startedAt: startedAt,
-            playerNames: playerNames
+            playerSetup: playerSetup
         )
     }
 }
@@ -179,11 +179,11 @@ struct LiveMatchView: View {
     NavigationStack {
         LiveMatchView(
             rules: .default,
-            playerNames: MatchPlayerNames(
-                playerA1: "Alex",
-                playerA2: "Maria",
-                playerB1: "Chris",
-                playerB2: "Dana"
+            playerSetup: MatchPlayerSetup(
+                sideAPlayer1: .init(name: "Alex"),
+                sideAPlayer2: .init(name: "Maria"),
+                sideBPlayer1: .init(name: "Chris"),
+                sideBPlayer2: .init(name: "Dana")
             )
         )
     }

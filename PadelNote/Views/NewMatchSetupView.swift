@@ -1,17 +1,17 @@
 import PadelCore
+import SwiftData
 import SwiftUI
 
 struct NewMatchSetupView: View {
     var onFinished: () -> Void = {}
 
+    @Environment(CurrentUserStore.self) private var currentUserStore
+    @Query(sort: \Player.displayName) private var players: [Player]
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
-    @State private var playerA1Name = ""
-    @State private var playerA2Name = ""
-    @State private var playerB1Name = ""
-    @State private var playerB2Name = ""
+    @State private var playerSetup = MatchPlayerSetup.empty
     @State private var startLiveMatch = false
 
     private var rules: MatchRules {
@@ -20,15 +20,6 @@ struct NewMatchSetupView: View {
             gamePointStyle: gamePointStyle,
             setTieBreak: setTieBreak,
             finalSetTieBreak: finalSetTieBreak
-        )
-    }
-
-    private var playerNames: MatchPlayerNames {
-        MatchPlayerNames(
-            playerA1: playerA1Name,
-            playerA2: playerA2Name,
-            playerB1: playerB1Name,
-            playerB2: playerB2Name
         )
     }
 
@@ -42,17 +33,29 @@ struct NewMatchSetupView: View {
             )
 
             Section(String(localized: "Players (optional)")) {
-                TextField(String(localized: "Side A player 1"), text: $playerA1Name)
-                    .accessibilityLabel(String(localized: "Side A player 1"))
-                TextField(String(localized: "Side A player 2"), text: $playerA2Name)
-                    .accessibilityLabel(String(localized: "Side A player 2"))
+                PlayerNameField(
+                    selection: $playerSetup.sideAPlayer1,
+                    label: String(localized: "Side A player 1"),
+                    players: players
+                )
+                PlayerNameField(
+                    selection: $playerSetup.sideAPlayer2,
+                    label: String(localized: "Side A player 2"),
+                    players: players
+                )
             }
 
             Section {
-                TextField(String(localized: "Side B player 1"), text: $playerB1Name)
-                    .accessibilityLabel(String(localized: "Side B player 1"))
-                TextField(String(localized: "Side B player 2"), text: $playerB2Name)
-                    .accessibilityLabel(String(localized: "Side B player 2"))
+                PlayerNameField(
+                    selection: $playerSetup.sideBPlayer1,
+                    label: String(localized: "Side B player 1"),
+                    players: players
+                )
+                PlayerNameField(
+                    selection: $playerSetup.sideBPlayer2,
+                    label: String(localized: "Side B player 2"),
+                    players: players
+                )
             }
 
             Section {
@@ -68,11 +71,17 @@ struct NewMatchSetupView: View {
         }
         .navigationTitle(String(localized: "New match"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: loadDefaults)
+        .onAppear {
+            loadDefaults()
+            applyMeProfileIfNeeded()
+        }
+        .onChange(of: currentUserStore.mePlayer?.id) { _, _ in
+            applyMeProfileIfNeeded()
+        }
         .navigationDestination(isPresented: $startLiveMatch) {
             LiveMatchView(
                 rules: rules,
-                playerNames: playerNames,
+                playerSetup: playerSetup,
                 onFinished: onFinished
             )
         }
@@ -85,10 +94,17 @@ struct NewMatchSetupView: View {
         setTieBreak = values.setTieBreak
         finalSetTieBreak = values.finalSetTieBreak
     }
+
+    private func applyMeProfileIfNeeded() {
+        guard let mePlayer = currentUserStore.mePlayer else { return }
+        UserAccountPersistence.applyMeProfile(to: &playerSetup, player: mePlayer)
+    }
 }
 
 #Preview {
     NavigationStack {
         NewMatchSetupView()
     }
+    .modelContainer(PreviewData.container)
+    .environment(CurrentUserStore())
 }

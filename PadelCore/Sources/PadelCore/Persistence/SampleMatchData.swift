@@ -2,20 +2,21 @@ import Foundation
 import SwiftData
 
 public enum SampleMatchData {
+    @MainActor
     public static func seed(into context: ModelContext) {
         guard (try? context.fetchCount(FetchDescriptor<Match>())) == 0 else { return }
 
-        let samples: [(Date, TimeInterval, [Team], MatchRules, MatchPlayerNames)] = [
+        let samples: [(Date, TimeInterval, [Team], MatchRules, MatchPlayerSetup)] = [
             (
                 Calendar.current.date(byAdding: .day, value: -1, to: .now)!,
                 58 * 60,
                 sampleEventsAWin(),
                 .default,
-                MatchPlayerNames(
-                    playerA1: String(localized: "Alex"),
-                    playerA2: String(localized: "Maria"),
-                    playerB1: String(localized: "Chris"),
-                    playerB2: String(localized: "Dana")
+                MatchPlayerSetup(
+                    sideAPlayer1: .init(name: String(localized: "Alex")),
+                    sideAPlayer2: .init(name: String(localized: "Maria")),
+                    sideBPlayer1: .init(name: String(localized: "Chris")),
+                    sideBPlayer2: .init(name: String(localized: "Dana"))
                 )
             ),
             (
@@ -23,9 +24,11 @@ public enum SampleMatchData {
                 72 * 60,
                 sampleEventsBWin(),
                 MatchRules(setsToWin: 2, gamePointStyle: .advantage),
-                MatchPlayerNames(
-                    teamAName: String(localized: "Team A"),
-                    teamBName: String(localized: "Team B")
+                MatchPlayerSetup(
+                    sideAPlayer1: .init(name: String(localized: "Alex")),
+                    sideAPlayer2: .init(name: String(localized: "Maria")),
+                    sideBPlayer1: .init(name: String(localized: "Chris")),
+                    sideBPlayer2: .init(name: String(localized: "Dana"))
                 )
             ),
             (
@@ -37,11 +40,13 @@ public enum SampleMatchData {
             ),
         ]
 
-        for (start, duration, events, rules, playerNames) in samples {
+        for (start, duration, events, rules, setup) in samples {
+            let roster = PlayerPersistence.resolveRoster(context: context, setup: setup)
             let match = Match(
                 startedAt: start,
                 rules: rules,
-                playerNames: playerNames
+                playerNames: setup.playerNames,
+                roster: roster
             )
             context.insert(match)
 
@@ -60,7 +65,7 @@ public enum SampleMatchData {
             match.completedSets = state.completedSets
             match.winner = state.winner
             match.endedAt = start.addingTimeInterval(duration)
-            if playerNames.playerA1Name == String(localized: "Alex") {
+            if setup.sideAPlayer1.trimmedName == String(localized: "Alex") {
                 match.averageHeartRate = 142
                 match.activeEnergyKilocalories = 620
                 match.distanceMeters = 2800

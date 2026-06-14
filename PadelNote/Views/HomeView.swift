@@ -107,5 +107,6 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
+        .environment(CurrentUserStore())
         .modelContainer(PreviewData.container)
 }

@@ -13,6 +13,10 @@ public final class Match {
     public var playerA2Name: String?
     public var playerB1Name: String?
     public var playerB2Name: String?
+    public var playerA1ID: UUID?
+    public var playerA2ID: UUID?
+    public var playerB1ID: UUID?
+    public var playerB2ID: UUID?
     public var teamAName: String?
     public var teamBName: String?
     public var averageHeartRate: Double?
@@ -30,6 +34,7 @@ public final class Match {
         completedSets: [SetScore] = [],
         winner: Team? = nil,
         playerNames: MatchPlayerNames = .empty,
+        roster: MatchRoster = .empty,
         averageHeartRate: Double? = nil,
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
@@ -41,16 +46,41 @@ public final class Match {
         self.rulesData = (try? JSONEncoder().encode(rules)) ?? Data()
         self.completedSetsData = (try? JSONEncoder().encode(completedSets)) ?? Data()
         self.winnerRawValue = winner?.rawValue
-        self.playerA1Name = playerNames.playerA1Name
-        self.playerA2Name = playerNames.playerA2Name
-        self.playerB1Name = playerNames.playerB1Name
-        self.playerB2Name = playerNames.playerB2Name
+        self.playerA1Name = playerNames.playerA1Name ?? roster.sideA[safe: 0]?.name
+        self.playerA2Name = playerNames.playerA2Name ?? roster.sideA[safe: 1]?.name
+        self.playerB1Name = playerNames.playerB1Name ?? roster.sideB[safe: 0]?.name
+        self.playerB2Name = playerNames.playerB2Name ?? roster.sideB[safe: 1]?.name
+        self.playerA1ID = roster.sideA[safe: 0]?.id
+        self.playerA2ID = roster.sideA[safe: 1]?.id
+        self.playerB1ID = roster.sideB[safe: 0]?.id
+        self.playerB2ID = roster.sideB[safe: 1]?.id
         self.teamAName = playerNames.teamAName
         self.teamBName = playerNames.teamBName
         self.averageHeartRate = averageHeartRate
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
         self.points = points
+    }
+
+    public var roster: MatchRoster {
+        get {
+            MatchRoster(
+                playerA1ID: playerA1ID, playerA1Name: playerA1Name,
+                playerA2ID: playerA2ID, playerA2Name: playerA2Name,
+                playerB1ID: playerB1ID, playerB1Name: playerB1Name,
+                playerB2ID: playerB2ID, playerB2Name: playerB2Name
+            )
+        }
+        set {
+            playerA1ID = newValue.sideA[safe: 0]?.id
+            playerA1Name = newValue.sideA[safe: 0]?.name
+            playerA2ID = newValue.sideA[safe: 1]?.id
+            playerA2Name = newValue.sideA[safe: 1]?.name
+            playerB1ID = newValue.sideB[safe: 0]?.id
+            playerB1Name = newValue.sideB[safe: 0]?.name
+            playerB2ID = newValue.sideB[safe: 1]?.id
+            playerB2Name = newValue.sideB[safe: 1]?.name
+        }
     }
 
     public var playerNames: MatchPlayerNames {
@@ -146,7 +176,14 @@ public final class Match {
             events: enginePointEvents,
             winner: winner,
             duration: duration,
-            isCompleted: isCompleted
+            isCompleted: isCompleted,
+            roster: roster
         )
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

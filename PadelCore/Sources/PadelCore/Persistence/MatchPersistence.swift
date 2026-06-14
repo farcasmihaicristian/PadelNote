@@ -8,16 +8,18 @@ public enum MatchPersistence {
         rules: MatchRules,
         events: [PointEvent],
         startedAt: Date,
-        playerNames: MatchPlayerNames
+        playerSetup: MatchPlayerSetup
     ) -> Match {
         let state = ScoringEngine.replay(events: events, rules: rules)
+        let roster = PlayerPersistence.resolveRoster(context: context, setup: playerSetup)
         let match = Match(
             startedAt: startedAt,
             endedAt: .now,
             rules: rules,
             completedSets: state.completedSets,
             winner: state.winner,
-            playerNames: playerNames
+            playerNames: playerSetup.playerNames,
+            roster: roster
         )
         context.insert(match)
 
@@ -48,6 +50,13 @@ public enum MatchPersistence {
         descriptor.fetchLimit = 1
 
         let state = ScoringEngine.replay(events: payload.events, rules: payload.rules)
+        let setup = MatchPlayerSetup(
+            sideAPlayer1: .init(name: payload.playerNames.playerA1Name ?? "", playerID: nil),
+            sideAPlayer2: .init(name: payload.playerNames.playerA2Name ?? "", playerID: nil),
+            sideBPlayer1: .init(name: payload.playerNames.playerB1Name ?? "", playerID: nil),
+            sideBPlayer2: .init(name: payload.playerNames.playerB2Name ?? "", playerID: nil)
+        )
+        let roster = PlayerPersistence.resolveRoster(context: context, setup: setup)
         let match: Match
 
         if let existing = try? context.fetch(descriptor).first {
@@ -62,6 +71,7 @@ public enum MatchPersistence {
                 completedSets: state.completedSets,
                 winner: state.winner,
                 playerNames: payload.playerNames,
+                roster: roster,
                 averageHeartRate: payload.averageHeartRate,
                 activeEnergyKilocalories: payload.activeEnergyKilocalories,
                 distanceMeters: payload.distanceMeters
@@ -76,6 +86,7 @@ public enum MatchPersistence {
         match.completedSets = state.completedSets
         match.winner = state.winner
         match.playerNames = payload.playerNames
+        match.roster = roster
         match.averageHeartRate = payload.averageHeartRate
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters

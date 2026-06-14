@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var setTieBreak = MatchRules.default.setTieBreak
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     @State private var healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
+    @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -17,6 +18,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            AccountAuthSection()
+
             Section {
                 Text(String(localized: "These options are used as defaults when you start a new match."))
                     .font(.subheadline)
@@ -29,6 +32,8 @@ struct SettingsView: View {
                 setTieBreak: $setTieBreak,
                 finalSetTieBreak: $finalSetTieBreak
             )
+
+            meSlotSection
 
             Section(String(localized: "Health")) {
                 LabeledContent(String(localized: "HealthKit access")) {
@@ -63,11 +68,20 @@ struct SettingsView: View {
             loadDefaults()
             healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
             syncCoordinator.syncDefaultRulesToWatch()
+            preferredMeSlot = MeProfilePreferences.preferredSlot()
         }
         .onChange(of: bestOfSets) { _, _ in saveDefaults() }
         .onChange(of: gamePointStyle) { _, _ in saveDefaults() }
         .onChange(of: setTieBreak) { _, _ in saveDefaults() }
         .onChange(of: finalSetTieBreak) { _, _ in saveDefaults() }
+        .onChange(of: preferredMeSlot) { _, newValue in
+            MeProfilePreferences.savePreferredSlot(newValue)
+        }
+    }
+
+    @ViewBuilder
+    private var meSlotSection: some View {
+        MeSlotSettingsSection(preferredMeSlot: $preferredMeSlot)
     }
 
     private func loadDefaults() {
@@ -90,9 +104,28 @@ struct SettingsView: View {
     }
 }
 
+private struct MeSlotSettingsSection: View {
+    @Environment(CurrentUserStore.self) private var currentUserStore
+    @Binding var preferredMeSlot: PlayerSlot
+
+    var body: some View {
+        if currentUserStore.isSignedIn {
+            Section(String(localized: "Your match setup")) {
+                Picker(String(localized: "Default position"), selection: $preferredMeSlot) {
+                    ForEach(PlayerSlot.allCases) { slot in
+                        Text(slot.label).tag(slot)
+                    }
+                }
+                .accessibilityLabel(String(localized: "Default position on new match"))
+            }
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         SettingsView()
     }
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
+    .environment(CurrentUserStore())
 }
