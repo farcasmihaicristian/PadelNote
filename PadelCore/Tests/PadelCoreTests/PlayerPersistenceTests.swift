@@ -64,6 +64,66 @@ import Testing
     #expect(try context.fetch(FetchDescriptor<Player>()).count == 4)
 }
 
+@Test @MainActor func knownNamesFromMatchHistoryEmptyWhenNoCompletedMatches() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let orphan = Player(displayName: "Orphan", normalizedName: "orphan")
+    context.insert(orphan)
+    try context.save()
+
+    #expect(PlayerPersistence.knownNamesFromMatchHistory(context: context).isEmpty)
+    #expect(PlayerPersistence.distinctDisplayNames(context: context).isEmpty)
+}
+
+@Test @MainActor func knownNamesFromMatchHistoryUsesCompletedMatchRosterOnly() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let orphan = Player(displayName: "Orphan", normalizedName: "orphan")
+    context.insert(orphan)
+    try context.save()
+
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    let events: [PointEvent] = (0..<4).flatMap { _ in
+        [PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a)]
+    }
+
+    _ = MatchPersistence.saveCompletedMatch(
+        context: context,
+        rules: rules,
+        events: events,
+        startedAt: .now,
+        playerSetup: MatchPlayerSetup(
+            sideAPlayer1: .init(name: "Alex"),
+            sideAPlayer2: .init(name: "Maria"),
+            sideBPlayer1: .init(name: "Chris"),
+            sideBPlayer2: .init(name: "Dana")
+        )
+    )
+
+    let names = Set(PlayerPersistence.knownNamesFromMatchHistory(context: context))
+    #expect(names == Set(["Alex", "Maria", "Chris", "Dana"]))
+    #expect(!names.contains("Orphan"))
+}
+
+@Test @MainActor func pruneUnreferencedPlayersRemovesOrphansButKeepsMe() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let orphan = Player(displayName: "Orphan", normalizedName: "orphan")
+    let me = Player(displayName: "Me", normalizedName: "me", isOwnedByCurrentUser: true)
+    context.insert(orphan)
+    context.insert(me)
+    try context.save()
+
+    PlayerPersistence.pruneUnreferencedPlayers(context: context)
+
+    let remaining = try context.fetch(FetchDescriptor<Player>())
+    #expect(remaining.count == 1)
+    #expect(remaining.first?.displayName == "Me")
+}
+
 @Test func partnerStatsAggregateSideWinRate() {
     let alexID = UUID()
     let mariaID = UUID()

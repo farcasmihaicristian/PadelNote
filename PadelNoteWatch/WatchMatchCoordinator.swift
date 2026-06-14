@@ -22,6 +22,7 @@ final class WatchMatchCoordinator {
     var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     var playerSetup = MatchPlayerSetup.empty
     var knownPlayerNames: [String] = []
+    var meProfile: WatchMeProfile?
     var healthAuthDenied = false
     var workoutWarning: String?
     var isStarting = false
@@ -47,6 +48,7 @@ final class WatchMatchCoordinator {
     private func applyPhoneContext(_ payload: PhoneWatchSyncPayload) {
         MatchRulesPreferences.save(payload.rules)
         knownPlayerNames = payload.knownPlayerNames
+        meProfile = payload.meProfile
         guard phase == .idle else { return }
 
         let values = MatchRulesPreferences.formValues(from: payload.rules)
@@ -55,6 +57,13 @@ final class WatchMatchCoordinator {
         setTieBreak = values.setTieBreak
         finalSetTieBreak = values.finalSetTieBreak
         rules = payload.rules
+        applyMeProfileDefaultIfNeeded()
+    }
+
+    var sortedKnownPlayerNames: [String] {
+        knownPlayerNames.sorted {
+            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        }
     }
 
     var currentState: MatchState? {
@@ -70,6 +79,7 @@ final class WatchMatchCoordinator {
         await workoutRecorder.requestAuthorization()
         healthAuthDenied = workoutRecorder.authorizationDenied
         loadIdleSetup()
+        applyMeProfileDefaultIfNeeded()
     }
 
     func startMatch() async {
@@ -159,6 +169,7 @@ final class WatchMatchCoordinator {
         endedEarly = false
         playerSetup = .empty
         loadIdleSetup()
+        applyMeProfileDefaultIfNeeded()
     }
 
     var summaryScoreLine: String {
@@ -214,6 +225,18 @@ final class WatchMatchCoordinator {
         let guestName = GuestPlayerNaming.nextName(avoiding: reserved)
         var setup = playerSetup
         slot.applySelection(MatchPlayerSlotSelection(name: guestName), to: &setup)
+        playerSetup = setup
+    }
+
+    func applyMeProfileDefaultIfNeeded() {
+        guard phase == .idle, let meProfile else { return }
+
+        let slot = meProfile.preferredSlot
+        let current = slot.selection(from: playerSetup)
+        guard !current.hasContent else { return }
+
+        var setup = playerSetup
+        slot.applySelection(MatchPlayerSlotSelection(name: meProfile.displayName), to: &setup)
         playerSetup = setup
     }
 

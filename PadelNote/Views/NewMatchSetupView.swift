@@ -6,7 +6,7 @@ struct NewMatchSetupView: View {
     var onFinished: () -> Void = {}
 
     @Environment(CurrentUserStore.self) private var currentUserStore
-    @Query(sort: \Player.displayName) private var players: [Player]
+    @Environment(\.modelContext) private var modelContext
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
@@ -23,6 +23,14 @@ struct NewMatchSetupView: View {
         )
     }
 
+    private var knownPlayerNames: [String] {
+        PlayerPersistence.knownNamesFromMatchHistory(context: modelContext)
+    }
+
+    private var linkedHistoryPlayers: [Player] {
+        PlayerPersistence.playersFromMatchHistory(context: modelContext)
+    }
+
     var body: some View {
         Form {
             MatchRulesSettingsForm(
@@ -36,12 +44,14 @@ struct NewMatchSetupView: View {
                 PlayerNameField(
                     selection: $playerSetup.sideAPlayer1,
                     label: String(localized: "Side A player 1"),
-                    players: players
+                    knownNames: knownPlayerNames,
+                    linkedPlayers: linkedHistoryPlayers
                 )
                 PlayerNameField(
                     selection: $playerSetup.sideAPlayer2,
                     label: String(localized: "Side A player 2"),
-                    players: players
+                    knownNames: knownPlayerNames,
+                    linkedPlayers: linkedHistoryPlayers
                 )
             }
 
@@ -49,12 +59,14 @@ struct NewMatchSetupView: View {
                 PlayerNameField(
                     selection: $playerSetup.sideBPlayer1,
                     label: String(localized: "Side B player 1"),
-                    players: players
+                    knownNames: knownPlayerNames,
+                    linkedPlayers: linkedHistoryPlayers
                 )
                 PlayerNameField(
                     selection: $playerSetup.sideBPlayer2,
                     label: String(localized: "Side B player 2"),
-                    players: players
+                    knownNames: knownPlayerNames,
+                    linkedPlayers: linkedHistoryPlayers
                 )
             }
 
@@ -72,6 +84,7 @@ struct NewMatchSetupView: View {
         .navigationTitle(String(localized: "New match"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            PlayerPersistence.pruneUnreferencedPlayers(context: modelContext)
             loadDefaults()
             applyMeProfileIfNeeded()
         }
@@ -97,7 +110,15 @@ struct NewMatchSetupView: View {
 
     private func applyMeProfileIfNeeded() {
         guard let mePlayer = currentUserStore.mePlayer else { return }
-        UserAccountPersistence.applyMeProfile(to: &playerSetup, player: mePlayer)
+
+        let preferredSlot = MeProfilePreferences.preferredSlot()
+        guard !preferredSlot.selection(from: playerSetup).hasContent else { return }
+
+        UserAccountPersistence.applyMeProfile(
+            to: &playerSetup,
+            player: mePlayer,
+            preferredSlot: preferredSlot
+        )
     }
 }
 

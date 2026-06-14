@@ -659,6 +659,26 @@
         }
       }
     },
+    "Known players" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugadores conocidos"
+          }
+        }
+      }
+    },
+    "Known players for %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugadores conocidos para %@"
+          }
+        }
+      }
+    },
     "Link matches" : {
       "localizations" : {
         "es" : {
@@ -880,7 +900,6 @@
       }
     },
     "None" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -947,6 +966,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Ajustes para iniciar sesión"
+          }
+        }
+      }
+    },
+    "Or enter name" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O escribe un nombre"
           }
         }
       }
@@ -1580,6 +1609,7 @@
       }
     },
     "Use existing player %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {

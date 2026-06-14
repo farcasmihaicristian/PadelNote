@@ -41,10 +41,7 @@ struct MatchPlayersEditSection: View {
             )
         }
         .onAppear(perform: loadFromMatch)
-        .onChange(of: sideAPlayer1) { _, _ in saveIfNeeded() }
-        .onChange(of: sideAPlayer2) { _, _ in saveIfNeeded() }
-        .onChange(of: sideBPlayer1) { _, _ in saveIfNeeded() }
-        .onChange(of: sideBPlayer2) { _, _ in saveIfNeeded() }
+        .onDisappear(perform: saveIfNeeded)
     }
 
     private func playerField(title: String, text: Binding<String>) -> some View {
@@ -52,6 +49,7 @@ struct MatchPlayersEditSection: View {
             .textInputAutocapitalization(.words)
             .autocorrectionDisabled()
             .accessibilityLabel(title)
+            .onSubmit(saveIfNeeded)
     }
 
     private func loadFromMatch() {

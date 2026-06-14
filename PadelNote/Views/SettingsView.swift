@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
+    @Environment(CurrentUserStore.self) private var currentUserStore
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
@@ -76,6 +77,10 @@ struct SettingsView: View {
         .onChange(of: finalSetTieBreak) { _, _ in saveDefaults() }
         .onChange(of: preferredMeSlot) { _, newValue in
             MeProfilePreferences.savePreferredSlot(newValue)
+            syncCoordinator.syncPhoneContextToWatch()
+        }
+        .onChange(of: currentUserStore.isSignedIn) { _, _ in
+            syncCoordinator.syncPhoneContextToWatch()
         }
     }
 

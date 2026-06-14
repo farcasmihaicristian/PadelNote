@@ -95,32 +95,113 @@ public enum PlayerPersistence {
     }
 
     @MainActor
-    public static func distinctDisplayNames(context: ModelContext) -> [String] {
+    public static func watchMeProfile(context: ModelContext) -> WatchMeProfile? {
+        guard let players = try? context.fetch(FetchDescriptor<Player>()) else { return nil }
+        guard let me = players.first(where: \.isOwnedByCurrentUser) else { return nil }
+
+        let name = me.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+
+        return WatchMeProfile(
+            displayName: name,
+            preferredSlot: MeProfilePreferences.preferredSlot()
+        )
+    }
+
+    @MainActor
+    public static func knownNamesFromMatchHistory(context: ModelContext) -> [String] {
+        guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return [] }
+
         var names = Set<String>()
-
-        if let players = try? context.fetch(FetchDescriptor<Player>()) {
-            for player in players {
-                let trimmed = player.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty, !GuestPlayerNaming.isGuestName(trimmed) {
-                    names.insert(trimmed)
-                }
+        for match in matches where match.isCompleted {
+            for entry in match.roster.allEntries {
+                guard let name = entry.name?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !name.isEmpty,
+                      !GuestPlayerNaming.isGuestName(name)
+                else { continue }
+                names.insert(name)
             }
         }
 
-        if let matches = try? context.fetch(FetchDescriptor<Match>()) {
-            for match in matches {
-                for entry in match.roster.allEntries {
-                    guard let name = entry.name?.trimmingCharacters(in: .whitespacesAndNewlines),
-                          !name.isEmpty,
-                          !GuestPlayerNaming.isGuestName(name)
-                    else { continue }
-                    names.insert(name)
-                }
+        return filterTypingFragmentNames(
+            names.sorted {
+                $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+            }
+        )
+    }
+
+    @MainActor
+    public static func playersFromMatchHistory(context: ModelContext) -> [Player] {
+        guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return [] }
+
+        var ids = Set<UUID>()
+        for match in matches where match.isCompleted {
+            for id in match.roster.linkedPlayerIDs {
+                ids.insert(id)
             }
         }
 
-        return names.sorted {
-            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        let players = ids.compactMap { fetchPlayer(id: $0, context: context) }
+        return pickerPlayers(from: players)
+    }
+
+    @MainActor
+    public static func distinctDisplayNames(context: ModelContext) -> [String] {
+        knownNamesFromMatchHistory(context: context)
+    }
+
+    @MainActor
+    public static func pruneUnreferencedPlayers(context: ModelContext) {
+        guard let matches = try? context.fetch(FetchDescriptor<Match>()),
+              let players = try? context.fetch(FetchDescriptor<Player>())
+        else { return }
+
+        var referencedIDs = Set<UUID>()
+        for match in matches {
+            for id in match.roster.linkedPlayerIDs {
+                referencedIDs.insert(id)
+            }
+        }
+
+        var didDelete = false
+        for player in players {
+            guard !player.isOwnedByCurrentUser else { continue }
+            guard !referencedIDs.contains(player.id) else { continue }
+            context.delete(player)
+            didDelete = true
+        }
+
+        if didDelete {
+            try? context.save()
+        }
+    }
+
+    public static func pickerPlayers(from players: [Player]) -> [Player] {
+        let eligible = players.filter { !GuestPlayerNaming.isGuestName($0.displayName) }
+        let withoutFragments = eligible.filter { player in
+            !eligible.contains { other in
+                other.id != player.id
+                    && other.normalizedName.hasPrefix(player.normalizedName)
+                    && other.normalizedName.count > player.normalizedName.count
+            }
+        }
+
+        var seen = Set<String>()
+        return withoutFragments
+            .filter { seen.insert($0.normalizedName).inserted }
+            .sorted {
+                $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+            }
+    }
+
+    public static func filterTypingFragmentNames(_ names: [String]) -> [String] {
+        names.filter { name in
+            let normalized = normalizeName(name)
+            return !names.contains { other in
+                other != name
+                    && normalizeName(other).hasPrefix(normalized)
+                    && normalizeName(other).count > normalized.count
+            }
         }
     }
 

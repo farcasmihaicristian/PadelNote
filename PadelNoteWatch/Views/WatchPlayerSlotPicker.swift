@@ -17,15 +17,19 @@ struct WatchPlayerSlotPicker: View {
         )
     }
 
-    private var pickerTags: [String] {
-        var tags = [noneTag, GuestPlayerNaming.guestPickerToken]
-        tags.append(contentsOf: coordinator.knownPlayerNames)
-
+    private var playerNameOptions: [String] {
+        var names = Set(coordinator.sortedKnownPlayerNames)
         let current = selection.wrappedValue.trimmedName
-        if !current.isEmpty, !tags.contains(current) {
-            tags.append(current)
+        if !current.isEmpty {
+            names.insert(current)
         }
-        return tags
+        return names.sorted {
+            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        }
+    }
+
+    private var pickerTags: [String] {
+        [noneTag] + playerNameOptions + [GuestPlayerNaming.guestPickerToken]
     }
 
     private var pickerSelection: Binding<String> {

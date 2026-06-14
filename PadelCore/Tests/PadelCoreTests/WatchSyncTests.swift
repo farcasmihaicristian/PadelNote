@@ -20,7 +20,8 @@ import Testing
 @Test func phoneWatchSyncPayloadRoundTripsThroughCodec() throws {
     let payload = PhoneWatchSyncPayload(
         rules: MatchRules(setsToWin: 2, gamePointStyle: .starPoint),
-        knownPlayerNames: ["Alex", "Maria"]
+        knownPlayerNames: ["Alex", "Maria"],
+        meProfile: WatchMeProfile(displayName: "Alex", preferredSlot: .sideAPlayer1)
     )
 
     let encoded = SyncPayloadCodec.encodePhoneContext(payload)
@@ -29,6 +30,21 @@ import Testing
     #expect(decoded?.rules.setsToWin == 2)
     #expect(decoded?.rules.gamePointStyle == .starPoint)
     #expect(decoded?.knownPlayerNames == ["Alex", "Maria"])
+    #expect(decoded?.meProfile?.displayName == "Alex")
+    #expect(decoded?.meProfile?.preferredSlot == .sideAPlayer1)
+}
+
+@Test func filterTypingFragmentNamesRemovesPrefixOnlyEntries() {
+    let names = ["A", "An", "Anon", "Anonymous", "J", "John", "Maria"]
+    let filtered = PlayerPersistence.filterTypingFragmentNames(names)
+
+    #expect(filtered.contains("Anonymous"))
+    #expect(filtered.contains("John"))
+    #expect(filtered.contains("Maria"))
+    #expect(!filtered.contains("A"))
+    #expect(!filtered.contains("An"))
+    #expect(!filtered.contains("Anon"))
+    #expect(!filtered.contains("J"))
 }
 
 @Test func legacyDefaultRulesDecodeAsPhoneContext() throws {
