@@ -54,6 +54,7 @@ struct WatchPlayerSlotPicker: View {
                 Text(label(for: tag)).tag(tag)
             }
         }
+        .watchStartPickerRow()
         .accessibilityLabel(title)
     }
 

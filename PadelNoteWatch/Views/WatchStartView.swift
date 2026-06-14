@@ -21,76 +21,79 @@ struct WatchStartView: View {
     }
 
     private var startContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(String(localized: "PadelNote"))
-                    .font(.headline)
+        WatchStartFormLayout {
+            Text(String(localized: "PadelNote"))
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, 2)
 
-                Group {
-                    Picker(String(localized: "Sets"), selection: $coordinator.bestOfSets) {
-                        Text(String(localized: "Best of 1")).tag(1)
-                        Text(String(localized: "Best of 3")).tag(3)
-                        Text(String(localized: "Best of 5")).tag(5)
-                    }
-                    .accessibilityLabel(String(localized: "Number of sets"))
-
-                    Picker(String(localized: "Deuce rule"), selection: $coordinator.gamePointStyle) {
-                        Text(String(localized: "Golden point")).tag(GamePointStyle.goldenPoint)
-                        Text(String(localized: "Advantage")).tag(GamePointStyle.advantage)
-                        Text(String(localized: "Star point")).tag(GamePointStyle.starPoint)
-                    }
-                    .accessibilityLabel(String(localized: "Deuce rule"))
-                }
-
-                Text(String(localized: "Players (optional)"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-
-                WatchPlayerSlotPicker(
-                    title: String(localized: "Side A player 1"),
-                    slot: .sideAPlayer1,
-                    coordinator: coordinator
-                )
-                WatchPlayerSlotPicker(
-                    title: String(localized: "Side A player 2"),
-                    slot: .sideAPlayer2,
-                    coordinator: coordinator
-                )
-                WatchPlayerSlotPicker(
-                    title: String(localized: "Side B player 1"),
-                    slot: .sideBPlayer1,
-                    coordinator: coordinator
-                )
-                WatchPlayerSlotPicker(
-                    title: String(localized: "Side B player 2"),
-                    slot: .sideBPlayer2,
-                    coordinator: coordinator
-                )
-
-                if coordinator.healthAuthDenied {
-                    Text(String(localized: "Health access denied. You can still score, but workouts won't be saved to Apple Health."))
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                }
-
-                Button {
-                    Task { await coordinator.startMatch() }
-                } label: {
-                    if coordinator.isStarting {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text(String(localized: "Start"))
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(coordinator.isStarting)
-                .accessibilityLabel(String(localized: "Start match"))
-                .padding(.top, 4)
+            Picker(String(localized: "Sets"), selection: $coordinator.bestOfSets) {
+                Text(String(localized: "Best of 1")).tag(1)
+                Text(String(localized: "Best of 3")).tag(3)
+                Text(String(localized: "Best of 5")).tag(5)
             }
-            .padding(.horizontal, 4)
+            .watchStartPickerRow()
+            .accessibilityLabel(String(localized: "Number of sets"))
+
+            Picker(String(localized: "Deuce rule"), selection: $coordinator.gamePointStyle) {
+                Text(String(localized: "Golden point")).tag(GamePointStyle.goldenPoint)
+                Text(String(localized: "Advantage")).tag(GamePointStyle.advantage)
+                Text(String(localized: "Star point")).tag(GamePointStyle.starPoint)
+            }
+            .watchStartPickerRow()
+            .accessibilityLabel(String(localized: "Deuce rule"))
+
+            Text(String(localized: "Players (optional)"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 4)
+
+            WatchPlayerSlotPicker(
+                title: String(localized: "Side A player 1"),
+                slot: .sideAPlayer1,
+                coordinator: coordinator
+            )
+            WatchPlayerSlotPicker(
+                title: String(localized: "Side A player 2"),
+                slot: .sideAPlayer2,
+                coordinator: coordinator
+            )
+            WatchPlayerSlotPicker(
+                title: String(localized: "Side B player 1"),
+                slot: .sideBPlayer1,
+                coordinator: coordinator
+            )
+            WatchPlayerSlotPicker(
+                title: String(localized: "Side B player 2"),
+                slot: .sideBPlayer2,
+                coordinator: coordinator
+            )
+
+            if coordinator.healthAuthDenied {
+                Text(String(localized: "Health access denied. You can still score, but workouts won't be saved to Apple Health."))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            Button {
+                Task { await coordinator.startMatch() }
+            } label: {
+                if coordinator.isStarting {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text(String(localized: "Start"))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .watchStartPrimaryButton()
+            .disabled(coordinator.isStarting)
+            .accessibilityLabel(String(localized: "Start match"))
+            .padding(.top, 4)
         }
     }
 }
