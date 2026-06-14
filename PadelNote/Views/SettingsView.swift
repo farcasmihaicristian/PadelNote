@@ -29,6 +29,12 @@ struct SettingsView: View {
                 finalSetTieBreak: $finalSetTieBreak
             )
 
+            Section(String(localized: "Deuce rules explained")) {
+                Text(String(localized: "Star point is limited advantage: classic advantage applies for the first two deuces, then the third deuce is a sudden-death golden point."))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
             Section(String(localized: "Health")) {
                 LabeledContent(String(localized: "HealthKit access")) {
                     Text(HealthKitAuthorizationChecker.statusLabel(for: healthStatus))
