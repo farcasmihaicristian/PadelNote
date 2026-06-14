@@ -11,12 +11,24 @@ struct WatchLiveMatchView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            teamZone(team: .a, label: coordinator.activePlayerNames.sideLabel(for: .a))
+        GeometryReader { geometry in
+            ZStack {
+                VStack(spacing: 0) {
+                    teamZone(
+                        team: .a,
+                        label: coordinator.activePlayerNames.sideLabel(for: .a),
+                        height: geometry.size.height / 2
+                    )
 
-            scoreStrip
+                    teamZone(
+                        team: .b,
+                        label: coordinator.activePlayerNames.sideLabel(for: .b),
+                        height: geometry.size.height / 2
+                    )
+                }
 
-            teamZone(team: .b, label: coordinator.activePlayerNames.sideLabel(for: .b))
+                scoreOverlay
+            }
         }
         .ignoresSafeArea(edges: .horizontal)
         .navigationTitle(String(localized: "Live"))
@@ -66,35 +78,60 @@ struct WatchLiveMatchView: View {
         }
     }
 
-    private var scoreStrip: some View {
+    private var scoreOverlay: some View {
         VStack(spacing: 2) {
-            Text(ScoreFormatter.currentGameScore(in: state))
-                .font(.system(.title2, design: .rounded).weight(.bold))
-                .accessibilityLabel(String(localized: "Game score \(ScoreFormatter.currentGameScore(in: state))"))
+            HStack(spacing: 6) {
+                if !state.completedSets.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(Array(state.completedSets.enumerated()), id: \.offset) { _, set in
+                            Text(ScoreFormatter.formatSetScore(set))
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
 
-            Text(ScoreFormatter.currentSetGames(in: state))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                Text(ScoreFormatter.currentSetGames(in: state))
+                    .font(.caption.weight(.semibold))
+            }
+
+            Text(ScoreFormatter.currentGameScore(in: state))
+                .font(.system(.title3, design: .rounded).weight(.bold))
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(scoreAccessibilityLabel)
     }
 
-    private func teamZone(team: Team, label: String) -> some View {
+    private var scoreAccessibilityLabel: String {
+        let completed = state.completedSets.map(ScoreFormatter.formatSetScore(_:)).joined(separator: ", ")
+        let currentSet = ScoreFormatter.currentSetGames(in: state)
+        let game = ScoreFormatter.currentGameScore(in: state)
+
+        if completed.isEmpty {
+            return String(localized: "Set score \(currentSet), game score \(game)")
+        }
+        return String(localized: "Completed sets \(completed), current set \(currentSet), game score \(game)")
+    }
+
+    private func teamZone(team: Team, label: String, height: CGFloat) -> some View {
         Button {
             coordinator.addPoint(for: team)
         } label: {
-            VStack(spacing: 4) {
-                Text(label)
-                    .font(.headline)
-                Text(String(localized: "Point \(label)"))
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
+            Text(label)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(team == .a ? Color.blue.opacity(0.25) : Color.green.opacity(0.25))
+        .frame(height: height)
+        .frame(maxWidth: .infinity)
+        .background(team == .a ? Color.blue.opacity(0.32) : Color.green.opacity(0.32))
         .disabled(state.isMatchOver)
         .accessibilityLabel(String(localized: "Point \(label)"))
     }
