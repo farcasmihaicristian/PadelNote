@@ -4,6 +4,8 @@ import PadelCore
 
 @MainActor
 final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
+    private static let minimumSaveDuration: TimeInterval = 10 * 60
+
     private let healthStore = HKHealthStore()
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
@@ -15,6 +17,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
     private(set) var averageHeartRate: Double?
     private(set) var activeEnergyKilocalories: Double?
     private(set) var distanceMeters: Double?
+    private(set) var savedToHealth = false
 
     var elapsedDuration: TimeInterval {
         Date.now.timeIntervalSince(startedAt)
@@ -52,6 +55,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         averageHeartRate = nil
         activeEnergyKilocalories = nil
         distanceMeters = nil
+        savedToHealth = false
 
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .tennis
@@ -79,12 +83,22 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         guard let session, let builder else { return }
 
         let endDate = Date.now
+        let duration = endDate.timeIntervalSince(startedAt)
         session.end()
         try await builder.endCollection(at: endDate)
-        try await builder.finishWorkout()
 
-        if !heartRateSamples.isEmpty {
-            averageHeartRate = heartRateSamples.reduce(0, +) / Double(heartRateSamples.count)
+        if duration >= Self.minimumSaveDuration {
+            try await builder.finishWorkout()
+            savedToHealth = true
+            if !heartRateSamples.isEmpty {
+                averageHeartRate = heartRateSamples.reduce(0, +) / Double(heartRateSamples.count)
+            }
+        } else {
+            builder.discardWorkout()
+            savedToHealth = false
+            averageHeartRate = nil
+            activeEnergyKilocalories = nil
+            distanceMeters = nil
         }
 
         self.session = nil

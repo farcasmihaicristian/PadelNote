@@ -13,19 +13,24 @@ final class PhoneSyncCoordinator {
 
     init(syncListener: any MatchSyncListening) {
         self.syncListener = syncListener
+        configureHandlers()
     }
 
     var isWatchMatchLive: Bool {
-        guard let liveSnapshot else { return false }
-        return !liveSnapshot.isMatchOver
+        liveSnapshot?.isVisibleOnPhone == true
     }
 
     func activate(modelContext: ModelContext) {
         self.modelContext = modelContext
+        syncListener.activate()
+    }
 
+    private func configureHandlers() {
         syncListener.onLiveScoreUpdate = { [weak self] snapshot in
-            self?.liveSnapshot = snapshot
+            self?.liveSnapshot = snapshot.isVisibleOnPhone ? snapshot : nil
         }
+
+        syncListener.onPointLogUpdate = { _ in }
 
         syncListener.onMatchReceived = { [weak self] payload in
             guard let self, let modelContext = self.modelContext else { return }
@@ -34,7 +39,5 @@ final class PhoneSyncCoordinator {
                 self.liveSnapshot = nil
             }
         }
-
-        syncListener.activate()
     }
 }

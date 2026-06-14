@@ -65,6 +65,10 @@ public final class Match {
         return endedAt.timeIntervalSince(startedAt)
     }
 
+    public var isCompleted: Bool {
+        endedAt != nil && !sortedPoints.isEmpty
+    }
+
     public var scoreSummary: String {
         completedSets.map { ScoreFormatter.formatSetScore($0) }.joined(separator: " ")
     }

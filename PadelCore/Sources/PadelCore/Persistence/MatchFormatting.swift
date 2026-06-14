@@ -25,7 +25,9 @@ public enum MatchFormatting {
         case .b:
             match.teamName(for: .b)
         case .none:
-            String(localized: "In progress")
+            match.isCompleted
+                ? String(localized: "Incomplete")
+                : String(localized: "In progress")
         }
     }
 }

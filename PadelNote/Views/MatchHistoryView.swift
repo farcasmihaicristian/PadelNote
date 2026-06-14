@@ -5,8 +5,12 @@ import SwiftUI
 struct MatchHistoryView: View {
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
 
+    private var completedMatches: [Match] {
+        matches.filter(\.isCompleted)
+    }
+
     private var sections: [(title: String, matches: [Match])] {
-        let grouped = Dictionary(grouping: matches) { match in
+        let grouped = Dictionary(grouping: completedMatches) { match in
             Calendar.current.dateComponents([.year, .month], from: match.startedAt)
         }
 

@@ -8,6 +8,7 @@ protocol WorkoutRecording: AnyObject {
     var activeEnergyKilocalories: Double? { get }
     var distanceMeters: Double? { get }
     var elapsedDuration: TimeInterval { get }
+    var savedToHealth: Bool { get }
 
     func requestAuthorization() async
     func start() async throws

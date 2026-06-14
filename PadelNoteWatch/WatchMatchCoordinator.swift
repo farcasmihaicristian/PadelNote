@@ -67,24 +67,24 @@ final class WatchMatchCoordinator {
         session.addPoint(for: team)
         self.session = session
         publishSnapshot()
-        publishPointLog()
 
         if session.state.isMatchOver {
             phase = .summary
+            publishSessionEnded()
         }
     }
 
     func undo() {
-        guard var session else { return }
+        guard var session, phase == .live else { return }
         guard session.undo() else { return }
         self.session = session
         publishSnapshot()
-        publishPointLog()
     }
 
     func endMatchEarly() {
         guard session != nil, !session!.events.isEmpty else { return }
         phase = .summary
+        publishSessionEnded()
     }
 
     func saveMatch() async {
@@ -94,24 +94,29 @@ final class WatchMatchCoordinator {
 
         do {
             try await workoutRecorder.end()
+            if !workoutRecorder.savedToHealth {
+                workoutWarning = String(localized: "Workout not saved to Apple Health — match was under 10 minutes.")
+            }
         } catch {
             workoutWarning = error.localizedDescription
         }
 
         let payload = makeTransferPayload(matchID: matchID, events: session.events)
-        syncService.publishPointLog(payload)
         syncService.publishCompletedMatch(payload)
-        reset()
+        reset(clearLiveSession: false)
     }
 
     func discardMatch() async {
         if phase != .idle {
             try? await workoutRecorder.end()
         }
-        reset()
+        reset(clearLiveSession: false)
     }
 
-    func reset() {
+    func reset(clearLiveSession: Bool = true) {
+        if clearLiveSession, phase == .live {
+            publishSessionEnded()
+        }
         phase = .idle
         session = nil
         matchID = nil
@@ -129,20 +134,21 @@ final class WatchMatchCoordinator {
     }
 
     private func publishSnapshot() {
-        guard let session, let matchID else { return }
+        guard phase == .live, let session, let matchID else { return }
         let snapshot = LiveScoreSnapshot(
             matchID: matchID,
             state: session.state,
             teamAName: nil,
             teamBName: nil,
-            pointCount: session.events.count
+            pointCount: session.events.count,
+            isSessionActive: true
         )
         syncService.publishLiveScore(snapshot)
     }
 
-    private func publishPointLog() {
-        guard let session, let matchID else { return }
-        syncService.publishPointLog(makeTransferPayload(matchID: matchID, events: session.events))
+    private func publishSessionEnded() {
+        guard let matchID else { return }
+        syncService.publishSessionEnded(matchID: matchID)
     }
 
     private func makeTransferPayload(matchID: UUID, events: [PointEvent]) -> MatchTransferPayload {

@@ -11,6 +11,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
     public let teamBName: String?
     public let pointCount: Int
     public let updatedAt: Date
+    public let isSessionActive: Bool
 
     public init(
         matchID: UUID,
@@ -18,7 +19,8 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         teamAName: String?,
         teamBName: String?,
         pointCount: Int,
-        updatedAt: Date = .now
+        updatedAt: Date = .now,
+        isSessionActive: Bool = true
     ) {
         self.matchID = matchID
         self.gameScore = ScoreFormatter.currentGameScore(in: state)
@@ -29,6 +31,91 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         self.teamBName = teamBName?.nilIfEmpty
         self.pointCount = pointCount
         self.updatedAt = updatedAt
+        self.isSessionActive = isSessionActive
+    }
+
+    public static func sessionEnded(matchID: UUID) -> LiveScoreSnapshot {
+        LiveScoreSnapshot(
+            matchID: matchID,
+            gameScore: "0-0",
+            setGames: "0-0",
+            completedSetScores: [],
+            isMatchOver: false,
+            teamAName: nil,
+            teamBName: nil,
+            pointCount: 0,
+            updatedAt: .now,
+            isSessionActive: false
+        )
+    }
+
+    public init(
+        matchID: UUID,
+        gameScore: String,
+        setGames: String,
+        completedSetScores: [String],
+        isMatchOver: Bool,
+        teamAName: String?,
+        teamBName: String?,
+        pointCount: Int,
+        updatedAt: Date,
+        isSessionActive: Bool
+    ) {
+        self.matchID = matchID
+        self.gameScore = gameScore
+        self.setGames = setGames
+        self.completedSetScores = completedSetScores
+        self.isMatchOver = isMatchOver
+        self.teamAName = teamAName?.nilIfEmpty
+        self.teamBName = teamBName?.nilIfEmpty
+        self.pointCount = pointCount
+        self.updatedAt = updatedAt
+        self.isSessionActive = isSessionActive
+    }
+
+    public var isVisibleOnPhone: Bool {
+        isSessionActive && !isMatchOver
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case matchID
+        case gameScore
+        case setGames
+        case completedSetScores
+        case isMatchOver
+        case teamAName
+        case teamBName
+        case pointCount
+        case updatedAt
+        case isSessionActive
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        matchID = try container.decode(UUID.self, forKey: .matchID)
+        gameScore = try container.decode(String.self, forKey: .gameScore)
+        setGames = try container.decode(String.self, forKey: .setGames)
+        completedSetScores = try container.decode([String].self, forKey: .completedSetScores)
+        isMatchOver = try container.decode(Bool.self, forKey: .isMatchOver)
+        teamAName = try container.decodeIfPresent(String.self, forKey: .teamAName)
+        teamBName = try container.decodeIfPresent(String.self, forKey: .teamBName)
+        pointCount = try container.decode(Int.self, forKey: .pointCount)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        isSessionActive = try container.decodeIfPresent(Bool.self, forKey: .isSessionActive) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(matchID, forKey: .matchID)
+        try container.encode(gameScore, forKey: .gameScore)
+        try container.encode(setGames, forKey: .setGames)
+        try container.encode(completedSetScores, forKey: .completedSetScores)
+        try container.encode(isMatchOver, forKey: .isMatchOver)
+        try container.encodeIfPresent(teamAName, forKey: .teamAName)
+        try container.encodeIfPresent(teamBName, forKey: .teamBName)
+        try container.encode(pointCount, forKey: .pointCount)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encode(isSessionActive, forKey: .isSessionActive)
     }
 
     public var scoreLine: String {

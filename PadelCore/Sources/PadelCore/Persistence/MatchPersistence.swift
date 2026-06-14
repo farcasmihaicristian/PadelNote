@@ -48,23 +48,59 @@ public enum MatchPersistence {
             predicate: #Predicate { $0.id == payloadID }
         )
         descriptor.fetchLimit = 1
-        if let existing = try? context.fetch(descriptor).first {
-            return existing
-        }
 
         let state = ScoringEngine.replay(events: payload.events, rules: payload.rules)
-        let match = Match(
-            id: payload.id,
-            startedAt: payload.startedAt,
-            endedAt: payload.endedAt,
-            rules: payload.rules,
-            completedSets: state.completedSets,
-            winner: state.winner,
-            teamAName: payload.teamAName,
-            teamBName: payload.teamBName
-        )
-        context.insert(match)
+        let match: Match
 
+        if let existing = try? context.fetch(descriptor).first {
+            match = existing
+            replacePoints(on: match, from: payload, context: context)
+        } else {
+            match = Match(
+                id: payload.id,
+                startedAt: payload.startedAt,
+                endedAt: payload.endedAt,
+                rules: payload.rules,
+                completedSets: state.completedSets,
+                winner: state.winner,
+                teamAName: payload.teamAName,
+                teamBName: payload.teamBName
+            )
+            context.insert(match)
+            appendPoints(to: match, from: payload, context: context)
+        }
+
+        match.startedAt = payload.startedAt
+        match.endedAt = payload.endedAt
+        match.rules = payload.rules
+        match.completedSets = state.completedSets
+        match.winner = state.winner
+        match.teamAName = payload.teamAName
+        match.teamBName = payload.teamBName
+
+        try? context.save()
+        return match
+    }
+
+    @MainActor
+    private static func replacePoints(
+        on match: Match,
+        from payload: MatchTransferPayload,
+        context: ModelContext
+    ) {
+        for point in match.points {
+            context.delete(point)
+        }
+        match.points.removeAll()
+        appendPoints(to: match, from: payload, context: context)
+    }
+
+    @MainActor
+    private static func appendPoints(
+        to match: Match,
+        from payload: MatchTransferPayload,
+        context: ModelContext
+    ) {
         for (index, event) in payload.events.enumerated() {
             let point = StoredPointEvent(
                 sequence: index,
@@ -75,9 +111,6 @@ public enum MatchPersistence {
             context.insert(point)
             match.points.append(point)
         }
-
-        try? context.save()
-        return match
     }
 }
 

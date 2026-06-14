@@ -8,13 +8,15 @@ struct HomeView: View {
     @State private var showMatchFlow = false
 
     private var recentMatches: [Match] {
-        Array(matches.prefix(5))
+        Array(matches.filter(\.isCompleted).prefix(5))
     }
 
     var body: some View {
+        @Bindable var syncCoordinator = syncCoordinator
+
         NavigationStack {
             List {
-                if let snapshot = syncCoordinator.liveSnapshot {
+                if let snapshot = syncCoordinator.liveSnapshot, snapshot.isVisibleOnPhone {
                     Section {
                         NavigationLink {
                             WatchLiveMirrorView(snapshot: snapshot)
