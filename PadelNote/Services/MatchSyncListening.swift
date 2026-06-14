@@ -8,4 +8,5 @@ protocol MatchSyncListening: AnyObject {
     var onMatchReceived: ((MatchTransferPayload) -> Void)? { get set }
 
     func activate()
+    func refresh() async
 }

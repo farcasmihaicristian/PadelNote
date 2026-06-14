@@ -25,6 +25,11 @@ final class PhoneSyncCoordinator {
         syncListener.activate()
     }
 
+    func refresh() async {
+        await syncListener.refresh()
+        modelContext?.processPendingChanges()
+    }
+
     private func configureHandlers() {
         syncListener.onLiveScoreUpdate = { [weak self] snapshot in
             self?.liveSnapshot = snapshot.isVisibleOnPhone ? snapshot : nil

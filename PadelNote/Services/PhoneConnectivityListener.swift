@@ -18,6 +18,11 @@ final class PhoneConnectivityListener: NSObject, MatchSyncListening {
         session.activate()
     }
 
+    func refresh() async {
+        guard let session, session.activationState == .activated else { return }
+        refreshFromSession(session)
+    }
+
     private func deliverPayload(_ payload: [String: Any]) {
         guard SyncPayloadCodec.hasSyncPayload(payload) else { return }
 
