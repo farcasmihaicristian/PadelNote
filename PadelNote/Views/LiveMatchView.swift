@@ -14,6 +14,7 @@ struct LiveMatchView: View {
     @State private var startedAt = Date.now
     @State private var savedMatch: Match?
     @State private var showEndConfirmation = false
+    @ScaledMetric(relativeTo: .largeTitle) private var gameScoreFontSize = 56
 
     init(
         rules: MatchRules,
@@ -63,7 +64,9 @@ struct LiveMatchView: View {
 
             VStack(spacing: 8) {
                 Text(ScoreFormatter.currentGameScore(in: state))
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .accessibilityLabel(String(localized: "Game score \(ScoreFormatter.currentGameScore(in: state))"))
 
                 Text(

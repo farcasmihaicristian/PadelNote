@@ -94,7 +94,7 @@ Watch is source of truth during a live match (D-07). Needs physical devices on t
 - [x] 5.6 WatchConnectivity (§7): `updateApplicationContext` for live score snapshots, `transferUserInfo` for the point log, final `Match` sent to phone on match end
 - [x] 5.7 iPhone mirrors the live Watch score and persists the received match
 - [x] 5.8 Wrap HealthKit/WatchConnectivity behind protocols so view models stay testable (§13)
-- [ ] 5.9 Real-device test: full match on the Watch → workout appears in Apple Health → match appears in iPhone history
+- [x] 5.9 Real-device test: full match on the Watch → workout appears in Apple Health → match appears in iPhone history
 
 **Done when:** a match scored entirely from the wrist produces a HealthKit workout and a synced history entry on the phone.
 
@@ -112,11 +112,11 @@ Simulator can exercise UI and scoring, but **HealthKit workouts and WatchConnect
 
 ## Milestone 6 — Stats, polish, localization (Days 10–11)
 
-- [ ] 6.1 **Stats/Insights screen**: win rate, longest match, average duration, golden-point conversion %
-- [ ] 6.2 **Settings screen**: default rules, HealthKit permission status, about
-- [ ] 6.3 Match detail enriched with HealthKit data: calories, avg HR
-- [ ] 6.4 Dark mode pass, Dynamic Type pass, VoiceOver pass on every screen
-- [ ] 6.5 Spanish (ES) localization via `.xcstrings` (D-04 — strings were localized from day one, so this is translation work only)
+- [x] 6.1 **Stats/Insights screen**: win rate, longest match, average duration, golden-point conversion %
+- [x] 6.2 **Settings screen**: default rules, HealthKit permission status, about
+- [x] 6.3 Match detail enriched with HealthKit data: calories, avg HR
+- [x] 6.4 Dark mode pass, Dynamic Type pass, VoiceOver pass on every screen
+- [x] 6.5 Spanish (ES) localization via `.xcstrings` (D-04 — strings were localized from day one, so this is translation work only)
 
 **Done when:** the app is feature-complete for v1 in EN + ES, accessible, and looks right in dark mode.
 

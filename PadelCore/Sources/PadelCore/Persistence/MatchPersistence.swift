@@ -64,7 +64,10 @@ public enum MatchPersistence {
                 completedSets: state.completedSets,
                 winner: state.winner,
                 teamAName: payload.teamAName,
-                teamBName: payload.teamBName
+                teamBName: payload.teamBName,
+                averageHeartRate: payload.averageHeartRate,
+                activeEnergyKilocalories: payload.activeEnergyKilocalories,
+                distanceMeters: payload.distanceMeters
             )
             context.insert(match)
             appendPoints(to: match, from: payload, context: context)
@@ -77,6 +80,9 @@ public enum MatchPersistence {
         match.winner = state.winner
         match.teamAName = payload.teamAName
         match.teamBName = payload.teamBName
+        match.averageHeartRate = payload.averageHeartRate
+        match.activeEnergyKilocalories = payload.activeEnergyKilocalories
+        match.distanceMeters = payload.distanceMeters
 
         try? context.save()
         return match

@@ -30,4 +30,25 @@ public enum MatchFormatting {
                 : String(localized: "In progress")
         }
     }
+
+    public static func percentageText(for rate: Double) -> String {
+        let percent = (rate * 100).rounded()
+        return String(localized: "\(Int(percent))%")
+    }
+
+    public static func heartRateText(for bpm: Double) -> String {
+        String(localized: "\(Int(bpm.rounded())) bpm")
+    }
+
+    public static func energyText(for kilocalories: Double) -> String {
+        String(localized: "\(Int(kilocalories.rounded())) kcal")
+    }
+
+    public static func distanceText(for meters: Double) -> String {
+        if meters >= 1000 {
+            let kilometers = (meters / 1000 * 10).rounded() / 10
+            return String(localized: "\(kilometers) km")
+        }
+        return String(localized: "\(Int(meters.rounded())) m")
+    }
 }

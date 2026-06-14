@@ -56,6 +56,11 @@ public enum SampleMatchData {
             match.completedSets = state.completedSets
             match.winner = state.winner
             match.endedAt = start.addingTimeInterval(duration)
+            if teamA == String(localized: "Alex & Maria") {
+                match.averageHeartRate = 142
+                match.activeEnergyKilocalories = 620
+                match.distanceMeters = 2800
+            }
         }
 
         try? context.save()

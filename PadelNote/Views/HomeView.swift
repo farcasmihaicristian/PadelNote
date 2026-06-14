@@ -43,6 +43,16 @@ struct HomeView: View {
                     }
                     .accessibilityLabel(String(localized: "Start match"))
                     .accessibilityHint(String(localized: "Set up a new padel match"))
+
+                    NavigationLink {
+                        StatsView()
+                    } label: {
+                        Label(String(localized: "Insights"), systemImage: "chart.bar")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .accessibilityLabel(String(localized: "Insights"))
+                    .accessibilityHint(String(localized: "View match statistics and trends"))
                 }
 
                 Section(String(localized: "Recent matches")) {

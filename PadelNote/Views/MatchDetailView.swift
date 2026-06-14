@@ -73,6 +73,26 @@ struct MatchDetailView: View {
                     Text(ruleStyleLabel)
                 }
             }
+
+            if hasHealthData {
+                Section(String(localized: "Workout")) {
+                    if let heartRate = match.averageHeartRate {
+                        LabeledContent(String(localized: "Average heart rate")) {
+                            Text(MatchFormatting.heartRateText(for: heartRate))
+                        }
+                    }
+                    if let energy = match.activeEnergyKilocalories {
+                        LabeledContent(String(localized: "Active energy")) {
+                            Text(MatchFormatting.energyText(for: energy))
+                        }
+                    }
+                    if let distance = match.distanceMeters {
+                        LabeledContent(String(localized: "Distance")) {
+                            Text(MatchFormatting.distanceText(for: distance))
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle(String(localized: "Match detail"))
         .navigationBarTitleDisplayMode(.inline)
@@ -87,6 +107,12 @@ struct MatchDetailView: View {
         case .starPoint:
             String(localized: "Star point")
         }
+    }
+
+    private var hasHealthData: Bool {
+        match.averageHeartRate != nil
+            || match.activeEnergyKilocalories != nil
+            || match.distanceMeters != nil
     }
 }
 

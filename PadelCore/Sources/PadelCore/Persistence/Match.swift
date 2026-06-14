@@ -11,6 +11,9 @@ public final class Match {
     public var winnerRawValue: String?
     public var teamAName: String?
     public var teamBName: String?
+    public var averageHeartRate: Double?
+    public var activeEnergyKilocalories: Double?
+    public var distanceMeters: Double?
 
     @Relationship(deleteRule: .cascade, inverse: \StoredPointEvent.match)
     public var points: [StoredPointEvent]
@@ -24,6 +27,9 @@ public final class Match {
         winner: Team? = nil,
         teamAName: String? = nil,
         teamBName: String? = nil,
+        averageHeartRate: Double? = nil,
+        activeEnergyKilocalories: Double? = nil,
+        distanceMeters: Double? = nil,
         points: [StoredPointEvent] = []
     ) {
         self.id = id
@@ -34,6 +40,9 @@ public final class Match {
         self.winnerRawValue = winner?.rawValue
         self.teamAName = teamAName
         self.teamBName = teamBName
+        self.averageHeartRate = averageHeartRate
+        self.activeEnergyKilocalories = activeEnergyKilocalories
+        self.distanceMeters = distanceMeters
         self.points = points
     }
 
@@ -98,5 +107,15 @@ public final class Match {
         case .b:
             teamBName ?? String(localized: "Team B")
         }
+    }
+
+    public var summary: MatchSummary {
+        MatchSummary(
+            rules: rules,
+            events: enginePointEvents,
+            winner: winner,
+            duration: duration,
+            isCompleted: isCompleted
+        )
     }
 }
