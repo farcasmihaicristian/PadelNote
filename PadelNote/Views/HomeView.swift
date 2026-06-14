@@ -68,7 +68,7 @@ struct HomeView: View {
             }
             .navigationTitle(String(localized: "PadelNote"))
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     NavigationLink {
                         MatchHistoryView()
                     } label: {
@@ -76,10 +76,16 @@ struct HomeView: View {
                     }
                     .accessibilityLabel(String(localized: "Match history"))
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Text(String(localized: "Settings"))
+                    }
+                    .accessibilityLabel(String(localized: "Settings"))
+                }
             }
-        }
-        .fullScreenCover(isPresented: $showMatchFlow) {
-            NavigationStack {
+            .navigationDestination(isPresented: $showMatchFlow) {
                 NewMatchSetupView {
                     showMatchFlow = false
                 }
