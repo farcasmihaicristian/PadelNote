@@ -30,7 +30,7 @@ public enum PlayerSlot: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
 
-    public mutating func applySelection(_ selection: MatchPlayerSlotSelection, to setup: inout MatchPlayerSetup) {
+    public func applySelection(_ selection: MatchPlayerSlotSelection, to setup: inout MatchPlayerSetup) {
         switch self {
         case .sideAPlayer1: setup.sideAPlayer1 = selection
         case .sideAPlayer2: setup.sideAPlayer2 = selection

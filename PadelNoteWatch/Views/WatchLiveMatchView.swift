@@ -12,11 +12,11 @@ struct WatchLiveMatchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            teamZone(team: .a, label: String(localized: "Team A"))
+            teamZone(team: .a, label: coordinator.activePlayerNames.sideLabel(for: .a))
 
             scoreStrip
 
-            teamZone(team: .b, label: String(localized: "Team B"))
+            teamZone(team: .b, label: coordinator.activePlayerNames.sideLabel(for: .b))
         }
         .ignoresSafeArea(edges: .horizontal)
         .navigationTitle(String(localized: "Live"))

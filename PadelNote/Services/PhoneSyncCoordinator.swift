@@ -23,17 +23,29 @@ final class PhoneSyncCoordinator {
     func activate(modelContext: ModelContext) {
         self.modelContext = modelContext
         syncListener.activate()
-        syncDefaultRulesToWatch()
+        syncPhoneContextToWatch()
     }
 
     func refresh() async {
         await syncListener.refresh()
         modelContext?.processPendingChanges()
+        syncPhoneContextToWatch()
     }
 
     func syncDefaultRulesToWatch() {
-        guard let listener = syncListener as? PhoneConnectivityListener else { return }
-        listener.publishDefaultRules(MatchRulesPreferences.load())
+        syncPhoneContextToWatch()
+    }
+
+    func syncPhoneContextToWatch() {
+        guard let listener = syncListener as? PhoneConnectivityListener,
+              let modelContext
+        else { return }
+
+        let payload = PhoneWatchSyncPayload(
+            rules: MatchRulesPreferences.load(),
+            knownPlayerNames: PlayerPersistence.distinctDisplayNames(context: modelContext)
+        )
+        listener.publishPhoneContext(payload)
     }
 
     private func configureHandlers() {
@@ -49,6 +61,7 @@ final class PhoneSyncCoordinator {
             if self.liveSnapshot?.matchID == payload.id {
                 self.liveSnapshot = nil
             }
+            self.syncPhoneContextToWatch()
         }
     }
 }

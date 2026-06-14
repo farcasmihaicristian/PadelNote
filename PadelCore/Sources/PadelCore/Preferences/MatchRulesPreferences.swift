@@ -20,9 +20,9 @@ public enum MatchRulesPreferences {
 
     public static func summary(for rules: MatchRules) -> String {
         let setsLabel: String = {
-            switch rules.setsToWin {
+            switch bestOfSets(from: rules) {
             case 1: String(localized: "Best of 1")
-            case 2: String(localized: "Best of 3")
+            case 3: String(localized: "Best of 3")
             default: String(localized: "Best of 5")
             }
         }()
@@ -36,5 +36,47 @@ public enum MatchRulesPreferences {
         }()
 
         return "\(setsLabel) · \(deuceLabel)"
+    }
+
+    public static func bestOfSets(from rules: MatchRules) -> Int {
+        switch rules.setsToWin {
+        case 1: 1
+        case 2: 3
+        default: 5
+        }
+    }
+
+    public static func makeRules(
+        bestOfSets: Int,
+        gamePointStyle: GamePointStyle,
+        setTieBreak: TieBreakStyle = .classic,
+        finalSetTieBreak: TieBreakStyle = .superTieBreak10
+    ) -> MatchRules {
+        let setsToWin: Int = switch bestOfSets {
+        case 1: 1
+        case 3: 2
+        default: 3
+        }
+
+        return MatchRules(
+            setsToWin: setsToWin,
+            gamePointStyle: gamePointStyle,
+            setTieBreak: setTieBreak,
+            finalSetTieBreak: finalSetTieBreak
+        )
+    }
+
+    public static func formValues(from rules: MatchRules) -> (
+        bestOfSets: Int,
+        gamePointStyle: GamePointStyle,
+        setTieBreak: TieBreakStyle,
+        finalSetTieBreak: TieBreakStyle
+    ) {
+        (
+            bestOfSets(from: rules),
+            rules.gamePointStyle,
+            rules.setTieBreak,
+            rules.finalSetTieBreak
+        )
     }
 }

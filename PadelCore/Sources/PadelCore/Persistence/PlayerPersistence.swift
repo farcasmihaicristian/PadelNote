@@ -95,6 +95,47 @@ public enum PlayerPersistence {
     }
 
     @MainActor
+    public static func distinctDisplayNames(context: ModelContext) -> [String] {
+        var names = Set<String>()
+
+        if let players = try? context.fetch(FetchDescriptor<Player>()) {
+            for player in players {
+                let trimmed = player.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty, !GuestPlayerNaming.isGuestName(trimmed) {
+                    names.insert(trimmed)
+                }
+            }
+        }
+
+        if let matches = try? context.fetch(FetchDescriptor<Match>()) {
+            for match in matches {
+                for entry in match.roster.allEntries {
+                    guard let name = entry.name?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          !name.isEmpty,
+                          !GuestPlayerNaming.isGuestName(name)
+                    else { continue }
+                    names.insert(name)
+                }
+            }
+        }
+
+        return names.sorted {
+            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        }
+    }
+
+    @MainActor
+    public static func updateMatchPlayers(
+        context: ModelContext,
+        match: Match,
+        setup: MatchPlayerSetup
+    ) {
+        let roster = resolveRoster(context: context, setup: setup)
+        applyRoster(roster, to: match)
+        try? context.save()
+    }
+
+    @MainActor
     public static func backfillUnlinkedMatches(context: ModelContext) {
         guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return }
 

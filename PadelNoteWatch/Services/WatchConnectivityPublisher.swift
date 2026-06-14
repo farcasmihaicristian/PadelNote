@@ -8,7 +8,7 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
     private var pendingLiveScore: LiveScoreSnapshot?
     private var pendingCompletedMatch: MatchTransferPayload?
 
-    var onDefaultRulesUpdate: ((MatchRules) -> Void)?
+    var onPhoneContextUpdate: ((PhoneWatchSyncPayload) -> Void)?
 
     func activate() {
         guard let session else { return }
@@ -61,17 +61,17 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
         if let pendingCompletedMatch {
             sendCompletedMatch(pendingCompletedMatch, session: session)
         }
-        refreshDefaultRules(from: session)
+        refreshPhoneContext(from: session)
     }
 
-    private func refreshDefaultRules(from session: WCSession) {
-        guard let rules = SyncPayloadCodec.decodeDefaultRules(from: session.receivedApplicationContext) else { return }
-        onDefaultRulesUpdate?(rules)
+    private func refreshPhoneContext(from session: WCSession) {
+        guard let payload = SyncPayloadCodec.decodePhoneContext(from: session.receivedApplicationContext) else { return }
+        onPhoneContextUpdate?(payload)
     }
 
     private func deliverPayload(_ payload: [String: Any]) {
-        guard let rules = SyncPayloadCodec.decodeDefaultRules(from: payload) else { return }
-        onDefaultRulesUpdate?(rules)
+        guard let phoneContext = SyncPayloadCodec.decodePhoneContext(from: payload) else { return }
+        onPhoneContextUpdate?(phoneContext)
     }
 }
 

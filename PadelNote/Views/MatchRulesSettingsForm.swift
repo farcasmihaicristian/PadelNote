@@ -60,11 +60,7 @@ struct MatchRulesSettingsForm: View {
 
 extension MatchRulesSettingsForm {
     static func bestOfSets(from rules: MatchRules) -> Int {
-        switch rules.setsToWin {
-        case 1: 1
-        case 2: 3
-        default: 5
-        }
+        MatchRulesPreferences.bestOfSets(from: rules)
     }
 
     static func makeRules(
@@ -73,14 +69,8 @@ extension MatchRulesSettingsForm {
         setTieBreak: TieBreakStyle,
         finalSetTieBreak: TieBreakStyle
     ) -> MatchRules {
-        let setsToWin: Int = switch bestOfSets {
-        case 1: 1
-        case 3: 2
-        default: 3
-        }
-
-        return MatchRules(
-            setsToWin: setsToWin,
+        MatchRulesPreferences.makeRules(
+            bestOfSets: bestOfSets,
             gamePointStyle: gamePointStyle,
             setTieBreak: setTieBreak,
             finalSetTieBreak: finalSetTieBreak
@@ -93,11 +83,6 @@ extension MatchRulesSettingsForm {
         setTieBreak: TieBreakStyle,
         finalSetTieBreak: TieBreakStyle
     ) {
-        (
-            bestOfSets(from: rules),
-            rules.gamePointStyle,
-            rules.setTieBreak,
-            rules.finalSetTieBreak
-        )
+        MatchRulesPreferences.formValues(from: rules)
     }
 }

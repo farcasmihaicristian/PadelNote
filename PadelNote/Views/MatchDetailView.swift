@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct MatchDetailView: View {
-    let match: Match
+    @Bindable var match: Match
 
     var body: some View {
         List {
@@ -16,6 +16,8 @@ struct MatchDetailView: View {
                     Text(MatchFormatting.winnerLabel(for: match))
                 }
             }
+
+            MatchPlayersEditSection(match: match)
 
             Section(String(localized: "Sets")) {
                 if match.completedSets.isEmpty {

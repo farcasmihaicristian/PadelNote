@@ -1,6 +1,6 @@
 import Foundation
-import PadelCore
 import Observation
+import PadelCore
 
 @Observable
 @MainActor
@@ -16,6 +16,12 @@ final class WatchMatchCoordinator {
     var matchID: UUID?
     var startedAt = Date.now
     var rules: MatchRules = .default
+    var bestOfSets = 3
+    var gamePointStyle = MatchRules.default.gamePointStyle
+    var setTieBreak = MatchRules.default.setTieBreak
+    var finalSetTieBreak = MatchRules.default.finalSetTieBreak
+    var playerSetup = MatchPlayerSetup.empty
+    var knownPlayerNames: [String] = []
     var healthAuthDenied = false
     var workoutWarning: String?
     var isStarting = false
@@ -28,32 +34,42 @@ final class WatchMatchCoordinator {
     init(workoutRecorder: any WorkoutRecording, syncService: any MatchSyncPublishing) {
         self.workoutRecorder = workoutRecorder
         self.syncService = syncService
-        configureDefaultRulesSync()
+        configurePhoneContextSync()
     }
 
-    private func configureDefaultRulesSync() {
+    private func configurePhoneContextSync() {
         guard let publisher = syncService as? WatchConnectivityPublisher else { return }
-        publisher.onDefaultRulesUpdate = { [weak self] rules in
-            self?.applyDefaultRules(rules)
+        publisher.onPhoneContextUpdate = { [weak self] payload in
+            self?.applyPhoneContext(payload)
         }
     }
 
-    private func applyDefaultRules(_ rules: MatchRules) {
-        MatchRulesPreferences.save(rules)
-        if phase == .idle {
-            self.rules = rules
-        }
+    private func applyPhoneContext(_ payload: PhoneWatchSyncPayload) {
+        MatchRulesPreferences.save(payload.rules)
+        knownPlayerNames = payload.knownPlayerNames
+        guard phase == .idle else { return }
+
+        let values = MatchRulesPreferences.formValues(from: payload.rules)
+        bestOfSets = values.bestOfSets
+        gamePointStyle = values.gamePointStyle
+        setTieBreak = values.setTieBreak
+        finalSetTieBreak = values.finalSetTieBreak
+        rules = payload.rules
     }
 
     var currentState: MatchState? {
         session?.state
     }
 
+    var activePlayerNames: MatchPlayerNames {
+        playerSetup.playerNames
+    }
+
     func prepare() async {
         syncService.activate()
         await workoutRecorder.requestAuthorization()
         healthAuthDenied = workoutRecorder.authorizationDenied
-        rules = MatchRulesPreferences.load()
+        loadIdleSetup()
     }
 
     func startMatch() async {
@@ -61,7 +77,7 @@ final class WatchMatchCoordinator {
         isStarting = true
         defer { isStarting = false }
 
-        rules = MatchRulesPreferences.load()
+        rules = buildRules()
         MatchRulesPreferences.save(rules)
         matchID = UUID()
         startedAt = .now
@@ -141,7 +157,8 @@ final class WatchMatchCoordinator {
         matchID = nil
         workoutWarning = nil
         endedEarly = false
-        rules = MatchRulesPreferences.load()
+        playerSetup = .empty
+        loadIdleSetup()
     }
 
     var summaryScoreLine: String {
@@ -179,13 +196,53 @@ final class WatchMatchCoordinator {
         publishSnapshot()
     }
 
+    func reservedPlayerNames(excluding excludedSlot: PlayerSlot) -> Set<String> {
+        var names = Set<String>()
+        for slot in PlayerSlot.allCases where slot != excludedSlot {
+            let selection = slot.selection(from: playerSetup)
+            let trimmed = selection.trimmedName
+            if !trimmed.isEmpty {
+                names.insert(trimmed)
+            }
+        }
+        return names
+    }
+
+    func assignGuestName(to slot: PlayerSlot) {
+        let reserved = reservedPlayerNames(excluding: slot)
+            .union(Set(knownPlayerNames))
+        let guestName = GuestPlayerNaming.nextName(avoiding: reserved)
+        var setup = playerSetup
+        slot.applySelection(MatchPlayerSlotSelection(name: guestName), to: &setup)
+        playerSetup = setup
+    }
+
+    private func loadIdleSetup() {
+        let rules = MatchRulesPreferences.load()
+        let values = MatchRulesPreferences.formValues(from: rules)
+        bestOfSets = values.bestOfSets
+        gamePointStyle = values.gamePointStyle
+        setTieBreak = values.setTieBreak
+        finalSetTieBreak = values.finalSetTieBreak
+        self.rules = rules
+    }
+
+    private func buildRules() -> MatchRules {
+        MatchRulesPreferences.makeRules(
+            bestOfSets: bestOfSets,
+            gamePointStyle: gamePointStyle,
+            setTieBreak: setTieBreak,
+            finalSetTieBreak: finalSetTieBreak
+        )
+    }
+
     private func publishSnapshot() {
         guard phase == .live, let session, let matchID else { return }
 
         let snapshot = LiveScoreSnapshot(
             matchID: matchID,
             state: session.state,
-            playerNames: .empty,
+            playerNames: activePlayerNames,
             pointCount: session.events.count,
             isSessionActive: true
         )
@@ -204,7 +261,7 @@ final class WatchMatchCoordinator {
             endedAt: .now,
             rules: rules,
             events: events,
-            playerNames: .empty,
+            playerNames: activePlayerNames,
             averageHeartRate: workoutRecorder.averageHeartRate,
             activeEnergyKilocalories: workoutRecorder.activeEnergyKilocalories,
             distanceMeters: workoutRecorder.distanceMeters

@@ -6,6 +6,7 @@ public enum SyncPayloadCodec {
         case completedMatch
         case pointLog
         case defaultRules
+        case phoneContext
     }
 
     public static let kindKey = "kind"
@@ -76,18 +77,34 @@ public enum SyncPayloadCodec {
     }
 
     public static func encodeDefaultRules(_ rules: MatchRules) -> [String: Any] {
+        encodePhoneContext(PhoneWatchSyncPayload(rules: rules))
+    }
+
+    public static func encodePhoneContext(_ payload: PhoneWatchSyncPayload) -> [String: Any] {
         [
-            kindKey: Kind.defaultRules.rawValue,
-            payloadKey: (try? JSONEncoder().encode(rules)) as Any
+            kindKey: Kind.phoneContext.rawValue,
+            payloadKey: (try? JSONEncoder().encode(payload)) as Any
         ]
     }
 
     public static func decodeDefaultRules(from dictionary: [String: Any]) -> MatchRules? {
+        decodePhoneContext(from: dictionary)?.rules
+    }
+
+    public static func decodePhoneContext(from dictionary: [String: Any]) -> PhoneWatchSyncPayload? {
+        if dictionary[kindKey] as? String == Kind.phoneContext.rawValue,
+           let data = payloadData(from: dictionary),
+           let payload = try? JSONDecoder().decode(PhoneWatchSyncPayload.self, from: data) {
+            return payload
+        }
+
         guard
             dictionary[kindKey] as? String == Kind.defaultRules.rawValue,
-            let data = payloadData(from: dictionary)
+            let data = payloadData(from: dictionary),
+            let rules = try? JSONDecoder().decode(MatchRules.self, from: data)
         else { return nil }
-        return try? JSONDecoder().decode(MatchRules.self, from: data)
+
+        return PhoneWatchSyncPayload(rules: rules)
     }
 
     public static func decodeLiveScore(from dictionary: [String: Any]) -> LiveScoreSnapshot? {
@@ -160,7 +177,8 @@ public enum SyncPayloadCodec {
         switch kind {
         case Kind.liveScore.rawValue:
             return dictionary[matchIDKey] != nil || payloadData(from: dictionary) != nil
-        case Kind.completedMatch.rawValue, Kind.pointLog.rawValue, Kind.defaultRules.rawValue:
+        case Kind.completedMatch.rawValue, Kind.pointLog.rawValue,
+            Kind.defaultRules.rawValue, Kind.phoneContext.rawValue:
             return payloadData(from: dictionary) != nil
         default:
             return false

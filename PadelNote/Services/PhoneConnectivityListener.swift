@@ -24,14 +24,18 @@ final class PhoneConnectivityListener: NSObject, MatchSyncListening {
     }
 
     func publishDefaultRules(_ rules: MatchRules) {
-        guard let session else { return }
-        pendingDefaultRules = rules
-        guard session.activationState == .activated else { return }
-        sendDefaultRules(rules, session: session)
-        pendingDefaultRules = nil
+        publishPhoneContext(PhoneWatchSyncPayload(rules: rules))
     }
 
-    private var pendingDefaultRules: MatchRules?
+    func publishPhoneContext(_ payload: PhoneWatchSyncPayload) {
+        guard let session else { return }
+        pendingPhoneContext = payload
+        guard session.activationState == .activated else { return }
+        sendPhoneContext(payload, session: session)
+        pendingPhoneContext = nil
+    }
+
+    private var pendingPhoneContext: PhoneWatchSyncPayload?
 
     private func deliverPayload(_ payload: [String: Any]) {
         guard SyncPayloadCodec.hasSyncPayload(payload) else { return }
@@ -60,14 +64,14 @@ final class PhoneConnectivityListener: NSObject, MatchSyncListening {
         deliverPayload(session.receivedApplicationContext)
     }
 
-    private func sendDefaultRules(_ rules: MatchRules, session: WCSession) {
-        try? session.updateApplicationContext(SyncPayloadCodec.encodeDefaultRules(rules))
+    private func sendPhoneContext(_ payload: PhoneWatchSyncPayload, session: WCSession) {
+        try? session.updateApplicationContext(SyncPayloadCodec.encodePhoneContext(payload))
     }
 
-    private func flushPendingDefaultRules(session: WCSession) {
-        guard let pendingDefaultRules else { return }
-        sendDefaultRules(pendingDefaultRules, session: session)
-        self.pendingDefaultRules = nil
+    private func flushPendingPhoneContext(session: WCSession) {
+        guard let pendingPhoneContext else { return }
+        sendPhoneContext(pendingPhoneContext, session: session)
+        self.pendingPhoneContext = nil
     }
 }
 
@@ -80,7 +84,7 @@ extension PhoneConnectivityListener: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             refreshFromSession(session)
-            flushPendingDefaultRules(session: session)
+            flushPendingPhoneContext(session: session)
         }
     }
 
