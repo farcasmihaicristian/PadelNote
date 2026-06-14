@@ -3,6 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct MatchHistoryView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
 
     private var completedMatches: [Match] {
@@ -44,12 +45,22 @@ struct MatchHistoryView: View {
                                 MatchRowView(match: match)
                             }
                         }
+                        .onDelete { offsets in
+                            deleteMatches(at: offsets, in: section.matches)
+                        }
                     }
                 }
             }
         }
         .navigationTitle(String(localized: "History"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func deleteMatches(at offsets: IndexSet, in matches: [Match]) {
+        for index in offsets {
+            modelContext.delete(matches[index])
+        }
+        try? modelContext.save()
     }
 }
 

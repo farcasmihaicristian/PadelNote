@@ -2,6 +2,7 @@ import PadelCore
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
@@ -28,12 +29,6 @@ struct SettingsView: View {
                 setTieBreak: $setTieBreak,
                 finalSetTieBreak: $finalSetTieBreak
             )
-
-            Section(String(localized: "Deuce rules explained")) {
-                Text(String(localized: "Star point is limited advantage: classic advantage applies for the first two deuces, then the third deuce is a sudden-death golden point."))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
 
             Section(String(localized: "Health")) {
                 LabeledContent(String(localized: "HealthKit access")) {
@@ -67,6 +62,7 @@ struct SettingsView: View {
         .onAppear {
             loadDefaults()
             healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
+            syncCoordinator.syncDefaultRulesToWatch()
         }
         .onChange(of: bestOfSets) { _, _ in saveDefaults() }
         .onChange(of: gamePointStyle) { _, _ in saveDefaults() }
@@ -83,14 +79,14 @@ struct SettingsView: View {
     }
 
     private func saveDefaults() {
-        MatchRulesPreferences.save(
-            MatchRulesSettingsForm.makeRules(
-                bestOfSets: bestOfSets,
-                gamePointStyle: gamePointStyle,
-                setTieBreak: setTieBreak,
-                finalSetTieBreak: finalSetTieBreak
-            )
+        let rules = MatchRulesSettingsForm.makeRules(
+            bestOfSets: bestOfSets,
+            gamePointStyle: gamePointStyle,
+            setTieBreak: setTieBreak,
+            finalSetTieBreak: finalSetTieBreak
         )
+        MatchRulesPreferences.save(rules)
+        syncCoordinator.syncDefaultRulesToWatch()
     }
 }
 
@@ -98,4 +94,5 @@ struct SettingsView: View {
     NavigationStack {
         SettingsView()
     }
+    .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
 }

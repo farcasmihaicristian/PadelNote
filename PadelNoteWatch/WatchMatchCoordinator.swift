@@ -20,6 +20,7 @@ final class WatchMatchCoordinator {
     var workoutWarning: String?
     var isStarting = false
     var isSaving = false
+    private var endedEarly = false
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
@@ -27,6 +28,21 @@ final class WatchMatchCoordinator {
     init(workoutRecorder: any WorkoutRecording, syncService: any MatchSyncPublishing) {
         self.workoutRecorder = workoutRecorder
         self.syncService = syncService
+        configureDefaultRulesSync()
+    }
+
+    private func configureDefaultRulesSync() {
+        guard let publisher = syncService as? WatchConnectivityPublisher else { return }
+        publisher.onDefaultRulesUpdate = { [weak self] rules in
+            self?.applyDefaultRules(rules)
+        }
+    }
+
+    private func applyDefaultRules(_ rules: MatchRules) {
+        MatchRulesPreferences.save(rules)
+        if phase == .idle {
+            self.rules = rules
+        }
     }
 
     var currentState: MatchState? {
@@ -51,6 +67,7 @@ final class WatchMatchCoordinator {
         startedAt = .now
         session = ScoringSession(rules: rules)
         workoutWarning = nil
+        endedEarly = false
 
         do {
             try await workoutRecorder.start()
@@ -69,6 +86,7 @@ final class WatchMatchCoordinator {
         publishSnapshot()
 
         if session.state.isMatchOver {
+            endedEarly = false
             phase = .summary
             publishSessionEnded()
         }
@@ -83,6 +101,7 @@ final class WatchMatchCoordinator {
 
     func endMatchEarly() {
         guard session != nil, !session!.events.isEmpty else { return }
+        endedEarly = true
         phase = .summary
         publishSessionEnded()
     }
@@ -121,6 +140,7 @@ final class WatchMatchCoordinator {
         session = nil
         matchID = nil
         workoutWarning = nil
+        endedEarly = false
         rules = MatchRulesPreferences.load()
     }
 
@@ -133,13 +153,39 @@ final class WatchMatchCoordinator {
         max(workoutRecorder.elapsedDuration, Date.now.timeIntervalSince(startedAt))
     }
 
+    var canContinueNewSet: Bool {
+        guard phase == .summary, let session, !endedEarly else { return false }
+        return session.state.isMatchOver
+    }
+
+    var summaryTitle: String {
+        guard let session else { return String(localized: "Summary") }
+        if session.state.isMatchOver {
+            return String(localized: "Match complete")
+        }
+        return String(localized: "Summary")
+    }
+
+    func continueNewSet() {
+        guard phase == .summary, let session, session.state.isMatchOver else { return }
+
+        let setsA = session.state.setsWonA
+        let setsB = session.state.setsWonB
+        rules.setsToWin = max(setsA, setsB) + 1
+        self.session = ScoringSession(rules: rules, events: session.events)
+
+        endedEarly = false
+        phase = .live
+        publishSnapshot()
+    }
+
     private func publishSnapshot() {
         guard phase == .live, let session, let matchID else { return }
+
         let snapshot = LiveScoreSnapshot(
             matchID: matchID,
             state: session.state,
-            teamAName: nil,
-            teamBName: nil,
+            playerNames: .empty,
             pointCount: session.events.count,
             isSessionActive: true
         )
@@ -158,8 +204,7 @@ final class WatchMatchCoordinator {
             endedAt: .now,
             rules: rules,
             events: events,
-            teamAName: nil,
-            teamBName: nil,
+            playerNames: .empty,
             averageHeartRate: workoutRecorder.averageHeartRate,
             activeEnergyKilocalories: workoutRecorder.activeEnergyKilocalories,
             distanceMeters: workoutRecorder.distanceMeters

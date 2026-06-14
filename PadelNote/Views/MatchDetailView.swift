@@ -124,8 +124,12 @@ struct MatchDetailView: View {
             rules: .default,
             completedSets: [SetScore(gamesA: 6, gamesB: 4), SetScore(gamesA: 7, gamesB: 6, tieBreakA: 7, tieBreakB: 5)],
             winner: .a,
-            teamAName: "Alex & Maria",
-            teamBName: "Chris & Dana"
+            playerNames: MatchPlayerNames(
+                playerA1: "Alex",
+                playerA2: "Maria",
+                playerB1: "Chris",
+                playerB2: "Dana"
+            )
         ))
     }
     .modelContainer(PreviewData.container)

@@ -8,8 +8,10 @@ struct NewMatchSetupView: View {
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
-    @State private var teamAName = ""
-    @State private var teamBName = ""
+    @State private var playerA1Name = ""
+    @State private var playerA2Name = ""
+    @State private var playerB1Name = ""
+    @State private var playerB2Name = ""
     @State private var startLiveMatch = false
 
     private var rules: MatchRules {
@@ -18,6 +20,15 @@ struct NewMatchSetupView: View {
             gamePointStyle: gamePointStyle,
             setTieBreak: setTieBreak,
             finalSetTieBreak: finalSetTieBreak
+        )
+    }
+
+    private var playerNames: MatchPlayerNames {
+        MatchPlayerNames(
+            playerA1: playerA1Name,
+            playerA2: playerA2Name,
+            playerB1: playerB1Name,
+            playerB2: playerB2Name
         )
     }
 
@@ -30,11 +41,18 @@ struct NewMatchSetupView: View {
                 finalSetTieBreak: $finalSetTieBreak
             )
 
-            Section(String(localized: "Teams (optional)")) {
-                TextField(String(localized: "Team A name"), text: $teamAName)
-                    .accessibilityLabel(String(localized: "Team A name"))
-                TextField(String(localized: "Team B name"), text: $teamBName)
-                    .accessibilityLabel(String(localized: "Team B name"))
+            Section(String(localized: "Players (optional)")) {
+                TextField(String(localized: "Side A player 1"), text: $playerA1Name)
+                    .accessibilityLabel(String(localized: "Side A player 1"))
+                TextField(String(localized: "Side A player 2"), text: $playerA2Name)
+                    .accessibilityLabel(String(localized: "Side A player 2"))
+            }
+
+            Section {
+                TextField(String(localized: "Side B player 1"), text: $playerB1Name)
+                    .accessibilityLabel(String(localized: "Side B player 1"))
+                TextField(String(localized: "Side B player 2"), text: $playerB2Name)
+                    .accessibilityLabel(String(localized: "Side B player 2"))
             }
 
             Section {
@@ -54,8 +72,7 @@ struct NewMatchSetupView: View {
         .navigationDestination(isPresented: $startLiveMatch) {
             LiveMatchView(
                 rules: rules,
-                teamAName: teamAName,
-                teamBName: teamBName,
+                playerNames: playerNames,
                 onFinished: onFinished
             )
         }

@@ -8,8 +8,7 @@ public enum MatchPersistence {
         rules: MatchRules,
         events: [PointEvent],
         startedAt: Date,
-        teamAName: String?,
-        teamBName: String?
+        playerNames: MatchPlayerNames
     ) -> Match {
         let state = ScoringEngine.replay(events: events, rules: rules)
         let match = Match(
@@ -18,8 +17,7 @@ public enum MatchPersistence {
             rules: rules,
             completedSets: state.completedSets,
             winner: state.winner,
-            teamAName: teamAName?.nilIfEmpty,
-            teamBName: teamBName?.nilIfEmpty
+            playerNames: playerNames
         )
         context.insert(match)
 
@@ -63,8 +61,7 @@ public enum MatchPersistence {
                 rules: payload.rules,
                 completedSets: state.completedSets,
                 winner: state.winner,
-                teamAName: payload.teamAName,
-                teamBName: payload.teamBName,
+                playerNames: payload.playerNames,
                 averageHeartRate: payload.averageHeartRate,
                 activeEnergyKilocalories: payload.activeEnergyKilocalories,
                 distanceMeters: payload.distanceMeters
@@ -78,8 +75,7 @@ public enum MatchPersistence {
         match.rules = payload.rules
         match.completedSets = state.completedSets
         match.winner = state.winner
-        match.teamAName = payload.teamAName
-        match.teamBName = payload.teamBName
+        match.playerNames = payload.playerNames
         match.averageHeartRate = payload.averageHeartRate
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters
@@ -117,11 +113,5 @@ public enum MatchPersistence {
             context.insert(point)
             match.points.append(point)
         }
-    }
-}
-
-private extension String {
-    var nilIfEmpty: String? {
-        isEmpty ? nil : self
     }
 }

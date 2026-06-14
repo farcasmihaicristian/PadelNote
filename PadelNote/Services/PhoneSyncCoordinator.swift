@@ -23,11 +23,17 @@ final class PhoneSyncCoordinator {
     func activate(modelContext: ModelContext) {
         self.modelContext = modelContext
         syncListener.activate()
+        syncDefaultRulesToWatch()
     }
 
     func refresh() async {
         await syncListener.refresh()
         modelContext?.processPendingChanges()
+    }
+
+    func syncDefaultRulesToWatch() {
+        guard let listener = syncListener as? PhoneConnectivityListener else { return }
+        listener.publishDefaultRules(MatchRulesPreferences.load())
     }
 
     private func configureHandlers() {

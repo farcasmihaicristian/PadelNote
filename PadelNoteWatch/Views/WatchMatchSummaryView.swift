@@ -7,7 +7,7 @@ struct WatchMatchSummaryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                Text(String(localized: "Match complete"))
+                Text(coordinator.summaryTitle)
                     .font(.headline)
 
                 Text(coordinator.summaryScoreLine)
@@ -30,20 +30,47 @@ struct WatchMatchSummaryView: View {
                         .foregroundStyle(.orange)
                 }
 
-                Button {
-                    Task { await coordinator.saveMatch() }
-                } label: {
-                    if coordinator.isSaving {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text(String(localized: "Save"))
+                if coordinator.canContinueNewSet {
+                    Button {
+                        coordinator.continueNewSet()
+                    } label: {
+                        Text(String(localized: "Continue new set"))
                             .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(coordinator.isSaving)
+                    .accessibilityLabel(String(localized: "Continue new set"))
+
+                    Button {
+                        Task { await coordinator.saveMatch() }
+                    } label: {
+                        if coordinator.isSaving {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(String(localized: "Save"))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(coordinator.isSaving)
+                    .accessibilityLabel(String(localized: "Save match"))
+                } else {
+                    Button {
+                        Task { await coordinator.saveMatch() }
+                    } label: {
+                        if coordinator.isSaving {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(String(localized: "Save"))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(coordinator.isSaving)
+                    .accessibilityLabel(String(localized: "Save match"))
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(coordinator.isSaving)
-                .accessibilityLabel(String(localized: "Save match"))
 
                 Button(String(localized: "Discard")) {
                     Task { await coordinator.discardMatch() }

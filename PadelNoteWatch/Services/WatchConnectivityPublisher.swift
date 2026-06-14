@@ -8,6 +8,8 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
     private var pendingLiveScore: LiveScoreSnapshot?
     private var pendingCompletedMatch: MatchTransferPayload?
 
+    var onDefaultRulesUpdate: ((MatchRules) -> Void)?
+
     func activate() {
         guard let session else { return }
         session.delegate = self
@@ -59,6 +61,17 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
         if let pendingCompletedMatch {
             sendCompletedMatch(pendingCompletedMatch, session: session)
         }
+        refreshDefaultRules(from: session)
+    }
+
+    private func refreshDefaultRules(from session: WCSession) {
+        guard let rules = SyncPayloadCodec.decodeDefaultRules(from: session.receivedApplicationContext) else { return }
+        onDefaultRulesUpdate?(rules)
+    }
+
+    private func deliverPayload(_ payload: [String: Any]) {
+        guard let rules = SyncPayloadCodec.decodeDefaultRules(from: payload) else { return }
+        onDefaultRulesUpdate?(rules)
     }
 }
 
@@ -71,6 +84,12 @@ extension WatchConnectivityPublisher: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             flushPending(session: session)
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+        Task { @MainActor in
+            deliverPayload(applicationContext)
         }
     }
 }

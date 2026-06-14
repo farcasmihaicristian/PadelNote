@@ -206,6 +206,11 @@ public struct ScoringSession: Sendable {
         self.events = []
     }
 
+    public init(rules: MatchRules, events: [PointEvent]) {
+        self.rules = rules
+        self.events = events
+    }
+
     public var state: MatchState {
         ScoringEngine.replay(events: events, rules: rules)
     }

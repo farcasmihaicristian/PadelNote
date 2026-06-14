@@ -9,6 +9,10 @@ public final class Match {
     public var rulesData: Data
     public var completedSetsData: Data
     public var winnerRawValue: String?
+    public var playerA1Name: String?
+    public var playerA2Name: String?
+    public var playerB1Name: String?
+    public var playerB2Name: String?
     public var teamAName: String?
     public var teamBName: String?
     public var averageHeartRate: Double?
@@ -25,8 +29,7 @@ public final class Match {
         rules: MatchRules = .default,
         completedSets: [SetScore] = [],
         winner: Team? = nil,
-        teamAName: String? = nil,
-        teamBName: String? = nil,
+        playerNames: MatchPlayerNames = .empty,
         averageHeartRate: Double? = nil,
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
@@ -38,12 +41,37 @@ public final class Match {
         self.rulesData = (try? JSONEncoder().encode(rules)) ?? Data()
         self.completedSetsData = (try? JSONEncoder().encode(completedSets)) ?? Data()
         self.winnerRawValue = winner?.rawValue
-        self.teamAName = teamAName
-        self.teamBName = teamBName
+        self.playerA1Name = playerNames.playerA1Name
+        self.playerA2Name = playerNames.playerA2Name
+        self.playerB1Name = playerNames.playerB1Name
+        self.playerB2Name = playerNames.playerB2Name
+        self.teamAName = playerNames.teamAName
+        self.teamBName = playerNames.teamBName
         self.averageHeartRate = averageHeartRate
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
         self.points = points
+    }
+
+    public var playerNames: MatchPlayerNames {
+        get {
+            MatchPlayerNames(
+                playerA1Name: playerA1Name,
+                playerA2Name: playerA2Name,
+                playerB1Name: playerB1Name,
+                playerB2Name: playerB2Name,
+                teamAName: teamAName,
+                teamBName: teamBName
+            )
+        }
+        set {
+            playerA1Name = newValue.playerA1Name
+            playerA2Name = newValue.playerA2Name
+            playerB1Name = newValue.playerB1Name
+            playerB2Name = newValue.playerB2Name
+            teamAName = newValue.teamAName
+            teamBName = newValue.teamBName
+        }
     }
 
     public var rules: MatchRules {
@@ -100,13 +128,16 @@ public final class Match {
         return ScoreFormatter.matchScoreLine(in: state)
     }
 
+    public func players(for team: Team) -> [String] {
+        playerNames.players(for: team)
+    }
+
+    public func sideLabel(for team: Team) -> String {
+        playerNames.sideLabel(for: team)
+    }
+
     public func teamName(for team: Team) -> String {
-        switch team {
-        case .a:
-            teamAName ?? String(localized: "Team A")
-        case .b:
-            teamBName ?? String(localized: "Team B")
-        }
+        sideLabel(for: team)
     }
 
     public var summary: MatchSummary {

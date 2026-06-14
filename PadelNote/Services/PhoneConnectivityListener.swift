@@ -23,6 +23,16 @@ final class PhoneConnectivityListener: NSObject, MatchSyncListening {
         refreshFromSession(session)
     }
 
+    func publishDefaultRules(_ rules: MatchRules) {
+        guard let session else { return }
+        pendingDefaultRules = rules
+        guard session.activationState == .activated else { return }
+        sendDefaultRules(rules, session: session)
+        pendingDefaultRules = nil
+    }
+
+    private var pendingDefaultRules: MatchRules?
+
     private func deliverPayload(_ payload: [String: Any]) {
         guard SyncPayloadCodec.hasSyncPayload(payload) else { return }
 
@@ -49,6 +59,16 @@ final class PhoneConnectivityListener: NSObject, MatchSyncListening {
     private func refreshFromSession(_ session: WCSession) {
         deliverPayload(session.receivedApplicationContext)
     }
+
+    private func sendDefaultRules(_ rules: MatchRules, session: WCSession) {
+        try? session.updateApplicationContext(SyncPayloadCodec.encodeDefaultRules(rules))
+    }
+
+    private func flushPendingDefaultRules(session: WCSession) {
+        guard let pendingDefaultRules else { return }
+        sendDefaultRules(pendingDefaultRules, session: session)
+        self.pendingDefaultRules = nil
+    }
 }
 
 extension PhoneConnectivityListener: WCSessionDelegate {
@@ -60,6 +80,7 @@ extension PhoneConnectivityListener: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             refreshFromSession(session)
+            flushPendingDefaultRules(session: session)
         }
     }
 

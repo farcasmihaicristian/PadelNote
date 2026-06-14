@@ -5,39 +5,43 @@ public enum SampleMatchData {
     public static func seed(into context: ModelContext) {
         guard (try? context.fetchCount(FetchDescriptor<Match>())) == 0 else { return }
 
-        let samples: [(Date, TimeInterval, [Team], MatchRules, String?, String?)] = [
+        let samples: [(Date, TimeInterval, [Team], MatchRules, MatchPlayerNames)] = [
             (
                 Calendar.current.date(byAdding: .day, value: -1, to: .now)!,
                 58 * 60,
                 sampleEventsAWin(),
                 .default,
-                String(localized: "Alex & Maria"),
-                String(localized: "Chris & Dana")
+                MatchPlayerNames(
+                    playerA1: String(localized: "Alex"),
+                    playerA2: String(localized: "Maria"),
+                    playerB1: String(localized: "Chris"),
+                    playerB2: String(localized: "Dana")
+                )
             ),
             (
                 Calendar.current.date(byAdding: .day, value: -4, to: .now)!,
                 72 * 60,
                 sampleEventsBWin(),
                 MatchRules(setsToWin: 2, gamePointStyle: .advantage),
-                String(localized: "Team A"),
-                String(localized: "Team B")
+                MatchPlayerNames(
+                    teamAName: String(localized: "Team A"),
+                    teamBName: String(localized: "Team B")
+                )
             ),
             (
                 Calendar.current.date(byAdding: .month, value: -1, to: .now)!,
                 65 * 60,
                 sampleEventsAWinShort(),
                 MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint),
-                nil,
-                nil
+                .empty
             ),
         ]
 
-        for (start, duration, events, rules, teamA, teamB) in samples {
+        for (start, duration, events, rules, playerNames) in samples {
             let match = Match(
                 startedAt: start,
                 rules: rules,
-                teamAName: teamA,
-                teamBName: teamB
+                playerNames: playerNames
             )
             context.insert(match)
 
@@ -56,7 +60,7 @@ public enum SampleMatchData {
             match.completedSets = state.completedSets
             match.winner = state.winner
             match.endedAt = start.addingTimeInterval(duration)
-            if teamA == String(localized: "Alex & Maria") {
+            if playerNames.playerA1Name == String(localized: "Alex") {
                 match.averageHeartRate = 142
                 match.activeEnergyKilocalories = 620
                 match.distanceMeters = 2800

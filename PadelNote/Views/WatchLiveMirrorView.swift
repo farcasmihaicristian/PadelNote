@@ -45,8 +45,12 @@ struct WatchLiveMirrorView: View {
             snapshot: LiveScoreSnapshot(
                 matchID: UUID(),
                 state: ScoringEngine.replay(events: [.init(team: .a), .init(team: .b)], rules: .default),
-                teamAName: "Team A",
-                teamBName: "Team B",
+                playerNames: MatchPlayerNames(
+                    playerA1: "Alex",
+                    playerA2: "Maria",
+                    playerB1: "Chris",
+                    playerB2: "Dana"
+                ),
                 pointCount: 2
             )
         )

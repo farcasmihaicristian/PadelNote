@@ -6,8 +6,7 @@ struct LiveMatchView: View {
     @Environment(\.modelContext) private var modelContext
 
     let rules: MatchRules
-    let teamAName: String
-    let teamBName: String
+    let playerNames: MatchPlayerNames
     var onFinished: () -> Void = {}
 
     @State private var session: ScoringSession
@@ -18,25 +17,23 @@ struct LiveMatchView: View {
 
     init(
         rules: MatchRules,
-        teamAName: String,
-        teamBName: String,
+        playerNames: MatchPlayerNames,
         onFinished: @escaping () -> Void = {}
     ) {
         self.rules = rules
-        self.teamAName = teamAName
-        self.teamBName = teamBName
+        self.playerNames = playerNames
         self.onFinished = onFinished
         _session = State(initialValue: ScoringSession(rules: rules))
     }
 
     private var state: MatchState { session.state }
 
-    private var teamALabel: String {
-        teamAName.isEmpty ? String(localized: "Team A") : teamAName
+    private var sideALabel: String {
+        playerNames.sideLabel(for: .a)
     }
 
-    private var teamBLabel: String {
-        teamBName.isEmpty ? String(localized: "Team B") : teamBName
+    private var sideBLabel: String {
+        playerNames.sideLabel(for: .b)
     }
 
     var body: some View {
@@ -79,8 +76,8 @@ struct LiveMatchView: View {
             }
 
             HStack(spacing: 16) {
-                pointButton(team: .a, label: teamALabel)
-                pointButton(team: .b, label: teamBLabel)
+                pointButton(team: .a, label: sideALabel)
+                pointButton(team: .b, label: sideBLabel)
             }
             .padding(.horizontal)
 
@@ -155,9 +152,9 @@ struct LiveMatchView: View {
             VStack(spacing: 8) {
                 Text(label)
                     .font(.headline)
-                Text(String(localized: "Point \(label)"))
-                    .font(.title.bold())
                     .multilineTextAlignment(.center)
+                Text(String(localized: "Point"))
+                    .font(.title.bold())
             }
             .frame(maxWidth: .infinity, minHeight: 120)
         }
@@ -173,15 +170,22 @@ struct LiveMatchView: View {
             rules: rules,
             events: session.events,
             startedAt: startedAt,
-            teamAName: teamAName,
-            teamBName: teamBName
+            playerNames: playerNames
         )
     }
 }
 
 #Preview {
     NavigationStack {
-        LiveMatchView(rules: .default, teamAName: "Alex & Maria", teamBName: "Chris & Dana")
+        LiveMatchView(
+            rules: .default,
+            playerNames: MatchPlayerNames(
+                playerA1: "Alex",
+                playerA2: "Maria",
+                playerB1: "Chris",
+                playerB2: "Dana"
+            )
+        )
     }
     .modelContainer(PreviewData.container)
 }

@@ -5,6 +5,7 @@ public enum SyncPayloadCodec {
         case liveScore
         case completedMatch
         case pointLog
+        case defaultRules
     }
 
     public static let kindKey = "kind"
@@ -18,6 +19,10 @@ public enum SyncPayloadCodec {
     private static let isSessionActiveKey = "isSessionActive"
     private static let teamANameKey = "teamAName"
     private static let teamBNameKey = "teamBName"
+    private static let playerA1NameKey = "playerA1Name"
+    private static let playerA2NameKey = "playerA2Name"
+    private static let playerB1NameKey = "playerB1Name"
+    private static let playerB2NameKey = "playerB2Name"
     private static let pointCountKey = "pointCount"
     private static let updatedAtKey = "updatedAt"
 
@@ -40,6 +45,18 @@ public enum SyncPayloadCodec {
         if let teamBName = snapshot.teamBName {
             dictionary[teamBNameKey] = teamBName
         }
+        if let playerA1Name = snapshot.playerA1Name {
+            dictionary[playerA1NameKey] = playerA1Name
+        }
+        if let playerA2Name = snapshot.playerA2Name {
+            dictionary[playerA2NameKey] = playerA2Name
+        }
+        if let playerB1Name = snapshot.playerB1Name {
+            dictionary[playerB1NameKey] = playerB1Name
+        }
+        if let playerB2Name = snapshot.playerB2Name {
+            dictionary[playerB2NameKey] = playerB2Name
+        }
 
         return dictionary
     }
@@ -56,6 +73,21 @@ public enum SyncPayloadCodec {
             kindKey: Kind.pointLog.rawValue,
             payloadKey: (try? JSONEncoder().encode(payload)) as Any
         ]
+    }
+
+    public static func encodeDefaultRules(_ rules: MatchRules) -> [String: Any] {
+        [
+            kindKey: Kind.defaultRules.rawValue,
+            payloadKey: (try? JSONEncoder().encode(rules)) as Any
+        ]
+    }
+
+    public static func decodeDefaultRules(from dictionary: [String: Any]) -> MatchRules? {
+        guard
+            dictionary[kindKey] as? String == Kind.defaultRules.rawValue,
+            let data = payloadData(from: dictionary)
+        else { return nil }
+        return try? JSONDecoder().decode(MatchRules.self, from: data)
     }
 
     public static func decodeLiveScore(from dictionary: [String: Any]) -> LiveScoreSnapshot? {
@@ -93,8 +125,14 @@ public enum SyncPayloadCodec {
             setGames: setGames,
             completedSetScores: completedSetScores,
             isMatchOver: isMatchOver,
-            teamAName: dictionary[teamANameKey] as? String,
-            teamBName: dictionary[teamBNameKey] as? String,
+            playerNames: MatchPlayerNames(
+                playerA1Name: dictionary[playerA1NameKey] as? String,
+                playerA2Name: dictionary[playerA2NameKey] as? String,
+                playerB1Name: dictionary[playerB1NameKey] as? String,
+                playerB2Name: dictionary[playerB2NameKey] as? String,
+                teamAName: dictionary[teamANameKey] as? String,
+                teamBName: dictionary[teamBNameKey] as? String
+            ),
             pointCount: pointCount,
             updatedAt: updatedAt,
             isSessionActive: isSessionActive
@@ -122,7 +160,7 @@ public enum SyncPayloadCodec {
         switch kind {
         case Kind.liveScore.rawValue:
             return dictionary[matchIDKey] != nil || payloadData(from: dictionary) != nil
-        case Kind.completedMatch.rawValue, Kind.pointLog.rawValue:
+        case Kind.completedMatch.rawValue, Kind.pointLog.rawValue, Kind.defaultRules.rawValue:
             return payloadData(from: dictionary) != nil
         default:
             return false
