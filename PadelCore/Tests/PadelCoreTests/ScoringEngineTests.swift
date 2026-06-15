@@ -158,6 +158,44 @@ private func reachGameScore(gamesA: Int, gamesB: Int) -> [Team] {
     #expect(s.gamesA == 1)
 }
 
+@Test func starPointFirstAdvantageShowsAd() {
+    // 40-40 then A takes the first advantage.
+    let s = matchState(rules: MatchRules(gamePointStyle: .starPoint), events: [.a, .a, .b, .b, .a, .b, .a])
+    #expect(ScoreFormatter.gamePoints(for: .a, in: s) == "Ad")
+    #expect(ScoreFormatter.gamePoints(for: .b, in: s) == "40")
+}
+
+@Test func starPointSecondAdvantageShowsAd2() {
+    // First advantage to A is lost, second advantage taken by A.
+    let s = matchState(
+        rules: MatchRules(gamePointStyle: .starPoint),
+        events: [.a, .a, .b, .b, .a, .b, .a, .b, .a]
+    )
+    #expect(s.deuceCount == 2)
+    #expect(ScoreFormatter.gamePoints(for: .a, in: s) == "Ad2")
+    #expect(ScoreFormatter.gamePoints(for: .b, in: s) == "40")
+}
+
+@Test func starPointThirdDeuceShowsSuddenDeath() {
+    // Both advantages lost -> third deuce is sudden death.
+    let s = matchState(
+        rules: MatchRules(gamePointStyle: .starPoint),
+        events: [.a, .a, .b, .b, .a, .b, .a, .b, .a, .b]
+    )
+    #expect(s.deuceCount == 3)
+    #expect(s.advantageTeam == nil)
+    #expect(ScoreFormatter.currentGameScore(in: s) == "SP-SP")
+}
+
+@Test func advantageStyleNeverShowsAd2OrSuddenDeath() {
+    // Classic advantage: repeated deuces still just show "Ad".
+    let s = matchState(
+        rules: MatchRules(gamePointStyle: .advantage),
+        events: [.a, .a, .b, .b, .a, .b, .a, .b, .a]
+    )
+    #expect(ScoreFormatter.gamePoints(for: .a, in: s) == "Ad")
+}
+
 // MARK: - Sets
 
 @Test func setWonAtSixFour() {
@@ -344,4 +382,49 @@ private func reachGameScore(gamesA: Int, gamesB: Int) -> [Team] {
 @Test func defaultRulesUseGoldenPoint() {
     #expect(MatchRules.default.gamePointStyle == .goldenPoint)
     #expect(MatchRules.default.finalSetTieBreak == .superTieBreak10)
+}
+
+// MARK: - Best-of-1 tie-break
+
+@Test func bestOfOneUsesSetTieBreakAsDecidingTieBreak() {
+    let rules = MatchRulesPreferences.makeRules(
+        bestOfSets: 1,
+        gamePointStyle: .goldenPoint,
+        setTieBreak: .classic,
+        finalSetTieBreak: .superTieBreak10
+    )
+    #expect(rules.setsToWin == 1)
+    #expect(rules.finalSetTieBreak == .classic)
+
+    var events = reachGameScore(gamesA: 6, gamesB: 6)
+    events += tieBreakPoints(pointsA: 7, pointsB: 5)
+    let s = matchState(rules: rules, events: events)
+    #expect(s.isMatchOver)
+    #expect(s.completedSets[0].tieBreakA == 7)
+}
+
+// MARK: - Session state cache parity
+
+@Test func sessionStateMatchesReplayAfterAddsAndUndos() {
+    let rules = MatchRules(gamePointStyle: .advantage)
+    var session = ScoringSession(rules: rules)
+    let teams: [Team] = [.a, .b, .a, .a, .b, .b, .a, .b, .a, .a, .b, .a]
+    for team in teams { session.addPoint(for: team) }
+    session.undo()
+    session.undo()
+    session.addPoint(for: .b)
+
+    let expected = ScoringEngine.replay(events: session.events, rules: rules)
+    #expect(session.state == expected)
+}
+
+@Test func sessionInitializedWithEventsMatchesReplay() {
+    let rules = MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint)
+    var events = winSet(for: .a, games: 6)
+    events += reachGameScore(gamesA: 3, gamesB: 2)
+    let pointEvents = events.map { PointEvent(team: $0) }
+
+    let session = ScoringSession(rules: rules, events: pointEvents)
+    let expected = ScoringEngine.replay(events: pointEvents, rules: rules)
+    #expect(session.state == expected)
 }

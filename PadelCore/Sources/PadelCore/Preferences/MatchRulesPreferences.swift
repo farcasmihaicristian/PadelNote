@@ -58,11 +58,15 @@ public enum MatchRulesPreferences {
         default: 3
         }
 
+        // In a single-set match the only set is also the deciding set, so honor the
+        // user's "At 6–6" choice rather than forcing the super tie-break.
+        let resolvedFinalSetTieBreak = bestOfSets == 1 ? setTieBreak : finalSetTieBreak
+
         return MatchRules(
             setsToWin: setsToWin,
             gamePointStyle: gamePointStyle,
             setTieBreak: setTieBreak,
-            finalSetTieBreak: finalSetTieBreak
+            finalSetTieBreak: resolvedFinalSetTieBreak
         )
     }
 

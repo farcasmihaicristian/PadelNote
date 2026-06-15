@@ -6,7 +6,6 @@ import WatchConnectivity
 final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
     private let session = WCSession.isSupported() ? WCSession.default : nil
     private var pendingLiveScore: LiveScoreSnapshot?
-    private var pendingCompletedMatch: MatchTransferPayload?
 
     var onPhoneContextUpdate: ((PhoneWatchSyncPayload) -> Void)?
 
@@ -15,6 +14,8 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
         session.delegate = self
         if session.activationState != .activated {
             session.activate()
+        } else {
+            flushPending(session: session)
         }
     }
 
@@ -33,9 +34,10 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
     func publishPointLog(_ payload: MatchTransferPayload) {}
 
     func publishCompletedMatch(_ payload: MatchTransferPayload) {
-        guard let session else { return }
-        pendingCompletedMatch = payload
-        guard session.activationState == .activated else { return }
+        // Persist first so the match survives even if the session isn't ready or
+        // the app is killed before delivery; cleared once handed to WatchConnectivity.
+        WatchMatchStore.addPendingCompletedMatch(payload)
+        guard let session, session.activationState == .activated else { return }
         sendCompletedMatch(payload, session: session)
     }
 
@@ -49,8 +51,10 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
 
     private func sendCompletedMatch(_ payload: MatchTransferPayload, session: WCSession) {
         let encoded = SyncPayloadCodec.encodeCompletedMatch(payload)
+        // Guard against an encode failure leaving a malformed payload queued.
+        guard SyncPayloadCodec.hasSyncPayload(encoded) else { return }
         session.transferUserInfo(encoded)
-        pendingCompletedMatch = nil
+        WatchMatchStore.removePendingCompletedMatch(id: payload.id)
     }
 
     private func flushPending(session: WCSession) {
@@ -58,8 +62,8 @@ final class WatchConnectivityPublisher: NSObject, MatchSyncPublishing {
             sendLiveScore(pendingLiveScore, session: session)
             self.pendingLiveScore = nil
         }
-        if let pendingCompletedMatch {
-            sendCompletedMatch(pendingCompletedMatch, session: session)
+        for payload in WatchMatchStore.pendingCompletedMatches() {
+            sendCompletedMatch(payload, session: session)
         }
         refreshPhoneContext(from: session)
     }

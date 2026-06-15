@@ -78,6 +78,17 @@ struct WatchStartView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
+            if coordinator.pendingSyncCount > 0 {
+                Label(
+                    String(localized: "\(coordinator.pendingSyncCount) match(es) waiting to sync to iPhone"),
+                    systemImage: "arrow.triangle.2.circlepath"
+                )
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+
             Button {
                 coordinator.startMatch()
             } label: {

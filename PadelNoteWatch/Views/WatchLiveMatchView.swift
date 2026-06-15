@@ -119,6 +119,13 @@ struct WatchLiveMatchView: View {
 
             Text(ScoreFormatter.currentGameScore(in: state))
                 .font(.system(.title2, design: .rounded).weight(.bold))
+
+            if coordinator.workoutWarning != nil {
+                Image(systemName: "heart.slash.fill")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel(String(localized: "Workout not recording"))
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)

@@ -10,6 +10,7 @@ final class NoOpWorkoutRecorder: WorkoutRecording {
     var distanceMeters: Double?
     private(set) var elapsedDuration: TimeInterval = 0
     var savedToHealth = false
+    var onRecordingError: ((String) -> Void)?
 
     private var startedAt = Date.now
 

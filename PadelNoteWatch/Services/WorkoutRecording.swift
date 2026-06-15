@@ -10,6 +10,9 @@ protocol WorkoutRecording: AnyObject {
     var elapsedDuration: TimeInterval { get }
     var savedToHealth: Bool { get }
 
+    /// Invoked when the underlying workout session fails after it has started.
+    var onRecordingError: ((String) -> Void)? { get set }
+
     func requestAuthorization() async
     func start() async throws
     func end(endedAt: Date) async throws

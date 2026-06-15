@@ -20,6 +20,8 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
     private(set) var distanceMeters: Double?
     private(set) var savedToHealth = false
 
+    var onRecordingError: ((String) -> Void)?
+
     var elapsedDuration: TimeInterval {
         Date.now.timeIntervalSince(startedAt)
     }
@@ -51,6 +53,13 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
             throw WorkoutRecorderError.healthDataUnavailable
         }
 
+        // Defensively tear down any session left over from a previous match.
+        if session != nil || builder != nil {
+            session?.end()
+            session = nil
+            builder = nil
+        }
+
         startedAt = .now
         heartRateSamples = []
         averageHeartRate = nil
@@ -74,17 +83,32 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         self.builder = builder
 
         session.startActivity(with: startedAt)
-        try await builder.beginCollection(at: startedAt)
-        try await builder.addMetadata([
-            HKMetadataKeyWorkoutBrandName: "Padel",
-            "sport": "padel"
-        ])
+        do {
+            try await builder.beginCollection(at: startedAt)
+            try await builder.addMetadata([
+                HKMetadataKeyWorkoutBrandName: "Padel",
+                "sport": "padel"
+            ])
+        } catch {
+            // Roll back so a failed start doesn't leave an orphan session running.
+            session.end()
+            self.session = nil
+            self.builder = nil
+            throw error
+        }
     }
 
     func end(endedAt: Date = .now) async throws {
-        guard let session, let builder else { return }
-        guard !hasEnded else { return }
+        guard let session, let builder, !hasEnded else { return }
         hasEnded = true
+
+        // Always tear down the session, even if collection/finish throws, so the
+        // next match can start cleanly and no workout is left running.
+        defer {
+            session.end()
+            self.session = nil
+            self.builder = nil
+        }
 
         let duration = endedAt.timeIntervalSince(startedAt)
         try await builder.endCollection(at: endedAt)
@@ -102,10 +126,6 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
             activeEnergyKilocalories = nil
             distanceMeters = nil
         }
-
-        session.end()
-        self.session = nil
-        self.builder = nil
     }
 
     private func updateStatistics(from workoutBuilder: HKLiveWorkoutBuilder, collectedTypes: Set<HKSampleType>) {
@@ -142,7 +162,13 @@ extension HealthKitWorkoutRecorder: HKWorkoutSessionDelegate {
         date: Date
     ) {}
 
-    nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {}
+    nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
+        Task { @MainActor in
+            onRecordingError?(
+                String(localized: "Workout recording stopped. Scoring will still work.")
+            )
+        }
+    }
 }
 
 extension HealthKitWorkoutRecorder: HKLiveWorkoutBuilderDelegate {

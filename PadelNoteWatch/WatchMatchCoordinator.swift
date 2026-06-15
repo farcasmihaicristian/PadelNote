@@ -26,9 +26,13 @@ final class WatchMatchCoordinator {
     var healthAuthDenied = false
     var workoutWarning: String?
     var isSaving = false
+    var pendingSyncCount = 0
     private var endedEarly = false
     private var matchActivityEndedAt: Date?
     private var workoutStartTask: Task<Void, Never>?
+    private var hasPrepared = false
+    private var rulesBeforeContinue: MatchRules?
+    private var continueBaselineEventCount: Int?
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
@@ -37,6 +41,13 @@ final class WatchMatchCoordinator {
         self.workoutRecorder = workoutRecorder
         self.syncService = syncService
         configurePhoneContextSync()
+        configureWorkoutErrorHandling()
+    }
+
+    private func configureWorkoutErrorHandling() {
+        workoutRecorder.onRecordingError = { [weak self] message in
+            self?.workoutWarning = message
+        }
     }
 
     private func configurePhoneContextSync() {
@@ -92,11 +103,43 @@ final class WatchMatchCoordinator {
     }
 
     func prepare() async {
+        guard !hasPrepared else { return }
+        hasPrepared = true
+
         syncService.activate()
         await workoutRecorder.requestAuthorization()
         healthAuthDenied = workoutRecorder.authorizationDenied
         loadIdleSetup()
         applyMeProfileDefaultIfNeeded()
+        refreshPendingSyncCount()
+        restoreInterruptedMatchIfNeeded()
+    }
+
+    private func restoreInterruptedMatchIfNeeded() {
+        guard phase == .idle, let saved = WatchMatchStore.loadLiveMatch() else { return }
+
+        rules = saved.rules
+        let values = MatchRulesPreferences.formValues(from: saved.rules)
+        bestOfSets = values.bestOfSets
+        gamePointStyle = values.gamePointStyle
+        setTieBreak = values.setTieBreak
+        finalSetTieBreak = values.finalSetTieBreak
+
+        matchID = saved.matchID
+        startedAt = saved.startedAt
+        session = ScoringSession(rules: saved.rules, events: saved.events)
+        playerSetup = MatchPlayerSetup(
+            sideAPlayer1: .init(name: saved.playerNames.playerA1Name ?? ""),
+            sideAPlayer2: .init(name: saved.playerNames.playerA2Name ?? ""),
+            sideBPlayer1: .init(name: saved.playerNames.playerB1Name ?? ""),
+            sideBPlayer2: .init(name: saved.playerNames.playerB2Name ?? "")
+        )
+        workoutWarning = nil
+        endedEarly = false
+        matchActivityEndedAt = nil
+        phase = .live
+        publishSnapshot()
+        startWorkoutInBackground()
     }
 
     func startMatch() {
@@ -109,10 +152,16 @@ final class WatchMatchCoordinator {
         session = ScoringSession(rules: rules)
         workoutWarning = nil
         endedEarly = false
+        rulesBeforeContinue = nil
+        continueBaselineEventCount = nil
 
         phase = .live
+        persistLiveState()
         publishSnapshot()
+        startWorkoutInBackground()
+    }
 
+    private func startWorkoutInBackground() {
         workoutStartTask = Task { [weak self] in
             guard let self else { return }
             do {
@@ -124,14 +173,37 @@ final class WatchMatchCoordinator {
         }
     }
 
+    private func persistLiveState() {
+        guard phase == .live, let session, let matchID else { return }
+        WatchMatchStore.saveLiveMatch(
+            WatchMatchStore.LiveMatch(
+                matchID: matchID,
+                startedAt: startedAt,
+                rules: rules,
+                events: session.events,
+                playerNames: activePlayerNames
+            )
+        )
+    }
+
     func addPoint(for team: Team) {
         guard var session, !session.state.isMatchOver else { return }
         session.addPoint(for: team)
         self.session = session
-        publishSnapshot()
+
+        // A real point was played after "Continue new set", so the prior
+        // completion no longer applies.
+        if let baseline = continueBaselineEventCount, session.events.count > baseline {
+            rulesBeforeContinue = nil
+            continueBaselineEventCount = nil
+        }
+
+        persistLiveState()
 
         if session.state.isMatchOver {
             transitionToSummary(endedEarly: false)
+        } else {
+            publishSnapshot()
         }
     }
 
@@ -139,11 +211,26 @@ final class WatchMatchCoordinator {
         guard var session, phase == .live else { return }
         guard session.undo() else { return }
         self.session = session
+        persistLiveState()
         publishSnapshot()
     }
 
     func endMatchEarly() {
-        guard session != nil, !session!.events.isEmpty else { return }
+        guard let events = session?.events, !events.isEmpty else { return }
+
+        // If the user tapped "Continue new set" but played no further points,
+        // restore the original rules so the decided winner is preserved.
+        if let baseline = continueBaselineEventCount,
+           events.count == baseline,
+           let originalRules = rulesBeforeContinue {
+            rules = originalRules
+            session = ScoringSession(rules: originalRules, events: events)
+            rulesBeforeContinue = nil
+            continueBaselineEventCount = nil
+            transitionToSummary(endedEarly: false)
+            return
+        }
+
         transitionToSummary(endedEarly: true)
     }
 
@@ -163,7 +250,9 @@ final class WatchMatchCoordinator {
         }
 
         let payload = makeTransferPayload(matchID: matchID, events: session.events)
+        WatchMatchStore.clearLiveMatch()
         syncService.publishCompletedMatch(payload)
+        refreshPendingSyncCount()
         reset(clearLiveSession: false)
     }
 
@@ -172,7 +261,12 @@ final class WatchMatchCoordinator {
             await workoutStartTask?.value
             try? await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
         }
+        WatchMatchStore.clearLiveMatch()
         reset(clearLiveSession: false)
+    }
+
+    private func refreshPendingSyncCount() {
+        pendingSyncCount = WatchMatchStore.pendingCompletedMatches().count
     }
 
     func reset(clearLiveSession: Bool = true) {
@@ -180,6 +274,7 @@ final class WatchMatchCoordinator {
         workoutStartTask = nil
         if clearLiveSession, phase == .live {
             publishSessionEnded()
+            WatchMatchStore.clearLiveMatch()
         }
         phase = .idle
         session = nil
@@ -187,9 +282,13 @@ final class WatchMatchCoordinator {
         workoutWarning = nil
         endedEarly = false
         matchActivityEndedAt = nil
-        playerSetup = .empty
+        rulesBeforeContinue = nil
+        continueBaselineEventCount = nil
+        // Player names are intentionally preserved across matches so back-to-back
+        // games with the same group don't require re-entry.
         loadIdleSetup()
         applyMeProfileDefaultIfNeeded()
+        refreshPendingSyncCount()
     }
 
     var summaryScoreLine: String {
@@ -220,6 +319,11 @@ final class WatchMatchCoordinator {
     func continueNewSet() {
         guard phase == .summary, let session, session.state.isMatchOver else { return }
 
+        // Remember the decided match so we can restore it if the user ends without
+        // playing any further points.
+        rulesBeforeContinue = rules
+        continueBaselineEventCount = session.events.count
+
         let setsA = session.state.setsWonA
         let setsB = session.state.setsWonB
         rules.setsToWin = max(setsA, setsB) + 1
@@ -228,6 +332,7 @@ final class WatchMatchCoordinator {
         endedEarly = false
         matchActivityEndedAt = nil
         phase = .live
+        persistLiveState()
         publishSnapshot()
     }
 
@@ -312,7 +417,7 @@ final class WatchMatchCoordinator {
         MatchTransferPayload(
             id: matchID,
             startedAt: startedAt,
-            endedAt: .now,
+            endedAt: matchActivityEndedAt ?? .now,
             rules: rules,
             events: events,
             playerNames: activePlayerNames,

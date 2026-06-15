@@ -197,33 +197,52 @@ public enum ScoringEngine {
 }
 
 /// Mutable scoring session with undo via event replay.
+///
+/// The running `MatchState` after each event is cached in `stateHistory` so that
+/// reading `state`, adding a point, or undoing is O(1) instead of replaying the
+/// full event log every time. `stateHistory[i]` is the state after `i` events,
+/// with index `0` holding the initial empty state.
 public struct ScoringSession: Sendable {
     public private(set) var rules: MatchRules
     public private(set) var events: [PointEvent]
+    private var stateHistory: [MatchState]
 
     public init(rules: MatchRules) {
         self.rules = rules
         self.events = []
+        self.stateHistory = [MatchState(rules: rules)]
     }
 
     public init(rules: MatchRules, events: [PointEvent]) {
         self.rules = rules
         self.events = events
+
+        var history = [MatchState(rules: rules)]
+        history.reserveCapacity(events.count + 1)
+        var current = history[0]
+        for event in events {
+            current = ScoringEngine.apply(point: event.team, to: current)
+            history.append(current)
+        }
+        self.stateHistory = history
     }
 
     public var state: MatchState {
-        ScoringEngine.replay(events: events, rules: rules)
+        stateHistory.last ?? MatchState(rules: rules)
     }
 
     public mutating func addPoint(for team: Team) {
-        guard !state.isMatchOver else { return }
+        let current = state
+        guard !current.isMatchOver else { return }
         events.append(PointEvent(team: team))
+        stateHistory.append(ScoringEngine.apply(point: team, to: current))
     }
 
     @discardableResult
     public mutating func undo() -> Bool {
         guard !events.isEmpty else { return false }
         events.removeLast()
+        stateHistory.removeLast()
         return true
     }
 }

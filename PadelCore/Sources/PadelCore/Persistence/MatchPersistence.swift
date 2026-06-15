@@ -91,8 +91,13 @@ public enum MatchPersistence {
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters
 
-        try? context.save()
-        return match
+        do {
+            try context.save()
+            return match
+        } catch {
+            assertionFailure("Failed to save transferred match: \(error)")
+            return nil
+        }
     }
 
     @MainActor

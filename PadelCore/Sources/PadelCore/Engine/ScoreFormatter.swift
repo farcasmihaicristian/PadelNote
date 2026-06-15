@@ -8,12 +8,34 @@ public enum ScoreFormatter {
     }
 
     if let advantageTeam = state.advantageTeam {
-      return advantageTeam == team ? "Ad" : "40"
+      if advantageTeam == team {
+        return isSecondStarPointAdvantage(in: state) ? "Ad2" : "Ad"
+      }
+      return "40"
+    }
+
+    // Star point: the third deuce is sudden death (golden point), shown as "SP".
+    if isStarPointSuddenDeath(in: state) {
+      return "SP"
     }
 
     let points = team == .a ? state.pointA : state.pointB
     guard points >= 0, points < gamePointLabels.count else { return "0" }
     return gamePointLabels[points]
+  }
+
+  /// True while a team holds the second advantage under star-point rules.
+  private static func isSecondStarPointAdvantage(in state: MatchState) -> Bool {
+    state.rules.gamePointStyle == .starPoint && state.deuceCount >= 2
+  }
+
+  /// True at the deciding 40-40 of a star-point game (third deuce, sudden death).
+  private static func isStarPointSuddenDeath(in state: MatchState) -> Bool {
+    state.rules.gamePointStyle == .starPoint
+      && state.advantageTeam == nil
+      && state.pointA == 3
+      && state.pointB == 3
+      && state.deuceCount >= 3
   }
 
   /// "40-30" style readout for the current game.

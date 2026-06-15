@@ -63,17 +63,11 @@ public enum SyncPayloadCodec {
     }
 
     public static func encodeCompletedMatch(_ payload: MatchTransferPayload) -> [String: Any] {
-        [
-            kindKey: Kind.completedMatch.rawValue,
-            payloadKey: (try? JSONEncoder().encode(payload)) as Any
-        ]
+        encoded(kind: .completedMatch, value: payload)
     }
 
     public static func encodePointLog(_ payload: MatchTransferPayload) -> [String: Any] {
-        [
-            kindKey: Kind.pointLog.rawValue,
-            payloadKey: (try? JSONEncoder().encode(payload)) as Any
-        ]
+        encoded(kind: .pointLog, value: payload)
     }
 
     public static func encodeDefaultRules(_ rules: MatchRules) -> [String: Any] {
@@ -81,10 +75,19 @@ public enum SyncPayloadCodec {
     }
 
     public static func encodePhoneContext(_ payload: PhoneWatchSyncPayload) -> [String: Any] {
-        [
-            kindKey: Kind.phoneContext.rawValue,
-            payloadKey: (try? JSONEncoder().encode(payload)) as Any
-        ]
+        encoded(kind: .phoneContext, value: payload)
+    }
+
+    /// Encodes a Codable payload into a WatchConnectivity-safe dictionary. If
+    /// encoding fails the `payload` key is omitted entirely (never a boxed nil),
+    /// so decoders fail gracefully instead of `transferUserInfo` rejecting a
+    /// non-property-list value.
+    private static func encoded<T: Encodable>(kind: Kind, value: T) -> [String: Any] {
+        var dictionary: [String: Any] = [kindKey: kind.rawValue]
+        if let data = try? JSONEncoder().encode(value) {
+            dictionary[payloadKey] = data
+        }
+        return dictionary
     }
 
     public static func decodeDefaultRules(from dictionary: [String: Any]) -> MatchRules? {

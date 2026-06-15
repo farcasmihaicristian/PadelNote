@@ -181,6 +181,39 @@ import Testing
     #expect(mariaPartner?.winRate == 0.5)
 }
 
+@Test @MainActor func saveTransferredMatchIsIdempotentByID() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let matchID = UUID()
+    let events: [PointEvent] = (0..<6).flatMap { _ in
+        [PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a), PointEvent(team: .a)]
+    }
+    let payload = MatchTransferPayload(
+        id: matchID,
+        startedAt: .now,
+        endedAt: .now,
+        rules: MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint),
+        events: events,
+        playerNames: MatchPlayerNames(
+            playerA1: "Alex",
+            playerA2: "Maria",
+            playerB1: "Chris",
+            playerB2: "Dana"
+        )
+    )
+
+    _ = MatchPersistence.saveTransferredMatch(context: context, payload: payload)
+    _ = MatchPersistence.saveTransferredMatch(context: context, payload: payload)
+
+    let matches = try context.fetch(FetchDescriptor<Match>())
+    #expect(matches.count == 1)
+    #expect(matches.first?.winner == .a)
+
+    let points = try context.fetch(FetchDescriptor<StoredPointEvent>())
+    #expect(points.count == events.count)
+}
+
 @MainActor
 private func makeContainer() throws -> ModelContainer {
     let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
