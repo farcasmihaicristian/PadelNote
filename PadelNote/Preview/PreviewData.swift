@@ -10,7 +10,7 @@ enum PreviewData {
             for: Match.self, StoredPointEvent.self, Player.self, AppUser.self,
             configurations: configuration
         )
-        SampleMatchData.seed(into: container.mainContext)
+        try? HistoryDriveImporter.replaceAllHistory(context: container.mainContext)
         return container
     }()
 }

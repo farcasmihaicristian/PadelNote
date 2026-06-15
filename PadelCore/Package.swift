@@ -17,7 +17,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "PadelCore"
+            name: "PadelCore",
+            resources: [
+                .process("Resources"),
+            ]
         ),
         .testTarget(
             name: "PadelCoreTests",

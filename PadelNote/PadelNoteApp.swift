@@ -13,9 +13,6 @@ struct PadelNoteApp: App {
         modelContainer = try! ModelContainer(
             for: Match.self, StoredPointEvent.self, Player.self, AppUser.self
         )
-        #if DEBUG
-        SampleMatchData.seed(into: modelContainer.mainContext)
-        #endif
     }
 
     var body: some Scene {
@@ -26,7 +23,9 @@ struct PadelNoteApp: App {
                 .onAppear {
                     syncCoordinator.activate(modelContext: modelContainer.mainContext)
                     currentUserStore.activate(modelContext: modelContainer.mainContext)
+                    HistoryDriveImporter.importIfNeeded(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
+                    syncCoordinator.syncPhoneContextToWatch()
                 }
                 .onChange(of: currentUserStore.pendingPastMatchLinkCount) { _, count in
                     showPastMatchLinkDialog = count > 0
