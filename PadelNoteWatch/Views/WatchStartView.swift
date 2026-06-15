@@ -79,19 +79,13 @@ struct WatchStartView: View {
             }
 
             Button {
-                Task { await coordinator.startMatch() }
+                coordinator.startMatch()
             } label: {
-                if coordinator.isStarting {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text(String(localized: "Start"))
-                        .frame(maxWidth: .infinity)
-                }
+                Text(String(localized: "Start"))
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .watchStartPrimaryButton()
-            .disabled(coordinator.isStarting)
             .accessibilityLabel(String(localized: "Start match"))
             .padding(.top, 4)
         }

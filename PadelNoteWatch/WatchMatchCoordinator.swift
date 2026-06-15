@@ -25,10 +25,10 @@ final class WatchMatchCoordinator {
     var meProfile: WatchMeProfile?
     var healthAuthDenied = false
     var workoutWarning: String?
-    var isStarting = false
     var isSaving = false
     private var endedEarly = false
     private var matchActivityEndedAt: Date?
+    private var workoutStartTask: Task<Void, Never>?
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
@@ -99,10 +99,8 @@ final class WatchMatchCoordinator {
         applyMeProfileDefaultIfNeeded()
     }
 
-    func startMatch() async {
-        guard !isStarting else { return }
-        isStarting = true
-        defer { isStarting = false }
+    func startMatch() {
+        guard phase == .idle else { return }
 
         rules = buildRules()
         MatchRulesPreferences.save(rules)
@@ -112,14 +110,18 @@ final class WatchMatchCoordinator {
         workoutWarning = nil
         endedEarly = false
 
-        do {
-            try await workoutRecorder.start()
-        } catch {
-            workoutWarning = String(localized: "Workout recording unavailable. Scoring will still work.")
-        }
-
         phase = .live
         publishSnapshot()
+
+        workoutStartTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await workoutRecorder.start()
+            } catch {
+                guard !Task.isCancelled else { return }
+                workoutWarning = String(localized: "Workout recording unavailable. Scoring will still work.")
+            }
+        }
     }
 
     func addPoint(for team: Team) {
@@ -151,6 +153,7 @@ final class WatchMatchCoordinator {
         defer { isSaving = false }
 
         do {
+            await workoutStartTask?.value
             try await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
             if !workoutRecorder.savedToHealth {
                 workoutWarning = String(localized: "Workout not saved to Apple Health — match was under 10 minutes.")
@@ -166,12 +169,15 @@ final class WatchMatchCoordinator {
 
     func discardMatch() async {
         if phase != .idle {
+            await workoutStartTask?.value
             try? await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
         }
         reset(clearLiveSession: false)
     }
 
     func reset(clearLiveSession: Bool = true) {
+        workoutStartTask?.cancel()
+        workoutStartTask = nil
         if clearLiveSession, phase == .live {
             publishSessionEnded()
         }
