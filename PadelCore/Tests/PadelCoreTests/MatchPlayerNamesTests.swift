@@ -15,6 +15,19 @@ import Testing
     #expect(names.players(for: .a) == ["Alex", "Maria"])
 }
 
+@Test func courtSideLabelOrdersPlayerTwoLeftAndPlayerOneRight() {
+    let names = MatchPlayerNames(
+        playerA1: "Mihai",
+        playerA2: "Alex",
+        playerB1: "Chris",
+        playerB2: "Dana"
+    )
+
+    #expect(names.courtSideLabel(for: .a) == "Alex · Mihai")
+    #expect(names.courtSideLabel(for: .b) == "Dana · Chris")
+    #expect(names.playersInCourtDisplayOrder(for: .a) == ["Alex", "Mihai"])
+}
+
 @Test func sideLabelUsesSinglePlayerWhenOnlyOneNamed() {
     let names = MatchPlayerNames(playerA1: "Alex", playerA2: "", playerB1: "Chris", playerB2: "")
 

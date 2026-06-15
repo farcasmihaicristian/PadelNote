@@ -21,26 +21,26 @@ struct MatchPlayersEditSection: View {
 
         Section(String(localized: "Side A")) {
             playerField(
-                title: String(localized: "Left side"),
-                subtitle: String(localized: "Left side"),
+                title: String(localized: "Right side"),
+                subtitle: String(localized: "Right side"),
                 text: $sideAPlayer1
             )
             playerField(
-                title: String(localized: "Right side"),
-                subtitle: String(localized: "Right side"),
+                title: String(localized: "Left side"),
+                subtitle: String(localized: "Left side"),
                 text: $sideAPlayer2
             )
         }
 
         Section(String(localized: "Side B")) {
             playerField(
-                title: String(localized: "Left side"),
-                subtitle: String(localized: "Left side"),
+                title: String(localized: "Right side"),
+                subtitle: String(localized: "Right side"),
                 text: $sideBPlayer1
             )
             playerField(
-                title: String(localized: "Right side"),
-                subtitle: String(localized: "Right side"),
+                title: String(localized: "Left side"),
+                subtitle: String(localized: "Left side"),
                 text: $sideBPlayer2
             )
         }

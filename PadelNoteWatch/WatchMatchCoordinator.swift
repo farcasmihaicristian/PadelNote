@@ -76,7 +76,7 @@ final class WatchMatchCoordinator {
     }
 
     func displaySideLabel(for team: Team) -> String {
-        activePlayerNames.sideLabel(for: team)
+        activePlayerNames.courtSideLabel(for: team)
     }
 
     func toggleLeftRightSides(for team: Team) {

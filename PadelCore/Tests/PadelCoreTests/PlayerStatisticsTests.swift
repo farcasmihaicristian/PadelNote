@@ -124,8 +124,8 @@ import Testing
     )
 
     #expect(roster.team(for: alexID) == .a)
-    #expect(roster.courtSide(for: alexID) == .left)
-    #expect(roster.placementDescription(for: alexID) == "Left side")
+    #expect(roster.courtSide(for: alexID) == .right)
+    #expect(roster.placementDescription(for: alexID) == "Right side")
 }
 
 @Test func playerInsightsSplitWinRateByLeftAndRightSide() {
@@ -181,10 +181,10 @@ import Testing
     )
 
     #expect(insights.matchCount == 3)
-    #expect(insights.leftSideStats.matchCount == 2)
-    #expect(insights.leftSideStats.wins == 2)
-    #expect(insights.leftSideStats.winRate == 1)
-    #expect(insights.rightSideStats.matchCount == 1)
-    #expect(insights.rightSideStats.losses == 1)
-    #expect(insights.rightSideStats.winRate == 0)
+    #expect(insights.leftSideStats.matchCount == 1)
+    #expect(insights.leftSideStats.losses == 1)
+    #expect(insights.leftSideStats.winRate == 0)
+    #expect(insights.rightSideStats.matchCount == 2)
+    #expect(insights.rightSideStats.wins == 2)
+    #expect(insights.rightSideStats.winRate == 1)
 }

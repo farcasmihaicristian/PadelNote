@@ -51,8 +51,25 @@ public struct MatchPlayerNames: Codable, Hashable, Sendable {
         }
     }
 
+    /// Player names left-to-right on court: player 2 (left), player 1 (right).
+    public func playersInCourtDisplayOrder(for team: Team) -> [String] {
+        switch team {
+        case .a:
+            [playerA2Name, playerA1Name].compactMap { $0 }
+        case .b:
+            [playerB2Name, playerB1Name].compactMap { $0 }
+        }
+    }
+
     public func sideLabel(for team: Team) -> String {
-        let names = players(for: team)
+        label(for: team, players: players(for: team))
+    }
+
+    public func courtSideLabel(for team: Team) -> String {
+        label(for: team, players: playersInCourtDisplayOrder(for: team))
+    }
+
+    private func label(for team: Team, players names: [String]) -> String {
         if !names.isEmpty {
             return names.joined(separator: " · ")
         }

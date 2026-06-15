@@ -29,11 +29,11 @@ struct LiveMatchView: View {
     private var state: MatchState { session.state }
 
     private var sideALabel: String {
-        playerSetup.playerNames.sideLabel(for: .a)
+        playerSetup.playerNames.courtSideLabel(for: .a)
     }
 
     private var sideBLabel: String {
-        playerSetup.playerNames.sideLabel(for: .b)
+        playerSetup.playerNames.courtSideLabel(for: .b)
     }
 
     var body: some View {

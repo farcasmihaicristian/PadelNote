@@ -88,7 +88,7 @@ public struct MatchRoster: Sendable, Hashable, Codable {
         guard let team = team(for: playerID) else { return nil }
         let side = team == .a ? sideA : sideB
         guard let index = side.firstIndex(where: { $0.id == playerID }) else { return nil }
-        return index == 0 ? .left : .right
+        return index == 0 ? .right : .left
     }
 
     public func placementDescription(for playerID: UUID) -> String? {
