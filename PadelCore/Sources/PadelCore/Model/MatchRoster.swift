@@ -1,5 +1,19 @@
 import Foundation
 
+public enum PlayerCourtSide: Int, Sendable, Hashable, Codable {
+    case left = 0
+    case right = 1
+
+    public var label: String {
+        switch self {
+        case .left:
+            String(localized: "Left side")
+        case .right:
+            String(localized: "Right side")
+        }
+    }
+}
+
 public struct MatchPlayerRosterEntry: Sendable, Hashable, Codable {
     public let id: UUID?
     public let name: String?
@@ -68,6 +82,17 @@ public struct MatchRoster: Sendable, Hashable, Codable {
         guard let team = team(for: playerID) else { return [] }
         let side = team == .a ? sideA : sideB
         return side.compactMap(\.id).filter { $0 != playerID }
+    }
+
+    public func courtSide(for playerID: UUID) -> PlayerCourtSide? {
+        guard let team = team(for: playerID) else { return nil }
+        let side = team == .a ? sideA : sideB
+        guard let index = side.firstIndex(where: { $0.id == playerID }) else { return nil }
+        return index == 0 ? .left : .right
+    }
+
+    public func placementDescription(for playerID: UUID) -> String? {
+        courtSide(for: playerID)?.label
     }
 }
 

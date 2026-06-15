@@ -3,8 +3,8 @@ import SwiftUI
 
 struct WatchLiveMatchView: View {
     @Bindable var coordinator: WatchMatchCoordinator
-    @State private var crownValue = 0.0
     @State private var showEndConfirmation = false
+    @State private var showCourtOptions = false
 
     private var state: MatchState {
         coordinator.currentState ?? ScoringEngine.replay(events: [], rules: coordinator.rules)
@@ -15,33 +15,30 @@ struct WatchLiveMatchView: View {
             ZStack {
                 VStack(spacing: 0) {
                     teamZone(
-                        team: .a,
-                        label: coordinator.activePlayerNames.sideLabel(for: .a),
+                        team: .b,
+                        label: coordinator.displaySideLabel(for: .b),
                         height: geometry.size.height / 2
                     )
 
                     teamZone(
-                        team: .b,
-                        label: coordinator.activePlayerNames.sideLabel(for: .b),
+                        team: .a,
+                        label: coordinator.displaySideLabel(for: .a),
                         height: geometry.size.height / 2
                     )
                 }
 
                 scoreOverlay
+
+                HStack(spacing: 0) {
+                    courtOptionsEdgeZone(height: geometry.size.height)
+                    Spacer(minLength: 0)
+                }
             }
         }
         .ignoresSafeArea(edges: .horizontal)
         .navigationTitle(String(localized: "Live"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(String(localized: "Undo")) {
-                    coordinator.undo()
-                }
-                .disabled(coordinator.session?.events.isEmpty ?? true)
-                .accessibilityLabel(String(localized: "Undo last point"))
-            }
-
             ToolbarItem(placement: .topBarLeading) {
                 Button(String(localized: "End")) {
                     showEndConfirmation = true
@@ -49,22 +46,17 @@ struct WatchLiveMatchView: View {
                 .disabled(coordinator.session?.events.isEmpty ?? true)
                 .accessibilityLabel(String(localized: "End match"))
             }
-        }
-        .focusable(true)
-        .digitalCrownRotation(
-            $crownValue,
-            from: 0,
-            through: 100,
-            by: 1,
-            sensitivity: .medium,
-            isContinuous: false,
-            isHapticFeedbackEnabled: true
-        )
-        .onChange(of: crownValue) { _, newValue in
-            if newValue > 0 {
-                coordinator.undo()
-                crownValue = 0
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(String(localized: "Undo")) {
+                    coordinator.undo()
+                }
+                .disabled(coordinator.session?.events.isEmpty ?? true)
+                .accessibilityLabel(String(localized: "Undo last point"))
             }
+        }
+        .navigationDestination(isPresented: $showCourtOptions) {
+            WatchLiveMatchOptionsView(coordinator: coordinator, isPresented: $showCourtOptions)
         }
         .confirmationDialog(
             String(localized: "End this match?"),
@@ -76,6 +68,26 @@ struct WatchLiveMatchView: View {
             }
             Button(String(localized: "Cancel"), role: .cancel) {}
         }
+    }
+
+    private func courtOptionsEdgeZone(height: CGFloat) -> some View {
+        Color.clear
+            .frame(width: 28, height: height)
+            .contentShape(Rectangle())
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 10)
+                    .onEnded { value in
+                        guard value.translation.width > 14,
+                              abs(value.translation.width) > abs(value.translation.height)
+                        else { return }
+                        showCourtOptions = true
+                    }
+            )
+            .onTapGesture {
+                showCourtOptions = true
+            }
+            .accessibilityLabel(String(localized: "Team layout options"))
+            .accessibilityAddTraits(.isButton)
     }
 
     private var scoreOverlay: some View {
@@ -138,11 +150,23 @@ struct WatchLiveMatchView: View {
 }
 
 #Preview {
-    let coordinator = WatchMatchCoordinator(
-        workoutRecorder: NoOpWorkoutRecorder(),
-        syncService: WatchConnectivityPublisher()
-    )
-    coordinator.session = ScoringSession(rules: .default)
-    coordinator.phase = .live
-    return WatchLiveMatchView(coordinator: coordinator)
+    NavigationStack {
+        WatchLiveMatchView(
+            coordinator: {
+                let coordinator = WatchMatchCoordinator(
+                    workoutRecorder: NoOpWorkoutRecorder(),
+                    syncService: WatchConnectivityPublisher()
+                )
+                coordinator.session = ScoringSession(rules: .default)
+                coordinator.playerSetup = MatchPlayerSetup(
+                    sideAPlayer1: .init(name: "Sergiu"),
+                    sideAPlayer2: .init(name: "Alex"),
+                    sideBPlayer1: .init(name: "Mihai"),
+                    sideBPlayer2: .init(name: "Catalin")
+                )
+                coordinator.phase = .live
+                return coordinator
+            }()
+        )
+    }
 }

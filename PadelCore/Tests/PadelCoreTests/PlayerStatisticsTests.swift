@@ -113,3 +113,78 @@ import Testing
 @Test func normalizeNameDeduplicatesCaseAndWhitespace() {
     #expect(PlayerPersistence.normalizeName("  Alex ") == PlayerPersistence.normalizeName("alex"))
 }
+
+@Test func rosterTracksPlayerCourtSide() {
+    let alexID = UUID()
+    let roster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: nil, playerA2Name: "Maria",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+
+    #expect(roster.team(for: alexID) == .a)
+    #expect(roster.courtSide(for: alexID) == .left)
+    #expect(roster.placementDescription(for: alexID) == "Left side")
+}
+
+@Test func playerInsightsSplitWinRateByLeftAndRightSide() {
+    let alexID = UUID()
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    let winEvents: [PointEvent] = (0..<4).map { _ in PointEvent(team: .a) }
+    let lossEvents: [PointEvent] = (0..<4).map { _ in PointEvent(team: .b) }
+
+    let leftSideRoster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: nil, playerA2Name: "Maria",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+    let rightSideRoster = MatchRoster(
+        playerA1ID: nil, playerA1Name: "Maria",
+        playerA2ID: alexID, playerA2Name: "Alex",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+
+    let summaries = [
+        MatchSummary(
+            rules: rules,
+            events: winEvents,
+            winner: .a,
+            duration: 3600,
+            isCompleted: true,
+            roster: leftSideRoster
+        ),
+        MatchSummary(
+            rules: rules,
+            events: winEvents,
+            winner: .a,
+            duration: 3600,
+            isCompleted: true,
+            roster: leftSideRoster
+        ),
+        MatchSummary(
+            rules: rules,
+            events: lossEvents,
+            winner: .b,
+            duration: 3600,
+            isCompleted: true,
+            roster: rightSideRoster
+        ),
+    ]
+
+    let insights = MatchStatistics.playerInsights(
+        for: alexID,
+        displayName: "Alex",
+        in: summaries
+    )
+
+    #expect(insights.matchCount == 3)
+    #expect(insights.leftSideStats.matchCount == 2)
+    #expect(insights.leftSideStats.wins == 2)
+    #expect(insights.leftSideStats.winRate == 1)
+    #expect(insights.rightSideStats.matchCount == 1)
+    #expect(insights.rightSideStats.losses == 1)
+    #expect(insights.rightSideStats.winRate == 0)
+}

@@ -21,22 +21,26 @@ struct MatchPlayersEditSection: View {
 
         Section(String(localized: "Side A")) {
             playerField(
-                title: String(localized: "Side A player 1"),
+                title: String(localized: "Left side"),
+                subtitle: String(localized: "Left side"),
                 text: $sideAPlayer1
             )
             playerField(
-                title: String(localized: "Side A player 2"),
+                title: String(localized: "Right side"),
+                subtitle: String(localized: "Right side"),
                 text: $sideAPlayer2
             )
         }
 
         Section(String(localized: "Side B")) {
             playerField(
-                title: String(localized: "Side B player 1"),
+                title: String(localized: "Left side"),
+                subtitle: String(localized: "Left side"),
                 text: $sideBPlayer1
             )
             playerField(
-                title: String(localized: "Side B player 2"),
+                title: String(localized: "Right side"),
+                subtitle: String(localized: "Right side"),
                 text: $sideBPlayer2
             )
         }
@@ -44,12 +48,17 @@ struct MatchPlayersEditSection: View {
         .onDisappear(perform: saveIfNeeded)
     }
 
-    private func playerField(title: String, text: Binding<String>) -> some View {
-        TextField(title, text: text)
-            .textInputAutocapitalization(.words)
-            .autocorrectionDisabled()
-            .accessibilityLabel(title)
-            .onSubmit(saveIfNeeded)
+    private func playerField(title: String, subtitle: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            TextField(title, text: text)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .accessibilityLabel("\(subtitle), \(title)")
+                .onSubmit(saveIfNeeded)
+        }
     }
 
     private func loadFromMatch() {

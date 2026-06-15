@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MatchRowView: View {
     let match: Match
+    var focusPlayerID: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -13,16 +14,34 @@ struct MatchRowView: View {
             Text(match.scoreSummary)
                 .font(.headline)
 
+            if let focusPlayerID,
+               let placement = match.roster.placementDescription(for: focusPlayerID) {
+                Text(placement)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Text(MatchFormatting.winnerLabel(for: match))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            String(
-                localized: "\(MatchFormatting.dayTitle(for: match.startedAt)), score \(match.scoreSummary), winner \(MatchFormatting.winnerLabel(for: match))"
-            )
-        )
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var accessibilityLabel: String {
+        var parts = [
+            MatchFormatting.dayTitle(for: match.startedAt),
+            String(localized: "score \(match.scoreSummary)"),
+            String(localized: "winner \(MatchFormatting.winnerLabel(for: match))"),
+        ]
+
+        if let focusPlayerID,
+           let placement = match.roster.placementDescription(for: focusPlayerID) {
+            parts.append(String(localized: "played \(placement)"))
+        }
+
+        return parts.joined(separator: ", ")
     }
 }
 

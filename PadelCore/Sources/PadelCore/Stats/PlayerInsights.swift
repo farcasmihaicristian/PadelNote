@@ -1,5 +1,26 @@
 import Foundation
 
+public struct RolePerformanceStats: Sendable, Hashable {
+    public let matchCount: Int
+    public let wins: Int
+    public let losses: Int
+    public let winRate: Double?
+
+    public static let empty = RolePerformanceStats(
+        matchCount: 0,
+        wins: 0,
+        losses: 0,
+        winRate: nil
+    )
+
+    public init(matchCount: Int, wins: Int, losses: Int, winRate: Double?) {
+        self.matchCount = matchCount
+        self.wins = wins
+        self.losses = losses
+        self.winRate = winRate
+    }
+}
+
 public struct PlayerSummary: Sendable, Hashable, Identifiable {
     public let id: UUID
     public let displayName: String
@@ -62,6 +83,8 @@ public struct PlayerInsights: Sendable, Hashable {
     public let goldenPointOpportunities: Int
     public let goldenPointWins: Int
     public let goldenPointConversionRate: Double?
+    public let leftSideStats: RolePerformanceStats
+    public let rightSideStats: RolePerformanceStats
 
     public static func empty(playerID: UUID, displayName: String) -> PlayerInsights {
         PlayerInsights(
@@ -75,7 +98,9 @@ public struct PlayerInsights: Sendable, Hashable {
             averageDuration: nil,
             goldenPointOpportunities: 0,
             goldenPointWins: 0,
-            goldenPointConversionRate: nil
+            goldenPointConversionRate: nil,
+            leftSideStats: .empty,
+            rightSideStats: .empty
         )
     }
 }

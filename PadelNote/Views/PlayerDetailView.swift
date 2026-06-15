@@ -73,6 +73,8 @@ struct PlayerDetailView: View {
                     }
                 }
 
+                CourtSideInsightsSection(insights: insights)
+
                 Section(String(localized: "Duration")) {
                     if let averageDuration = insights.averageDuration {
                         LabeledContent(String(localized: "Average duration")) {
@@ -125,7 +127,7 @@ struct PlayerDetailView: View {
                             NavigationLink {
                                 MatchDetailView(match: match)
                             } label: {
-                                MatchRowView(match: match)
+                                MatchRowView(match: match, focusPlayerID: player.id)
                             }
                         }
                     }

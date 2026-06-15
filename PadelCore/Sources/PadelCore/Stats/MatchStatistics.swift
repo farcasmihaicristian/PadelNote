@@ -155,22 +155,46 @@ public enum MatchStatistics {
         var goldenPointWins = 0
         var durations: [TimeInterval] = []
 
+        var leftMatches = 0
+        var leftWins = 0
+        var leftLosses = 0
+        var rightMatches = 0
+        var rightWins = 0
+        var rightLosses = 0
+
         for summary in completed {
             if let duration = summary.duration {
                 durations.append(duration)
             }
 
-            if let team = summary.roster.team(for: playerID) {
-                let goldenCounts = goldenPointCounts(for: summary, team: team)
-                goldenPointOpportunities += goldenCounts.opportunities
-                goldenPointWins += goldenCounts.wins
+            guard let team = summary.roster.team(for: playerID),
+                  let courtSide = summary.roster.courtSide(for: playerID)
+            else { continue }
 
-                if let winner = summary.winner {
-                    if winner == team {
-                        wins += 1
-                    } else {
-                        losses += 1
-                    }
+            let goldenCounts = goldenPointCounts(for: summary, team: team)
+            goldenPointOpportunities += goldenCounts.opportunities
+            goldenPointWins += goldenCounts.wins
+
+            switch courtSide {
+            case .left:
+                leftMatches += 1
+            case .right:
+                rightMatches += 1
+            }
+
+            if let winner = summary.winner {
+                let won = winner == team
+                if won {
+                    wins += 1
+                } else {
+                    losses += 1
+                }
+
+                switch courtSide {
+                case .left:
+                    if won { leftWins += 1 } else { leftLosses += 1 }
+                case .right:
+                    if won { rightWins += 1 } else { rightLosses += 1 }
                 }
             }
         }
@@ -190,7 +214,31 @@ public enum MatchStatistics {
             goldenPointWins: goldenPointWins,
             goldenPointConversionRate: goldenPointOpportunities == 0
                 ? nil
-                : Double(goldenPointWins) / Double(goldenPointOpportunities)
+                : Double(goldenPointWins) / Double(goldenPointOpportunities),
+            leftSideStats: rolePerformanceStats(
+                matchCount: leftMatches,
+                wins: leftWins,
+                losses: leftLosses
+            ),
+            rightSideStats: rolePerformanceStats(
+                matchCount: rightMatches,
+                wins: rightWins,
+                losses: rightLosses
+            )
+        )
+    }
+
+    private static func rolePerformanceStats(
+        matchCount: Int,
+        wins: Int,
+        losses: Int
+    ) -> RolePerformanceStats {
+        let decided = wins + losses
+        return RolePerformanceStats(
+            matchCount: matchCount,
+            wins: wins,
+            losses: losses,
+            winRate: decided == 0 ? nil : Double(wins) / Double(decided)
         )
     }
 

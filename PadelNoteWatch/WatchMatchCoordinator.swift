@@ -74,6 +74,22 @@ final class WatchMatchCoordinator {
         playerSetup.playerNames
     }
 
+    func displaySideLabel(for team: Team) -> String {
+        activePlayerNames.sideLabel(for: team)
+    }
+
+    func toggleLeftRightSides(for team: Team) {
+        var setup = playerSetup
+        switch team {
+        case .a:
+            swap(&setup.sideAPlayer1, &setup.sideAPlayer2)
+        case .b:
+            swap(&setup.sideBPlayer1, &setup.sideBPlayer2)
+        }
+        playerSetup = setup
+        publishSnapshot()
+    }
+
     func prepare() async {
         syncService.activate()
         await workoutRecorder.requestAuthorization()
