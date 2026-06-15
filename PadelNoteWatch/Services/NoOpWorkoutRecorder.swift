@@ -19,7 +19,7 @@ final class NoOpWorkoutRecorder: WorkoutRecording {
         startedAt = .now
     }
 
-    func end() async throws {
-        elapsedDuration = Date.now.timeIntervalSince(startedAt)
+    func end(endedAt: Date = .now) async throws {
+        elapsedDuration = endedAt.timeIntervalSince(startedAt)
     }
 }

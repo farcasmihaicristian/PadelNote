@@ -8,15 +8,15 @@ struct WatchLiveMatchOptionsView: View {
     var body: some View {
         List {
             optionButton(
-                title: String(localized: "Change Left/Right — Top"),
-                subtitle: String(localized: "Swap left and right for the top pair.")
+                title: String(localized: "Swap Team Green"),
+                subtitle: String(localized: "Swap left and right for the green team.")
             ) {
                 coordinator.toggleLeftRightSides(for: .b)
             }
 
             optionButton(
-                title: String(localized: "Change Left/Right — Bottom"),
-                subtitle: String(localized: "Swap left and right for the bottom pair.")
+                title: String(localized: "Swap Team Blue"),
+                subtitle: String(localized: "Swap left and right for the blue team.")
             ) {
                 coordinator.toggleLeftRightSides(for: .a)
             }

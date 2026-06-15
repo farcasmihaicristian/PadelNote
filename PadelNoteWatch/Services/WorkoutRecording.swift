@@ -12,5 +12,5 @@ protocol WorkoutRecording: AnyObject {
 
     func requestAuthorization() async
     func start() async throws
-    func end() async throws
+    func end(endedAt: Date) async throws
 }

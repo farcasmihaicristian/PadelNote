@@ -28,6 +28,7 @@ final class WatchMatchCoordinator {
     var isStarting = false
     var isSaving = false
     private var endedEarly = false
+    private var matchActivityEndedAt: Date?
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
@@ -128,9 +129,7 @@ final class WatchMatchCoordinator {
         publishSnapshot()
 
         if session.state.isMatchOver {
-            endedEarly = false
-            phase = .summary
-            publishSessionEnded()
+            transitionToSummary(endedEarly: false)
         }
     }
 
@@ -143,9 +142,7 @@ final class WatchMatchCoordinator {
 
     func endMatchEarly() {
         guard session != nil, !session!.events.isEmpty else { return }
-        endedEarly = true
-        phase = .summary
-        publishSessionEnded()
+        transitionToSummary(endedEarly: true)
     }
 
     func saveMatch() async {
@@ -154,7 +151,7 @@ final class WatchMatchCoordinator {
         defer { isSaving = false }
 
         do {
-            try await workoutRecorder.end()
+            try await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
             if !workoutRecorder.savedToHealth {
                 workoutWarning = String(localized: "Workout not saved to Apple Health — match was under 10 minutes.")
             }
@@ -169,7 +166,7 @@ final class WatchMatchCoordinator {
 
     func discardMatch() async {
         if phase != .idle {
-            try? await workoutRecorder.end()
+            try? await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
         }
         reset(clearLiveSession: false)
     }
@@ -183,6 +180,7 @@ final class WatchMatchCoordinator {
         matchID = nil
         workoutWarning = nil
         endedEarly = false
+        matchActivityEndedAt = nil
         playerSetup = .empty
         loadIdleSetup()
         applyMeProfileDefaultIfNeeded()
@@ -194,7 +192,10 @@ final class WatchMatchCoordinator {
     }
 
     var summaryDuration: TimeInterval {
-        max(workoutRecorder.elapsedDuration, Date.now.timeIntervalSince(startedAt))
+        if let matchActivityEndedAt {
+            return matchActivityEndedAt.timeIntervalSince(startedAt)
+        }
+        return max(workoutRecorder.elapsedDuration, Date.now.timeIntervalSince(startedAt))
     }
 
     var canContinueNewSet: Bool {
@@ -219,8 +220,16 @@ final class WatchMatchCoordinator {
         self.session = ScoringSession(rules: rules, events: session.events)
 
         endedEarly = false
+        matchActivityEndedAt = nil
         phase = .live
         publishSnapshot()
+    }
+
+    private func transitionToSummary(endedEarly: Bool) {
+        self.endedEarly = endedEarly
+        matchActivityEndedAt = .now
+        phase = .summary
+        publishSessionEnded()
     }
 
     func reservedPlayerNames(excluding excludedSlot: PlayerSlot) -> Set<String> {

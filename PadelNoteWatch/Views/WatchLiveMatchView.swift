@@ -11,36 +11,32 @@ struct WatchLiveMatchView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                VStack(spacing: 0) {
-                    teamZone(
-                        team: .b,
-                        label: coordinator.displaySideLabel(for: .b),
-                        height: geometry.size.height / 2
-                    )
+        ZStack {
+            VStack(spacing: 0) {
+                teamZone(
+                    team: .b,
+                    label: coordinator.displaySideLabel(for: .b)
+                )
 
-                    teamZone(
-                        team: .a,
-                        label: coordinator.displaySideLabel(for: .a),
-                        height: geometry.size.height / 2
-                    )
-                }
+                teamZone(
+                    team: .a,
+                    label: coordinator.displaySideLabel(for: .a)
+                )
+            }
 
-                scoreOverlay
+            scoreOverlay
 
-                HStack(spacing: 0) {
-                    courtOptionsEdgeZone(height: geometry.size.height)
-                    Spacer(minLength: 0)
-                }
+            HStack(spacing: 0) {
+                courtOptionsEdgeZone
+                Spacer(minLength: 0)
             }
         }
-        .ignoresSafeArea(edges: .horizontal)
-        .navigationTitle(String(localized: "Live"))
+        .ignoresSafeArea()
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button(String(localized: "End")) {
+                liveControlButton(String(localized: "End")) {
                     showEndConfirmation = true
                 }
                 .disabled(coordinator.session?.events.isEmpty ?? true)
@@ -48,7 +44,7 @@ struct WatchLiveMatchView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button(String(localized: "Undo")) {
+                liveControlButton(String(localized: "Undo")) {
                     coordinator.undo()
                 }
                 .disabled(coordinator.session?.events.isEmpty ?? true)
@@ -70,9 +66,23 @@ struct WatchLiveMatchView: View {
         }
     }
 
-    private func courtOptionsEdgeZone(height: CGFloat) -> some View {
+    private func liveControlButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(title, action: action)
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.95))
+            .padding(.horizontal, 4)
+            .padding(.vertical, 1)
+            .background(.black.opacity(0.5), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(.black.opacity(0.6), lineWidth: 0.5)
+            }
+    }
+
+    private var courtOptionsEdgeZone: some View {
         Color.clear
-            .frame(width: 28, height: height)
+            .frame(width: 28)
+            .frame(maxHeight: .infinity)
             .contentShape(Rectangle())
             .highPriorityGesture(
                 DragGesture(minimumDistance: 10)
@@ -91,10 +101,10 @@ struct WatchLiveMatchView: View {
     }
 
     private var scoreOverlay: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 6) {
+        VStack(spacing: 3) {
+            HStack(spacing: 7) {
                 if !state.completedSets.isEmpty {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         ForEach(Array(state.completedSets.enumerated()), id: \.offset) { _, set in
                             Text(ScoreFormatter.formatSetScore(set))
                         }
@@ -108,13 +118,15 @@ struct WatchLiveMatchView: View {
             }
 
             Text(ScoreFormatter.currentGameScore(in: state))
-                .font(.system(.title3, design: .rounded).weight(.bold))
+                .font(.system(.title2, design: .rounded).weight(.bold))
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .scaleEffect(1.15)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(scoreAccessibilityLabel)
+        .allowsHitTesting(false)
     }
 
     private var scoreAccessibilityLabel: String {
@@ -128,24 +140,39 @@ struct WatchLiveMatchView: View {
         return String(localized: "Completed sets \(completed), current set \(currentSet), game score \(game)")
     }
 
-    private func teamZone(team: Team, label: String, height: CGFloat) -> some View {
+    private func teamZone(team: Team, label: String) -> some View {
         Button {
             coordinator.addPoint(for: team)
         } label: {
-            Text(label)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
+            ZStack {
+                teamBackground(for: team)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                Text(label)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .padding(.horizontal, 8)
+                    .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(height: height)
-        .frame(maxWidth: .infinity)
-        .background(team == .a ? Color.blue.opacity(0.32) : Color.green.opacity(0.32))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .disabled(state.isMatchOver)
         .accessibilityLabel(String(localized: "Point \(label)"))
+    }
+
+    private func teamBackground(for team: Team) -> Color {
+        switch team {
+        case .a:
+            Color(red: 0.20, green: 0.36, blue: 0.55)
+        case .b:
+            Color(red: 0.18, green: 0.44, blue: 0.30)
+        }
     }
 }
 

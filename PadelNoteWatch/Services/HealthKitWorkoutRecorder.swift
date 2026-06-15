@@ -11,6 +11,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
     private var builder: HKLiveWorkoutBuilder?
     private var startedAt = Date.now
     private var heartRateSamples: [Double] = []
+    private var hasEnded = false
 
     private(set) var isAuthorized = false
     private(set) var authorizationDenied = false
@@ -56,6 +57,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         activeEnergyKilocalories = nil
         distanceMeters = nil
         savedToHealth = false
+        hasEnded = false
 
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .tennis
@@ -79,13 +81,13 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         ])
     }
 
-    func end() async throws {
+    func end(endedAt: Date = .now) async throws {
         guard let session, let builder else { return }
+        guard !hasEnded else { return }
+        hasEnded = true
 
-        let endDate = Date.now
-        let duration = endDate.timeIntervalSince(startedAt)
-        session.end()
-        try await builder.endCollection(at: endDate)
+        let duration = endedAt.timeIntervalSince(startedAt)
+        try await builder.endCollection(at: endedAt)
 
         if duration >= Self.minimumSaveDuration {
             try await builder.finishWorkout()
@@ -101,6 +103,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
             distanceMeters = nil
         }
 
+        session.end()
         self.session = nil
         self.builder = nil
     }
