@@ -24,6 +24,7 @@ enum WatchMatchStore {
         var events: [PointEvent]
         var playerNames: MatchPlayerNames
         var setLineups: [MatchPlayerNames]
+        var setServeOrders: [ServeOrder]
 
         init(
             matchID: UUID,
@@ -31,7 +32,8 @@ enum WatchMatchStore {
             rules: MatchRules,
             events: [PointEvent],
             playerNames: MatchPlayerNames,
-            setLineups: [MatchPlayerNames] = []
+            setLineups: [MatchPlayerNames] = [],
+            setServeOrders: [ServeOrder] = []
         ) {
             self.matchID = matchID
             self.startedAt = startedAt
@@ -39,6 +41,7 @@ enum WatchMatchStore {
             self.events = events
             self.playerNames = playerNames
             self.setLineups = setLineups
+            self.setServeOrders = setServeOrders
         }
 
         init(from decoder: Decoder) throws {
@@ -49,6 +52,7 @@ enum WatchMatchStore {
             events = try container.decode([PointEvent].self, forKey: .events)
             playerNames = try container.decode(MatchPlayerNames.self, forKey: .playerNames)
             setLineups = try container.decodeIfPresent([MatchPlayerNames].self, forKey: .setLineups) ?? []
+            setServeOrders = try container.decodeIfPresent([ServeOrder].self, forKey: .setServeOrders) ?? []
         }
     }
 

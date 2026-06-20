@@ -162,12 +162,45 @@ public enum MatchStatistics {
         var rightWins = 0
         var rightLosses = 0
 
+        var servePointsPlayed = 0
+        var servePointsWon = 0
+        var serviceGamesPlayed = 0
+        var serviceGamesHeld = 0
+
         for summary in completed {
             if let duration = summary.duration {
                 durations.append(duration)
             }
 
             guard let team = summary.roster.team(for: playerID) else { continue }
+
+            // Serve attribution. Only matches recorded with serve tracking
+            // contribute, so legacy matches don't get a default rotation applied.
+            if !summary.setServeOrders.isEmpty {
+                let timeline = ServeEngine.timeline(
+                    events: summary.events,
+                    rules: summary.rules,
+                    orders: summary.setServeOrders
+                )
+
+                for point in timeline.points {
+                    let roster = summary.setRosters[safe: point.setIndex] ?? summary.roster
+                    guard serverID(for: point.servingSlot, in: roster) == playerID else { continue }
+                    servePointsPlayed += 1
+                    if point.winner == point.servingTeam {
+                        servePointsWon += 1
+                    }
+                }
+
+                for game in timeline.games where !game.isTieBreak {
+                    let roster = summary.setRosters[safe: game.setIndex] ?? summary.roster
+                    guard serverID(for: game.serverSlot, in: roster) == playerID else { continue }
+                    serviceGamesPlayed += 1
+                    if game.held {
+                        serviceGamesHeld += 1
+                    }
+                }
+            }
 
             let goldenCounts = goldenPointCounts(for: summary, team: team)
             goldenPointOpportunities += goldenCounts.opportunities
@@ -230,8 +263,29 @@ public enum MatchStatistics {
                 matchCount: rightSets,
                 wins: rightWins,
                 losses: rightLosses
-            )
+            ),
+            servePointsPlayed: servePointsPlayed,
+            servePointsWon: servePointsWon,
+            servePointWinRate: servePointsPlayed == 0
+                ? nil
+                : Double(servePointsWon) / Double(servePointsPlayed),
+            serviceGamesPlayed: serviceGamesPlayed,
+            serviceGamesHeld: serviceGamesHeld,
+            serviceGamesBroken: serviceGamesPlayed - serviceGamesHeld,
+            serviceHoldRate: serviceGamesPlayed == 0
+                ? nil
+                : Double(serviceGamesHeld) / Double(serviceGamesPlayed)
         )
+    }
+
+    /// Maps a serving slot to the player occupying that position in a set's roster.
+    private static func serverID(for slot: PlayerSlot, in roster: MatchRoster) -> UUID? {
+        switch slot {
+        case .sideAPlayer1: roster.sideA[safe: 0]?.id
+        case .sideAPlayer2: roster.sideA[safe: 1]?.id
+        case .sideBPlayer1: roster.sideB[safe: 0]?.id
+        case .sideBPlayer2: roster.sideB[safe: 1]?.id
+        }
     }
 
     private static func rolePerformanceStats(

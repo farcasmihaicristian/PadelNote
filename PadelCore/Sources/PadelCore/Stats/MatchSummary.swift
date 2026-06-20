@@ -10,6 +10,9 @@ public struct MatchSummary: Sendable, Hashable {
     /// Court lineup per set (index = set number). Empty for matches without
     /// per-set tracking; consumers fall back to `roster` for every set.
     public let setRosters: [MatchRoster]
+    /// Serving order per set (index = set number). Empty for matches recorded
+    /// without serve tracking.
+    public let setServeOrders: [ServeOrder]
 
     public init(
         rules: MatchRules,
@@ -18,7 +21,8 @@ public struct MatchSummary: Sendable, Hashable {
         duration: TimeInterval?,
         isCompleted: Bool,
         roster: MatchRoster = .empty,
-        setRosters: [MatchRoster] = []
+        setRosters: [MatchRoster] = [],
+        setServeOrders: [ServeOrder] = []
     ) {
         self.rules = rules
         self.events = events
@@ -27,5 +31,6 @@ public struct MatchSummary: Sendable, Hashable {
         self.isCompleted = isCompleted
         self.roster = roster
         self.setRosters = setRosters
+        self.setServeOrders = setServeOrders
     }
 }

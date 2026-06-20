@@ -75,6 +75,8 @@ struct PlayerDetailView: View {
 
                 CourtSideInsightsSection(insights: insights)
 
+                ServeInsightsSection(insights: insights)
+
                 Section(String(localized: "Duration")) {
                     if let averageDuration = insights.averageDuration {
                         LabeledContent(String(localized: "Average duration")) {

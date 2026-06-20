@@ -8,6 +8,32 @@ public enum PlayerSlot: String, CaseIterable, Codable, Sendable, Identifiable {
 
     public var id: String { rawValue }
 
+    /// The team this slot belongs to (Side A = bottom, Side B = top).
+    public var team: Team {
+        switch self {
+        case .sideAPlayer1, .sideAPlayer2: .a
+        case .sideBPlayer1, .sideBPlayer2: .b
+        }
+    }
+
+    /// The partner sharing this slot's side of the court.
+    public var partner: PlayerSlot {
+        switch self {
+        case .sideAPlayer1: .sideAPlayer2
+        case .sideAPlayer2: .sideAPlayer1
+        case .sideBPlayer1: .sideBPlayer2
+        case .sideBPlayer2: .sideBPlayer1
+        }
+    }
+
+    /// Default on-court position before any left/right swap (player 1 = right).
+    public var defaultCourtSide: PlayerCourtSide {
+        switch self {
+        case .sideAPlayer1, .sideBPlayer1: .right
+        case .sideAPlayer2, .sideBPlayer2: .left
+        }
+    }
+
     public var label: String {
         switch self {
         case .sideAPlayer1:

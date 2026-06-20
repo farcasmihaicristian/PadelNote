@@ -12,6 +12,7 @@ struct NewMatchSetupView: View {
     @State private var setTieBreak = MatchRules.default.setTieBreak
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     @State private var playerSetup = MatchPlayerSetup.empty
+    @State private var firstServer: PlayerSlot = MeProfilePreferences.preferredSlot()
     @State private var startLiveMatch = false
 
     private var rules: MatchRules {
@@ -70,6 +71,14 @@ struct NewMatchSetupView: View {
                 )
             }
 
+            Section(String(localized: "Serve")) {
+                Picker(String(localized: "First serve"), selection: $firstServer) {
+                    ForEach(PlayerSlot.allCases) { slot in
+                        Text(serverLabel(for: slot)).tag(slot)
+                    }
+                }
+            }
+
             Section {
                 Button {
                     startLiveMatch = true
@@ -95,9 +104,15 @@ struct NewMatchSetupView: View {
             LiveMatchView(
                 rules: rules,
                 playerSetup: playerSetup,
+                firstServer: firstServer,
                 onFinished: onFinished
             )
         }
+    }
+
+    private func serverLabel(for slot: PlayerSlot) -> String {
+        let name = slot.selection(from: playerSetup).trimmedName
+        return name.isEmpty ? slot.label : name
     }
 
     private func loadDefaults() {

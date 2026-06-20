@@ -21,8 +21,23 @@ struct WatchLiveMatchOptionsView: View {
                 coordinator.toggleLeftRightSides(for: .a)
             }
 
+            if coordinator.canSwapSides {
+                Picker(
+                    String(localized: "First serve"),
+                    selection: Binding(
+                        get: { coordinator.firstServer },
+                        set: { coordinator.setFirstServerForCurrentSet($0) }
+                    )
+                ) {
+                    ForEach(PlayerSlot.allCases) { slot in
+                        Text(coordinator.serverDisplayName(for: slot)).tag(slot)
+                    }
+                }
+                .accessibilityLabel(String(localized: "Server for this set"))
+            }
+
             if !coordinator.canSwapSides {
-                Text(String(localized: "Switch sides only at the start of a new set (0-0)."))
+                Text(String(localized: "Switch sides or server only at the start of a new set (0-0)."))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

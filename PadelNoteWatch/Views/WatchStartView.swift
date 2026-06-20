@@ -70,6 +70,14 @@ struct WatchStartView: View {
                 coordinator: coordinator
             )
 
+            Picker(String(localized: "First serve"), selection: $coordinator.firstServer) {
+                ForEach(PlayerSlot.allCases) { slot in
+                    Text(coordinator.serverDisplayName(for: slot)).tag(slot)
+                }
+            }
+            .watchStartPickerRow()
+            .accessibilityLabel(String(localized: "First server"))
+
             if coordinator.healthAuthDenied {
                 Text(String(localized: "Health access denied. You can still score, but workouts won't be saved to Apple Health."))
                     .font(.caption2)

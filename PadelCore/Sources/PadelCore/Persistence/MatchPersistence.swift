@@ -8,7 +8,8 @@ public enum MatchPersistence {
         rules: MatchRules,
         events: [PointEvent],
         startedAt: Date,
-        playerSetup: MatchPlayerSetup
+        playerSetup: MatchPlayerSetup,
+        setServeOrders: [ServeOrder] = []
     ) -> Match {
         let state = ScoringEngine.replay(events: events, rules: rules)
         let roster = PlayerPersistence.resolveRoster(context: context, setup: playerSetup)
@@ -19,7 +20,8 @@ public enum MatchPersistence {
             completedSets: state.completedSets,
             winner: state.winner,
             playerNames: playerSetup.playerNames,
-            roster: roster
+            roster: roster,
+            setServeOrders: setServeOrders
         )
         context.insert(match)
 
@@ -86,7 +88,8 @@ public enum MatchPersistence {
                 averageHeartRate: payload.averageHeartRate,
                 activeEnergyKilocalories: payload.activeEnergyKilocalories,
                 distanceMeters: payload.distanceMeters,
-                setRosters: setRosters
+                setRosters: setRosters,
+                setServeOrders: payload.setServeOrders
             )
             context.insert(match)
             appendPoints(to: match, from: payload, context: context)
@@ -100,6 +103,7 @@ public enum MatchPersistence {
         match.playerNames = payload.playerNames
         match.roster = roster
         match.setRosters = setRosters
+        match.setServeOrders = payload.setServeOrders
         match.averageHeartRate = payload.averageHeartRate
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters

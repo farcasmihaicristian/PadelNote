@@ -22,6 +22,14 @@ struct WatchLiveMirrorView: View {
                 LabeledContent(String(localized: "Points played")) {
                     Text("\(snapshot.pointCount)")
                 }
+
+                if let serveText {
+                    LabeledContent(String(localized: "Serving")) {
+                        Label(serveText, systemImage: "arrowtriangle.right.fill")
+                            .labelStyle(.titleAndIcon)
+                            .foregroundStyle(.orange)
+                    }
+                }
             } header: {
                 Label(String(localized: "Live on Apple Watch"), systemImage: "applewatch")
             }
@@ -36,6 +44,17 @@ struct WatchLiveMirrorView: View {
         }
         .navigationTitle(String(localized: "Watch match"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var serveText: String? {
+        guard !snapshot.isMatchOver, let side = snapshot.serveSide else { return nil }
+        let server = snapshot.servingPlayerName
+            ?? snapshot.servingTeam.map { snapshot.teamLabel(for: $0) }
+            ?? String(localized: "Server")
+        let sideText = side == .right
+            ? String(localized: "right")
+            : String(localized: "left")
+        return String(localized: "\(server) · \(sideText)")
     }
 }
 

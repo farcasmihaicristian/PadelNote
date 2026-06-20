@@ -112,6 +112,41 @@ import Testing
     #expect(decoded.setLineups == [setOne, setTwo])
 }
 
+@Test func matchTransferPayloadRoundTripsSetServeOrders() throws {
+    let orders = [
+        ServeOrder.standard(firstServer: .sideAPlayer1),
+        ServeOrder(firstServer: .sideBPlayer2, firstReceiverServer: .sideAPlayer2),
+    ]
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: .default,
+        events: [PointEvent(team: .a)],
+        setServeOrders: orders
+    )
+
+    let data = try JSONEncoder().encode(payload)
+    let decoded = try JSONDecoder().decode(MatchTransferPayload.self, from: data)
+
+    #expect(decoded.setServeOrders == orders)
+}
+
+@Test func matchTransferPayloadDecodesLegacyWithoutSetServeOrders() throws {
+    let json = """
+    {
+        "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+        "startedAt": 0,
+        "endedAt": 0,
+        "rules": { "setsToWin": 2, "gamesPerSet": 6, "winByTwoGames": true, "gamePointStyle": "goldenPoint", "setTieBreak": "classic", "finalSetTieBreak": "superTieBreak10" },
+        "events": []
+    }
+    """.data(using: .utf8)!
+
+    let decoded = try JSONDecoder().decode(MatchTransferPayload.self, from: json)
+
+    #expect(decoded.setServeOrders.isEmpty)
+}
+
 @Test func matchTransferPayloadDecodesLegacyWithoutSetLineups() throws {
     let json = """
     {

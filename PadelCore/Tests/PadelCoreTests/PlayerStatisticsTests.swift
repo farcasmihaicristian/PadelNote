@@ -192,6 +192,76 @@ import Testing
     #expect(insights.rightSideStats.winRate == 1)
 }
 
+@Test func playerInsightsTracksServePointsAndGames() {
+    let alexID = UUID()
+    let chrisID = UUID()
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    // Team A wins every game of a 6-0 set.
+    let events: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .a) } }
+
+    let roster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: nil, playerA2Name: "Maria",
+        playerB1ID: chrisID, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+
+    // Alex (A1) serves first -> rotation A1, B1, A2, B2.
+    let summary = MatchSummary(
+        rules: rules,
+        events: events,
+        winner: .a,
+        duration: 3600,
+        isCompleted: true,
+        roster: roster,
+        setServeOrders: [ServeOrder.standard(firstServer: .sideAPlayer1)]
+    )
+
+    let alex = MatchStatistics.playerInsights(for: alexID, displayName: "Alex", in: [summary])
+    // Alex serves games 1 and 5 (0-indexed 0 and 4), both held; all 8 points won.
+    #expect(alex.serviceGamesPlayed == 2)
+    #expect(alex.serviceGamesHeld == 2)
+    #expect(alex.serviceGamesBroken == 0)
+    #expect(alex.serviceHoldRate == 1)
+    #expect(alex.servePointsPlayed == 8)
+    #expect(alex.servePointsWon == 8)
+    #expect(alex.servePointWinRate == 1)
+
+    let chris = MatchStatistics.playerInsights(for: chrisID, displayName: "Chris", in: [summary])
+    // Chris (B1) serves games 2 and 6, both broken; lost all 8 service points.
+    #expect(chris.serviceGamesPlayed == 2)
+    #expect(chris.serviceGamesHeld == 0)
+    #expect(chris.serviceGamesBroken == 2)
+    #expect(chris.serviceHoldRate == 0)
+    #expect(chris.servePointsPlayed == 8)
+    #expect(chris.servePointsWon == 0)
+}
+
+@Test func playerInsightsHasNoServeDataWithoutServeOrders() {
+    let alexID = UUID()
+    let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
+    let events: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .a) } }
+    let roster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: nil, playerA2Name: "Maria",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+    let summary = MatchSummary(
+        rules: rules,
+        events: events,
+        winner: .a,
+        duration: 3600,
+        isCompleted: true,
+        roster: roster
+    )
+
+    let insights = MatchStatistics.playerInsights(for: alexID, displayName: "Alex", in: [summary])
+    #expect(!insights.hasServeData)
+    #expect(insights.servePointsPlayed == 0)
+    #expect(insights.serviceGamesPlayed == 0)
+}
+
 @Test func playerInsightsTracksSideChangesPerSet() {
     let alexID = UUID()
     let rules = MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint)

@@ -24,6 +24,14 @@ final class WatchMatchCoordinator {
     /// Court lineup per set (index = set number), capturing left/right side
     /// changes made between sets. Sent with the completed match for per-set insights.
     var setLineups: [MatchPlayerNames] = []
+    /// Player who serves the first game of the match.
+    var firstServer: PlayerSlot = .sideAPlayer1
+    /// Serving order per set (index = set number). Sent with the completed match
+    /// for per-set serve insights.
+    var setServeOrders: [ServeOrder] = []
+    /// Receiver's chosen serve side for the upcoming golden/star deciding point.
+    /// Cleared once that point is played or undone.
+    var decidingSideOverride: ServeSide?
     var knownPlayerNames: [String] = []
     var meProfile: WatchMeProfile?
     var healthAuthDenied = false
@@ -94,6 +102,50 @@ final class WatchMatchCoordinator {
         activePlayerNames.courtSideLabel(for: team)
     }
 
+    /// The serve for the next point (which player serves, from which side),
+    /// honoring any receiver side choice for a deciding point.
+    var currentServe: ServeContext? {
+        guard phase == .live, let session, !session.state.isMatchOver else { return nil }
+        return ServeEngine.currentServe(
+            events: session.events,
+            rules: rules,
+            orders: setServeOrders,
+            decidingSideOverride: decidingSideOverride
+        )
+    }
+
+    /// True when the next point is a golden/star deciding point that still needs
+    /// the receiving team to choose the serve side.
+    var needsDecidingSideChoice: Bool {
+        guard let serve = currentServe else { return false }
+        return serve.isDecidingPoint && decidingSideOverride == nil
+    }
+
+    /// Picks the receiver's serve side for the upcoming deciding point.
+    func chooseDecidingSide(_ side: ServeSide) {
+        decidingSideOverride = side
+        publishSnapshot()
+    }
+
+    /// Re-points the serve indicator by changing who serves first this set.
+    /// Allowed only at a set boundary (0-0), the same gate as side swaps.
+    func setFirstServerForCurrentSet(_ slot: PlayerSlot) {
+        guard canSwapSides, let session else { return }
+        firstServer = slot
+        let activeSetIndex = session.state.completedSets.count
+        let order = ServeOrder.standard(firstServer: slot)
+        if activeSetIndex < setServeOrders.count {
+            setServeOrders[activeSetIndex] = order
+        } else {
+            syncSetServeOrders()
+            if activeSetIndex < setServeOrders.count {
+                setServeOrders[activeSetIndex] = order
+            }
+        }
+        persistLiveState()
+        publishSnapshot()
+    }
+
     /// Sides can only be switched at the start of a set (fully at 0-0): before
     /// the first point of the match, or between sets after one completes.
     var canSwapSides: Bool {
@@ -146,6 +198,28 @@ final class WatchMatchCoordinator {
         setLineups[activeSetIndex] = activePlayerNames
     }
 
+    /// Keeps `setServeOrders` aligned with the sets played so far. Unlike the
+    /// lineup, the serving order is fixed once a set starts: new sets inherit the
+    /// previous set's order (or derive from `firstServer` for the first set).
+    private func syncSetServeOrders() {
+        guard let session else {
+            setServeOrders = []
+            return
+        }
+
+        let activeSetIndex = session.state.completedSets.count
+        let targetCount = activeSetIndex + 1
+
+        if setServeOrders.count > targetCount {
+            setServeOrders = Array(setServeOrders.prefix(targetCount))
+        }
+
+        while setServeOrders.count < targetCount {
+            let order = setServeOrders.last ?? ServeOrder.standard(firstServer: firstServer)
+            setServeOrders.append(order)
+        }
+    }
+
     private func makeSetup(from names: MatchPlayerNames) -> MatchPlayerSetup {
         MatchPlayerSetup(
             sideAPlayer1: .init(name: names.playerA1Name ?? ""),
@@ -188,11 +262,15 @@ final class WatchMatchCoordinator {
             sideBPlayer2: .init(name: saved.playerNames.playerB2Name ?? "")
         )
         setLineups = saved.setLineups
+        setServeOrders = saved.setServeOrders
+        firstServer = saved.setServeOrders.first?.firstServer ?? .sideAPlayer1
+        decidingSideOverride = nil
         workoutWarning = nil
         endedEarly = false
         matchActivityEndedAt = nil
         phase = .live
         syncSetLineups()
+        syncSetServeOrders()
         publishSnapshot()
         startWorkoutInBackground()
     }
@@ -210,9 +288,12 @@ final class WatchMatchCoordinator {
         rulesBeforeContinue = nil
         continueBaselineEventCount = nil
         setLineups = []
+        setServeOrders = []
+        decidingSideOverride = nil
 
         phase = .live
         syncSetLineups()
+        syncSetServeOrders()
         persistLiveState()
         publishSnapshot()
         startWorkoutInBackground()
@@ -239,7 +320,8 @@ final class WatchMatchCoordinator {
                 rules: rules,
                 events: session.events,
                 playerNames: activePlayerNames,
-                setLineups: setLineups
+                setLineups: setLineups,
+                setServeOrders: setServeOrders
             )
         )
     }
@@ -256,7 +338,9 @@ final class WatchMatchCoordinator {
             continueBaselineEventCount = nil
         }
 
+        decidingSideOverride = nil
         syncSetLineups()
+        syncSetServeOrders()
         persistLiveState()
 
         if session.state.isMatchOver {
@@ -270,7 +354,9 @@ final class WatchMatchCoordinator {
         guard var session, phase == .live else { return }
         guard session.undo() else { return }
         self.session = session
+        decidingSideOverride = nil
         syncSetLineups()
+        syncSetServeOrders()
         persistLiveState()
         publishSnapshot()
     }
@@ -345,6 +431,9 @@ final class WatchMatchCoordinator {
         rulesBeforeContinue = nil
         continueBaselineEventCount = nil
         setLineups = []
+        setServeOrders = []
+        decidingSideOverride = nil
+        firstServer = .sideAPlayer1
         // Player names are intentionally preserved across matches so back-to-back
         // games with the same group don't require re-entry.
         loadIdleSetup()
@@ -392,8 +481,10 @@ final class WatchMatchCoordinator {
 
         endedEarly = false
         matchActivityEndedAt = nil
+        decidingSideOverride = nil
         phase = .live
         syncSetLineups()
+        syncSetServeOrders()
         persistLiveState()
         publishSnapshot()
     }
@@ -403,6 +494,13 @@ final class WatchMatchCoordinator {
         matchActivityEndedAt = .now
         phase = .summary
         publishSessionEnded()
+    }
+
+    /// A label for a serving slot: the player's name when set, else the
+    /// positional slot label.
+    func serverDisplayName(for slot: PlayerSlot) -> String {
+        let name = slot.selection(from: playerSetup).trimmedName
+        return name.isEmpty ? slot.label : name
     }
 
     func reservedPlayerNames(excluding excludedSlot: PlayerSlot) -> Set<String> {
@@ -430,6 +528,7 @@ final class WatchMatchCoordinator {
         guard phase == .idle, let meProfile else { return }
 
         let slot = meProfile.preferredSlot
+        firstServer = slot
         let current = slot.selection(from: playerSetup)
         guard !current.hasContent else { return }
 
@@ -460,12 +559,15 @@ final class WatchMatchCoordinator {
     private func publishSnapshot() {
         guard phase == .live, let session, let matchID else { return }
 
+        let serve = currentServe
         let snapshot = LiveScoreSnapshot(
             matchID: matchID,
             state: session.state,
             playerNames: activePlayerNames,
             pointCount: session.events.count,
-            isSessionActive: true
+            isSessionActive: true,
+            serve: serve,
+            servingPlayerName: serve.map { serverDisplayName(for: $0.servingSlot) }
         )
         syncService.publishLiveScore(snapshot)
     }
@@ -486,7 +588,8 @@ final class WatchMatchCoordinator {
             averageHeartRate: workoutRecorder.averageHeartRate,
             activeEnergyKilocalories: workoutRecorder.activeEnergyKilocalories,
             distanceMeters: workoutRecorder.distanceMeters,
-            setLineups: setLineups
+            setLineups: setLineups,
+            setServeOrders: setServeOrders
         )
     }
 }

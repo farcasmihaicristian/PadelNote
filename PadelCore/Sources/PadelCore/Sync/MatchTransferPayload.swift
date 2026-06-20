@@ -20,6 +20,9 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
     /// changes made between sets. Empty for matches recorded without per-set
     /// tracking; consumers fall back to the canonical `playerNames`.
     public let setLineups: [MatchPlayerNames]
+    /// Serving order per set (index = set number). Empty for matches recorded
+    /// without serve tracking.
+    public let setServeOrders: [ServeOrder]
 
     public var playerNames: MatchPlayerNames {
         MatchPlayerNames(
@@ -42,7 +45,8 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         averageHeartRate: Double? = nil,
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
-        setLineups: [MatchPlayerNames] = []
+        setLineups: [MatchPlayerNames] = [],
+        setServeOrders: [ServeOrder] = []
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -59,6 +63,7 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
         self.setLineups = setLineups
+        self.setServeOrders = setServeOrders
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -67,6 +72,7 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         case teamAName, teamBName
         case averageHeartRate, activeEnergyKilocalories, distanceMeters
         case setLineups
+        case setServeOrders
     }
 
     public init(from decoder: Decoder) throws {
@@ -86,5 +92,6 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         activeEnergyKilocalories = try container.decodeIfPresent(Double.self, forKey: .activeEnergyKilocalories)
         distanceMeters = try container.decodeIfPresent(Double.self, forKey: .distanceMeters)
         setLineups = try container.decodeIfPresent([MatchPlayerNames].self, forKey: .setLineups) ?? []
+        setServeOrders = try container.decodeIfPresent([ServeOrder].self, forKey: .setServeOrders) ?? []
     }
 }

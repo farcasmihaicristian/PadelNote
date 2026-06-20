@@ -25,6 +25,9 @@ public final class Match {
     /// JSON-encoded `[MatchRoster]`, one entry per set, capturing left/right
     /// side changes made between sets. Empty for matches without per-set tracking.
     public var setRostersData: Data = Data()
+    /// JSON-encoded `[ServeOrder]`, one entry per set, capturing the serving
+    /// rotation. Empty for matches recorded without serve tracking.
+    public var setServeOrdersData: Data = Data()
 
     @Relationship(deleteRule: .cascade, inverse: \StoredPointEvent.match)
     public var points: [StoredPointEvent]
@@ -42,6 +45,7 @@ public final class Match {
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
         setRosters: [MatchRoster] = [],
+        setServeOrders: [ServeOrder] = [],
         points: [StoredPointEvent] = []
     ) {
         self.id = id
@@ -64,6 +68,7 @@ public final class Match {
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
         self.setRostersData = (try? JSONEncoder().encode(setRosters)) ?? Data()
+        self.setServeOrdersData = (try? JSONEncoder().encode(setServeOrders)) ?? Data()
         self.points = points
     }
 
@@ -135,6 +140,17 @@ public final class Match {
         }
         set {
             setRostersData = (try? JSONEncoder().encode(newValue)) ?? Data()
+        }
+    }
+
+    /// Serving order per set (index = set number). Empty for matches recorded
+    /// without serve tracking.
+    public var setServeOrders: [ServeOrder] {
+        get {
+            (try? JSONDecoder().decode([ServeOrder].self, from: setServeOrdersData)) ?? []
+        }
+        set {
+            setServeOrdersData = (try? JSONEncoder().encode(newValue)) ?? Data()
         }
     }
 
@@ -217,7 +233,8 @@ public final class Match {
             duration: duration,
             isCompleted: isCompleted,
             roster: roster,
-            setRosters: setRosters
+            setRosters: setRosters,
+            setServeOrders: setServeOrders
         )
     }
 }

@@ -16,6 +16,12 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
     public let pointCount: Int
     public let updatedAt: Date
     public let isSessionActive: Bool
+    /// Team currently serving (nil when serve isn't tracked).
+    public let servingTeam: Team?
+    /// Serve box for the next point (nil when serve isn't tracked).
+    public let serveSide: ServeSide?
+    /// Display name of the serving player (nil when serve isn't tracked).
+    public let servingPlayerName: String?
 
     public var playerNames: MatchPlayerNames {
         MatchPlayerNames(
@@ -34,7 +40,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         playerNames: MatchPlayerNames = .empty,
         pointCount: Int,
         updatedAt: Date = .now,
-        isSessionActive: Bool = true
+        isSessionActive: Bool = true,
+        serve: ServeContext? = nil,
+        servingPlayerName: String? = nil
     ) {
         self.matchID = matchID
         self.gameScore = ScoreFormatter.currentGameScore(in: state)
@@ -50,6 +58,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         self.pointCount = pointCount
         self.updatedAt = updatedAt
         self.isSessionActive = isSessionActive
+        self.servingTeam = serve?.servingTeam
+        self.serveSide = serve?.side
+        self.servingPlayerName = servingPlayerName
     }
 
     public static func sessionEnded(matchID: UUID) -> LiveScoreSnapshot {
@@ -75,7 +86,10 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         playerNames: MatchPlayerNames = .empty,
         pointCount: Int,
         updatedAt: Date,
-        isSessionActive: Bool
+        isSessionActive: Bool,
+        servingTeam: Team? = nil,
+        serveSide: ServeSide? = nil,
+        servingPlayerName: String? = nil
     ) {
         self.matchID = matchID
         self.gameScore = gameScore
@@ -91,6 +105,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         self.pointCount = pointCount
         self.updatedAt = updatedAt
         self.isSessionActive = isSessionActive
+        self.servingTeam = servingTeam
+        self.serveSide = serveSide
+        self.servingPlayerName = servingPlayerName
     }
 
     public var isVisibleOnPhone: Bool {
@@ -112,6 +129,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         case pointCount
         case updatedAt
         case isSessionActive
+        case servingTeam
+        case serveSide
+        case servingPlayerName
     }
 
     public init(from decoder: Decoder) throws {
@@ -130,6 +150,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         pointCount = try container.decode(Int.self, forKey: .pointCount)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         isSessionActive = try container.decodeIfPresent(Bool.self, forKey: .isSessionActive) ?? false
+        servingTeam = try container.decodeIfPresent(Team.self, forKey: .servingTeam)
+        serveSide = try container.decodeIfPresent(ServeSide.self, forKey: .serveSide)
+        servingPlayerName = try container.decodeIfPresent(String.self, forKey: .servingPlayerName)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -148,6 +171,9 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         try container.encode(pointCount, forKey: .pointCount)
         try container.encode(updatedAt, forKey: .updatedAt)
         try container.encode(isSessionActive, forKey: .isSessionActive)
+        try container.encodeIfPresent(servingTeam, forKey: .servingTeam)
+        try container.encodeIfPresent(serveSide, forKey: .serveSide)
+        try container.encodeIfPresent(servingPlayerName, forKey: .servingPlayerName)
     }
 
     public var scoreLine: String {

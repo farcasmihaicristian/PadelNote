@@ -5,9 +5,14 @@ struct WatchLiveMatchView: View {
     @Bindable var coordinator: WatchMatchCoordinator
     @State private var showEndConfirmation = false
     @State private var showCourtOptions = false
+    @State private var showServeSidePrompt = false
 
     private var state: MatchState {
         coordinator.currentState ?? ScoringEngine.replay(events: [], rules: coordinator.rules)
+    }
+
+    private var serve: ServeContext? {
+        coordinator.currentServe
     }
 
     var body: some View {
@@ -63,6 +68,24 @@ struct WatchLiveMatchView: View {
                 coordinator.endMatchEarly()
             }
             Button(String(localized: "Cancel"), role: .cancel) {}
+        }
+        .confirmationDialog(
+            String(localized: "Deciding point — receiver picks the serve side"),
+            isPresented: $showServeSidePrompt,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "Receive right")) {
+                coordinator.chooseDecidingSide(.right)
+            }
+            Button(String(localized: "Receive left")) {
+                coordinator.chooseDecidingSide(.left)
+            }
+        }
+        .onAppear {
+            showServeSidePrompt = coordinator.needsDecidingSideChoice
+        }
+        .onChange(of: coordinator.needsDecidingSideChoice) { _, needs in
+            showServeSidePrompt = needs
         }
     }
 
@@ -165,12 +188,50 @@ struct WatchLiveMatchView: View {
                     .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: serveAlignment(for: team)) {
+                serveIndicator(for: team)
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .disabled(state.isMatchOver)
-        .accessibilityLabel(String(localized: "Point \(label)"))
+        .accessibilityLabel(serveAccessibilityLabel(for: team, label: label))
+    }
+
+    @ViewBuilder
+    private func serveIndicator(for team: Team) -> some View {
+        if let serve, serve.servingTeam == team {
+            Image(systemName: team == .a ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.orange)
+                .shadow(color: .black.opacity(0.35), radius: 1, y: 0.5)
+                .padding(team == .a ? .top : .bottom, 5)
+                .padding(.horizontal, 10)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Where the serve triangle sits: the net edge of the serving team's zone,
+    /// on the deuce/ad box side (mirrored for the top team).
+    private func serveAlignment(for team: Team) -> Alignment {
+        let vertical: VerticalAlignment = team == .a ? .top : .bottom
+        let onRight = serve?.side == .right
+        // The top team faces the other way, so its right box is screen-left.
+        let trailing = team == .a ? onRight : !onRight
+        let horizontal: HorizontalAlignment = trailing ? .trailing : .leading
+        return Alignment(horizontal: horizontal, vertical: vertical)
+    }
+
+    private func serveAccessibilityLabel(for team: Team, label: String) -> String {
+        guard let serve, serve.servingTeam == team else {
+            return String(localized: "Point \(label)")
+        }
+        let side = serve.side == .right
+            ? String(localized: "right")
+            : String(localized: "left")
+        return String(localized: "Point \(label). Serving from the \(side).")
     }
 
     private func teamBackground(for team: Team) -> Color {
