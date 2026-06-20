@@ -76,9 +76,9 @@ public struct MatchPlayerNames: Codable, Hashable, Sendable {
 
         switch team {
         case .a:
-            return teamAName ?? String(localized: "Team A")
+            return teamAName ?? String(localized: "Bottom Team")
         case .b:
-            return teamBName ?? String(localized: "Team B")
+            return teamBName ?? String(localized: "Top Team")
         }
     }
 }

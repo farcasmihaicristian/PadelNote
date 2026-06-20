@@ -55,8 +55,8 @@ import Testing
 @Test func sideLabelFallsBackToDefaultTeamLabels() {
     let names = MatchPlayerNames.empty
 
-    #expect(names.sideLabel(for: .a) == String(localized: "Team A"))
-    #expect(names.sideLabel(for: .b) == String(localized: "Team B"))
+    #expect(names.sideLabel(for: .a) == String(localized: "Bottom Team"))
+    #expect(names.sideLabel(for: .b) == String(localized: "Top Team"))
 }
 
 @Test func emptyAndWhitespaceNamesAreNormalizedAway() {
