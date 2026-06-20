@@ -20,13 +20,18 @@ struct WatchLiveMatchView: View {
             VStack(spacing: 0) {
                 teamZone(
                     team: .b,
-                    playerNames: coordinator.activePlayerNames.playersInCourtDisplayOrder(for: .b),
+                    playerNames: [
+                        coordinator.activePlayerNames.playerB1Name,
+                        coordinator.activePlayerNames.playerB2Name,
+                    ].compactMap { $0 },
+                    playerSlots: [.sideBPlayer1, .sideBPlayer2],
                     fallbackLabel: coordinator.displaySideLabel(for: .b)
                 )
 
                 teamZone(
                     team: .a,
                     playerNames: coordinator.activePlayerNames.playersInCourtDisplayOrder(for: .a),
+                    playerSlots: [.sideAPlayer2, .sideAPlayer1],
                     fallbackLabel: coordinator.displaySideLabel(for: .a)
                 )
             }
@@ -172,7 +177,12 @@ struct WatchLiveMatchView: View {
         return String(localized: "Completed sets \(completed), current set \(currentSet), game score \(game)")
     }
 
-    private func teamZone(team: Team, playerNames: [String], fallbackLabel: String) -> some View {
+    private func teamZone(
+        team: Team,
+        playerNames: [String],
+        playerSlots: [PlayerSlot],
+        fallbackLabel: String
+    ) -> some View {
         Button {
             coordinator.addPoint(for: team)
         } label: {
@@ -180,9 +190,13 @@ struct WatchLiveMatchView: View {
                 teamBackground(for: team)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                teamNameRow(playerNames: playerNames, fallbackLabel: fallbackLabel)
-                    .padding(.horizontal, 12)
-                    .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
+                GeometryReader { proxy in
+                    teamNameRow(playerNames: playerNames, playerSlots: playerSlots, fallbackLabel: fallbackLabel)
+                        .padding(.horizontal, 12)
+                        .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .offset(y: teamNameVerticalOffset(for: team, height: proxy.size.height))
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay(alignment: serveAlignment(for: team)) {
@@ -193,27 +207,26 @@ struct WatchLiveMatchView: View {
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .disabled(state.isMatchOver)
-        .accessibilityLabel(serveAccessibilityLabel(for: team, label: fallbackLabel))
+        .accessibilityLabel(
+            serveAccessibilityLabel(
+                for: team,
+                label: fallbackLabel,
+                playerNames: playerNames,
+                playerSlots: playerSlots
+            )
+        )
     }
 
     @ViewBuilder
-    private func teamNameRow(playerNames: [String], fallbackLabel: String) -> some View {
-        if playerNames.count >= 2 {
+    private func teamNameRow(playerNames: [String], playerSlots: [PlayerSlot], fallbackLabel: String) -> some View {
+        if playerNames.count >= 2, playerSlots.count >= 2 {
             HStack(spacing: 0) {
-                Text(playerNames[0])
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                playerNameLabel(name: playerNames[0], slot: playerSlots[0])
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer(minLength: 16)
 
-                Text(playerNames[1])
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                playerNameLabel(name: playerNames[1], slot: playerSlots[1])
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         } else {
@@ -224,6 +237,24 @@ struct WatchLiveMatchView: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
         }
+    }
+
+    private func playerNameLabel(name: String, slot: PlayerSlot) -> some View {
+        VStack(spacing: 3) {
+            Text(name)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Capsule()
+                .fill(serve?.servingSlot == slot ? .orange : .clear)
+                .frame(width: 24, height: 2)
+        }
+    }
+
+    private func teamNameVerticalOffset(for team: Team, height: CGFloat) -> CGFloat {
+        team == .b ? height * 0.05 : 0
     }
 
     @ViewBuilder
@@ -251,13 +282,22 @@ struct WatchLiveMatchView: View {
         return Alignment(horizontal: horizontal, vertical: vertical)
     }
 
-    private func serveAccessibilityLabel(for team: Team, label: String) -> String {
+    private func serveAccessibilityLabel(
+        for team: Team,
+        label: String,
+        playerNames: [String],
+        playerSlots: [PlayerSlot]
+    ) -> String {
         guard let serve, serve.servingTeam == team else {
             return String(localized: "Point \(label)")
         }
         let side = serve.side == .right
             ? String(localized: "right")
             : String(localized: "left")
+        if let slotIndex = playerSlots.firstIndex(of: serve.servingSlot),
+           let serverName = playerNames[safe: slotIndex] {
+            return String(localized: "Point \(label). \(serverName) serving from the \(side).")
+        }
         return String(localized: "Point \(label). Serving from the \(side).")
     }
 
@@ -268,6 +308,13 @@ struct WatchLiveMatchView: View {
         case .b:
             Color(red: 0.18, green: 0.44, blue: 0.30)
         }
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int?) -> Element? {
+        guard let index, indices.contains(index) else { return nil }
+        return self[index]
     }
 }
 
