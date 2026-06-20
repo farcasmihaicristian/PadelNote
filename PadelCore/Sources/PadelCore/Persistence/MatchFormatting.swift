@@ -19,14 +19,14 @@ public enum MatchFormatting {
     }
 
     public static func winnerLabel(for match: Match) -> String {
-        switch match.winner {
+        switch match.resolvedWinner {
         case .a:
             match.teamName(for: .a)
         case .b:
             match.teamName(for: .b)
         case .none:
             match.isCompleted
-                ? String(localized: "Incomplete")
+                ? String(localized: "Tied")
                 : String(localized: "In progress")
         }
     }

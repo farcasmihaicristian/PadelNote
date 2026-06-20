@@ -44,7 +44,8 @@ final class PhoneSyncCoordinator {
         let payload = PhoneWatchSyncPayload(
             rules: MatchRulesPreferences.load(),
             knownPlayerNames: PlayerPersistence.distinctDisplayNames(context: modelContext),
-            meProfile: PlayerPersistence.watchMeProfile(context: modelContext)
+            meProfile: PlayerPersistence.watchMeProfile(context: modelContext),
+            workoutActivity: WorkoutActivityPreferences.load()
         )
         listener.publishPhoneContext(payload)
     }

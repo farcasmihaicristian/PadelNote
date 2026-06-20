@@ -21,7 +21,8 @@ import Testing
     let payload = PhoneWatchSyncPayload(
         rules: MatchRules(setsToWin: 2, gamePointStyle: .starPoint),
         knownPlayerNames: ["Alex", "Maria"],
-        meProfile: WatchMeProfile(displayName: "Alex", preferredSlot: .sideAPlayer1)
+        meProfile: WatchMeProfile(displayName: "Alex", preferredSlot: .sideAPlayer1),
+        workoutActivity: .tennis
     )
 
     let encoded = SyncPayloadCodec.encodePhoneContext(payload)
@@ -32,6 +33,16 @@ import Testing
     #expect(decoded?.knownPlayerNames == ["Alex", "Maria"])
     #expect(decoded?.meProfile?.displayName == "Alex")
     #expect(decoded?.meProfile?.preferredSlot == .sideAPlayer1)
+    #expect(decoded?.workoutActivity == .tennis)
+}
+
+@Test func legacyPhoneContextWithoutWorkoutActivityDecodes() throws {
+    let payload = PhoneWatchSyncPayload(rules: .default)
+    let encoded = SyncPayloadCodec.encodePhoneContext(payload)
+
+    let decoded = SyncPayloadCodec.decodePhoneContext(from: encoded)
+    #expect(decoded?.workoutActivity == nil)
+    #expect((decoded?.workoutActivity ?? .default) == .pickleball)
 }
 
 @Test func filterTypingFragmentNamesRemovesPrefixOnlyEntries() {

@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var setTieBreak = MatchRules.default.setTieBreak
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     @State private var healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
+    @State private var workoutActivity = WorkoutActivityPreferences.load()
     @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
 
     private var appVersion: String {
@@ -46,7 +47,14 @@ struct SettingsView: View {
                     )
                 )
 
-                Text(String(localized: "Workouts are recorded on Apple Watch during matches. Manage permissions in the Health app."))
+                Picker(String(localized: "Workout type"), selection: $workoutActivity) {
+                    ForEach(WorkoutActivityKind.allCases) { activity in
+                        Text(activity.displayName).tag(activity)
+                    }
+                }
+                .accessibilityLabel(String(localized: "Workout type recorded on Apple Watch"))
+
+                Text(String(localized: "Workouts are recorded on Apple Watch during matches. HealthKit has no padel type, so pick the closest sport. Manage permissions in the Health app."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -68,6 +76,7 @@ struct SettingsView: View {
         .onAppear {
             loadDefaults()
             healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
+            workoutActivity = WorkoutActivityPreferences.load()
             syncCoordinator.syncDefaultRulesToWatch()
             preferredMeSlot = MeProfilePreferences.preferredSlot()
         }
@@ -75,6 +84,10 @@ struct SettingsView: View {
         .onChange(of: gamePointStyle) { _, _ in saveDefaults() }
         .onChange(of: setTieBreak) { _, _ in saveDefaults() }
         .onChange(of: finalSetTieBreak) { _, _ in saveDefaults() }
+        .onChange(of: workoutActivity) { _, newValue in
+            WorkoutActivityPreferences.save(newValue)
+            syncCoordinator.syncPhoneContextToWatch()
+        }
         .onChange(of: preferredMeSlot) { _, newValue in
             MeProfilePreferences.savePreferredSlot(newValue)
             syncCoordinator.syncPhoneContextToWatch()

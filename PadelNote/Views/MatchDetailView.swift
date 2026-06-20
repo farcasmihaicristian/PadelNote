@@ -8,9 +8,9 @@ struct MatchDetailView: View {
     var body: some View {
         List {
             Section(String(localized: "Final score")) {
-                Text(match.scoreSummary)
+                MatchScoreText.make(for: match)
                     .font(.title2.bold())
-                    .accessibilityLabel(String(localized: "Final score \(match.scoreSummary)"))
+                    .accessibilityLabel(String(localized: "Final score \(MatchScoreText.accessibilityLabel(for: match))"))
 
                 LabeledContent(String(localized: "Winner")) {
                     Text(MatchFormatting.winnerLabel(for: match))
@@ -20,13 +20,20 @@ struct MatchDetailView: View {
             MatchPlayersEditSection(match: match)
 
             Section(String(localized: "Sets")) {
-                if match.completedSets.isEmpty {
+                if match.completedSets.isEmpty && match.inProgressSetSummary == nil {
                     Text(String(localized: "No completed sets"))
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(Array(match.completedSets.enumerated()), id: \.offset) { index, set in
                         LabeledContent(String(localized: "Set \(index + 1)")) {
                             Text(ScoreFormatter.formatSetScore(set))
+                        }
+                    }
+
+                    if let partial = match.inProgressSetSummary {
+                        LabeledContent(String(localized: "Unfinished set")) {
+                            Text(partial)
+                                .foregroundStyle(.red)
                         }
                     }
                 }

@@ -5,14 +5,19 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
     public var rules: MatchRules
     public var knownPlayerNames: [String]
     public var meProfile: WatchMeProfile?
+    /// Optional for backward compatibility with payloads sent before the workout
+    /// type became configurable. Consumers should fall back to `.default`.
+    public var workoutActivity: WorkoutActivityKind?
 
     public init(
         rules: MatchRules,
         knownPlayerNames: [String] = [],
-        meProfile: WatchMeProfile? = nil
+        meProfile: WatchMeProfile? = nil,
+        workoutActivity: WorkoutActivityKind? = nil
     ) {
         self.rules = rules
         self.knownPlayerNames = knownPlayerNames
         self.meProfile = meProfile
+        self.workoutActivity = workoutActivity
     }
 }

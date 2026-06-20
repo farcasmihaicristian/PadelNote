@@ -69,7 +69,7 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         hasEnded = false
 
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = .tennis
+        configuration.activityType = WorkoutActivityPreferences.load().hkActivityType
         configuration.locationType = .indoor
 
         let session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
@@ -180,6 +180,17 @@ extension HealthKitWorkoutRecorder: HKLiveWorkoutBuilderDelegate {
     ) {
         Task { @MainActor in
             updateStatistics(from: workoutBuilder, collectedTypes: collectedTypes)
+        }
+    }
+}
+
+private extension WorkoutActivityKind {
+    var hkActivityType: HKWorkoutActivityType {
+        switch self {
+        case .pickleball:
+            .pickleball
+        case .tennis:
+            .tennis
         }
     }
 }

@@ -214,6 +214,101 @@ import Testing
     #expect(points.count == events.count)
 }
 
+@Test @MainActor func inProgressSetSummaryReportsUnfinishedSet() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    func winGame(_ team: Team) -> [PointEvent] {
+        (0..<4).map { _ in PointEvent(team: team) }
+    }
+
+    // First set won 6-0 by A, then an unfinished 3-2 second set.
+    var events: [PointEvent] = (0..<6).flatMap { _ in winGame(.a) }
+    events += winGame(.a) + winGame(.a) + winGame(.a)
+    events += winGame(.b) + winGame(.b)
+
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint),
+        events: events
+    )
+
+    let match = try #require(MatchPersistence.saveTransferredMatch(context: context, payload: payload))
+    #expect(match.winner == nil)
+    #expect(match.scoreSummary == "6-0")
+    #expect(match.inProgressSetSummary == "3-2")
+}
+
+@Test @MainActor func inProgressSetSummaryIsNilForDecidedMatch() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    let events: [PointEvent] = (0..<6).flatMap { _ in
+        (0..<4).map { _ in PointEvent(team: .a) }
+    }
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint),
+        events: events
+    )
+
+    let match = try #require(MatchPersistence.saveTransferredMatch(context: context, payload: payload))
+    #expect(match.winner == .a)
+    #expect(match.inProgressSetSummary == nil)
+}
+
+@Test @MainActor func resolvedWinnerFallsBackToCompletedSetLeader() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    func winGame(_ team: Team) -> [PointEvent] {
+        (0..<4).map { _ in PointEvent(team: team) }
+    }
+
+    // A wins the first set 6-0, then an unfinished 3-2 second set (no formal winner).
+    var events: [PointEvent] = (0..<6).flatMap { _ in winGame(.a) }
+    events += winGame(.a) + winGame(.a) + winGame(.a)
+    events += winGame(.b) + winGame(.b)
+
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint),
+        events: events
+    )
+
+    let match = try #require(MatchPersistence.saveTransferredMatch(context: context, payload: payload))
+    #expect(match.winner == nil)
+    #expect(match.resolvedWinner == .a)
+}
+
+@Test @MainActor func resolvedWinnerIsNilWhenCompletedSetsAreLevel() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+
+    func winGame(_ team: Team) -> [PointEvent] {
+        (0..<4).map { _ in PointEvent(team: team) }
+    }
+
+    // A wins set one 6-0, B wins set two 6-0, then an unfinished 1-0 third set.
+    var events: [PointEvent] = (0..<6).flatMap { _ in winGame(.a) }
+    events += (0..<6).flatMap { _ in winGame(.b) }
+    events += winGame(.a)
+
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint),
+        events: events
+    )
+
+    let match = try #require(MatchPersistence.saveTransferredMatch(context: context, payload: payload))
+    #expect(match.winner == nil)
+    #expect(match.resolvedWinner == nil)
+}
+
 @MainActor
 private func makeContainer() throws -> ModelContainer {
     let configuration = ModelConfiguration(isStoredInMemoryOnly: true)

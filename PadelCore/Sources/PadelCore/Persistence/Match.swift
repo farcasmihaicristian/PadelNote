@@ -127,6 +127,19 @@ public final class Match {
         set { winnerRawValue = newValue?.rawValue }
     }
 
+    /// The match winner, falling back to whoever won more completed sets when the
+    /// match ended early without a formally decided winner. `nil` only when the
+    /// completed sets are level (a genuine tie) or none were finished.
+    public var resolvedWinner: Team? {
+        if let winner { return winner }
+        let sets = completedSets
+        let setsA = sets.filter { $0.winner == .a }.count
+        let setsB = sets.filter { $0.winner == .b }.count
+        if setsA > setsB { return .a }
+        if setsB > setsA { return .b }
+        return nil
+    }
+
     public var duration: TimeInterval? {
         guard let endedAt else { return nil }
         return endedAt.timeIntervalSince(startedAt)
@@ -138,6 +151,16 @@ public final class Match {
 
     public var scoreSummary: String {
         completedSets.map { ScoreFormatter.formatSetScore($0) }.joined(separator: " ")
+    }
+
+    /// Games of a set that was started but never finished (e.g. the match was
+    /// stopped early on court). `nil` for matches that reached a decided result.
+    public var inProgressSetSummary: String? {
+        guard winner == nil else { return nil }
+        let state = replayedState()
+        guard !state.isMatchOver else { return nil }
+        guard state.isTieBreak || state.gamesA > 0 || state.gamesB > 0 else { return nil }
+        return ScoreFormatter.currentSetGames(in: state)
     }
 
     public var sortedPoints: [StoredPointEvent] {

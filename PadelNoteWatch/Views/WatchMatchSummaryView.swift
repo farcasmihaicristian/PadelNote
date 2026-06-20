@@ -18,12 +18,6 @@ struct WatchMatchSummaryView: View {
                     Text(MatchFormatting.durationText(for: coordinator.summaryDuration))
                 }
 
-                if let heartRate = coordinator.workoutRecorder.averageHeartRate {
-                    LabeledContent(String(localized: "Avg HR")) {
-                        Text(String(localized: "\(Int(heartRate.rounded())) bpm"))
-                    }
-                }
-
                 if let warning = coordinator.workoutWarning {
                     Text(warning)
                         .font(.caption2)

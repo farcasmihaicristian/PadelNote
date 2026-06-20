@@ -59,6 +59,7 @@ final class WatchMatchCoordinator {
 
     private func applyPhoneContext(_ payload: PhoneWatchSyncPayload) {
         MatchRulesPreferences.save(payload.rules)
+        WorkoutActivityPreferences.save(payload.workoutActivity ?? .default)
         knownPlayerNames = payload.knownPlayerNames
         meProfile = payload.meProfile
         guard phase == .idle else { return }

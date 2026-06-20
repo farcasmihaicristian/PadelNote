@@ -11,7 +11,7 @@ struct MatchRowView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            Text(match.scoreSummary)
+            MatchScoreText.make(for: match)
                 .font(.headline)
 
             if let focusPlayerID,
@@ -32,7 +32,7 @@ struct MatchRowView: View {
     private var accessibilityLabel: String {
         var parts = [
             MatchFormatting.dayTitle(for: match.startedAt),
-            String(localized: "score \(match.scoreSummary)"),
+            String(localized: "score \(MatchScoreText.accessibilityLabel(for: match))"),
             String(localized: "winner \(MatchFormatting.winnerLabel(for: match))"),
         ]
 
