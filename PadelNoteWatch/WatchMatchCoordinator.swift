@@ -21,6 +21,9 @@ final class WatchMatchCoordinator {
     var setTieBreak = MatchRules.default.setTieBreak
     var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     var playerSetup = MatchPlayerSetup.empty
+    /// Court lineup per set (index = set number), capturing left/right side
+    /// changes made between sets. Sent with the completed match for per-set insights.
+    var setLineups: [MatchPlayerNames] = []
     var knownPlayerNames: [String] = []
     var meProfile: WatchMeProfile?
     var healthAuthDenied = false
@@ -91,7 +94,20 @@ final class WatchMatchCoordinator {
         activePlayerNames.courtSideLabel(for: team)
     }
 
+    /// Sides can only be switched at the start of a set (fully at 0-0): before
+    /// the first point of the match, or between sets after one completes.
+    var canSwapSides: Bool {
+        guard phase == .live, let state = currentState, !state.isMatchOver else { return false }
+        return state.gamesA == 0 && state.gamesB == 0
+            && state.pointA == 0 && state.pointB == 0
+            && !state.isTieBreak
+            && state.tieBreakPointsA == 0 && state.tieBreakPointsB == 0
+            && state.advantageTeam == nil
+    }
+
     func toggleLeftRightSides(for team: Team) {
+        guard canSwapSides else { return }
+
         var setup = playerSetup
         switch team {
         case .a:
@@ -100,7 +116,43 @@ final class WatchMatchCoordinator {
             swap(&setup.sideBPlayer1, &setup.sideBPlayer2)
         }
         playerSetup = setup
+        syncSetLineups()
+        persistLiveState()
         publishSnapshot()
+    }
+
+    /// Keeps `setLineups` aligned with the sets played so far: one entry per
+    /// started set (including the active one). New sets inherit the current
+    /// orientation; undoing back into an earlier set trims later entries and
+    /// restores that set's lineup.
+    private func syncSetLineups() {
+        guard let session else {
+            setLineups = []
+            return
+        }
+
+        let activeSetIndex = session.state.completedSets.count
+        let targetCount = activeSetIndex + 1
+
+        if setLineups.count > targetCount {
+            setLineups = Array(setLineups.prefix(targetCount))
+            playerSetup = makeSetup(from: setLineups[activeSetIndex])
+        }
+
+        while setLineups.count < targetCount {
+            setLineups.append(activePlayerNames)
+        }
+
+        setLineups[activeSetIndex] = activePlayerNames
+    }
+
+    private func makeSetup(from names: MatchPlayerNames) -> MatchPlayerSetup {
+        MatchPlayerSetup(
+            sideAPlayer1: .init(name: names.playerA1Name ?? ""),
+            sideAPlayer2: .init(name: names.playerA2Name ?? ""),
+            sideBPlayer1: .init(name: names.playerB1Name ?? ""),
+            sideBPlayer2: .init(name: names.playerB2Name ?? "")
+        )
     }
 
     func prepare() async {
@@ -135,10 +187,12 @@ final class WatchMatchCoordinator {
             sideBPlayer1: .init(name: saved.playerNames.playerB1Name ?? ""),
             sideBPlayer2: .init(name: saved.playerNames.playerB2Name ?? "")
         )
+        setLineups = saved.setLineups
         workoutWarning = nil
         endedEarly = false
         matchActivityEndedAt = nil
         phase = .live
+        syncSetLineups()
         publishSnapshot()
         startWorkoutInBackground()
     }
@@ -155,8 +209,10 @@ final class WatchMatchCoordinator {
         endedEarly = false
         rulesBeforeContinue = nil
         continueBaselineEventCount = nil
+        setLineups = []
 
         phase = .live
+        syncSetLineups()
         persistLiveState()
         publishSnapshot()
         startWorkoutInBackground()
@@ -182,7 +238,8 @@ final class WatchMatchCoordinator {
                 startedAt: startedAt,
                 rules: rules,
                 events: session.events,
-                playerNames: activePlayerNames
+                playerNames: activePlayerNames,
+                setLineups: setLineups
             )
         )
     }
@@ -199,6 +256,7 @@ final class WatchMatchCoordinator {
             continueBaselineEventCount = nil
         }
 
+        syncSetLineups()
         persistLiveState()
 
         if session.state.isMatchOver {
@@ -212,6 +270,7 @@ final class WatchMatchCoordinator {
         guard var session, phase == .live else { return }
         guard session.undo() else { return }
         self.session = session
+        syncSetLineups()
         persistLiveState()
         publishSnapshot()
     }
@@ -285,6 +344,7 @@ final class WatchMatchCoordinator {
         matchActivityEndedAt = nil
         rulesBeforeContinue = nil
         continueBaselineEventCount = nil
+        setLineups = []
         // Player names are intentionally preserved across matches so back-to-back
         // games with the same group don't require re-entry.
         loadIdleSetup()
@@ -333,6 +393,7 @@ final class WatchMatchCoordinator {
         endedEarly = false
         matchActivityEndedAt = nil
         phase = .live
+        syncSetLineups()
         persistLiveState()
         publishSnapshot()
     }
@@ -424,7 +485,8 @@ final class WatchMatchCoordinator {
             playerNames: activePlayerNames,
             averageHeartRate: workoutRecorder.averageHeartRate,
             activeEnergyKilocalories: workoutRecorder.activeEnergyKilocalories,
-            distanceMeters: workoutRecorder.distanceMeters
+            distanceMeters: workoutRecorder.distanceMeters,
+            setLineups: setLineups
         )
     }
 }

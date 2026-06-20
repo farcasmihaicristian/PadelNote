@@ -155,10 +155,10 @@ public enum MatchStatistics {
         var goldenPointWins = 0
         var durations: [TimeInterval] = []
 
-        var leftMatches = 0
+        var leftSets = 0
         var leftWins = 0
         var leftLosses = 0
-        var rightMatches = 0
+        var rightSets = 0
         var rightWins = 0
         var rightLosses = 0
 
@@ -167,33 +167,39 @@ public enum MatchStatistics {
                 durations.append(duration)
             }
 
-            guard let team = summary.roster.team(for: playerID),
-                  let courtSide = summary.roster.courtSide(for: playerID)
-            else { continue }
+            guard let team = summary.roster.team(for: playerID) else { continue }
 
             let goldenCounts = goldenPointCounts(for: summary, team: team)
             goldenPointOpportunities += goldenCounts.opportunities
             goldenPointWins += goldenCounts.wins
 
-            switch courtSide {
-            case .left:
-                leftMatches += 1
-            case .right:
-                rightMatches += 1
-            }
-
             if let winner = summary.winner {
-                let won = winner == team
-                if won {
+                if winner == team {
                     wins += 1
                 } else {
                     losses += 1
                 }
+            }
 
+            // Per-set side attribution: each completed set is credited to the
+            // side the player occupied during that set (falling back to the
+            // canonical lineup when no per-set data was recorded).
+            let completedSets = ScoringEngine.replay(
+                events: summary.events,
+                rules: summary.rules
+            ).completedSets
+
+            for (index, set) in completedSets.enumerated() {
+                let roster = summary.setRosters[safe: index] ?? summary.roster
+                guard let courtSide = roster.courtSide(for: playerID) else { continue }
+
+                let won = set.winner == team
                 switch courtSide {
                 case .left:
+                    leftSets += 1
                     if won { leftWins += 1 } else { leftLosses += 1 }
                 case .right:
+                    rightSets += 1
                     if won { rightWins += 1 } else { rightLosses += 1 }
                 }
             }
@@ -216,12 +222,12 @@ public enum MatchStatistics {
                 ? nil
                 : Double(goldenPointWins) / Double(goldenPointOpportunities),
             leftSideStats: rolePerformanceStats(
-                matchCount: leftMatches,
+                matchCount: leftSets,
                 wins: leftWins,
                 losses: leftLosses
             ),
             rightSideStats: rolePerformanceStats(
-                matchCount: rightMatches,
+                matchCount: rightSets,
                 wins: rightWins,
                 losses: rightLosses
             )
@@ -284,5 +290,11 @@ public enum MatchStatistics {
         case .advantage:
             return false
         }
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

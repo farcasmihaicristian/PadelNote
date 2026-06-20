@@ -16,6 +16,10 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
     public let averageHeartRate: Double?
     public let activeEnergyKilocalories: Double?
     public let distanceMeters: Double?
+    /// Court lineup per set (index = set number). Captures left/right side
+    /// changes made between sets. Empty for matches recorded without per-set
+    /// tracking; consumers fall back to the canonical `playerNames`.
+    public let setLineups: [MatchPlayerNames]
 
     public var playerNames: MatchPlayerNames {
         MatchPlayerNames(
@@ -37,7 +41,8 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         playerNames: MatchPlayerNames = .empty,
         averageHeartRate: Double? = nil,
         activeEnergyKilocalories: Double? = nil,
-        distanceMeters: Double? = nil
+        distanceMeters: Double? = nil,
+        setLineups: [MatchPlayerNames] = []
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -53,5 +58,33 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         self.averageHeartRate = averageHeartRate
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
+        self.setLineups = setLineups
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, startedAt, endedAt, rules, events
+        case playerA1Name, playerA2Name, playerB1Name, playerB2Name
+        case teamAName, teamBName
+        case averageHeartRate, activeEnergyKilocalories, distanceMeters
+        case setLineups
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        startedAt = try container.decode(Date.self, forKey: .startedAt)
+        endedAt = try container.decode(Date.self, forKey: .endedAt)
+        rules = try container.decode(MatchRules.self, forKey: .rules)
+        events = try container.decode([PointEvent].self, forKey: .events)
+        playerA1Name = try container.decodeIfPresent(String.self, forKey: .playerA1Name)
+        playerA2Name = try container.decodeIfPresent(String.self, forKey: .playerA2Name)
+        playerB1Name = try container.decodeIfPresent(String.self, forKey: .playerB1Name)
+        playerB2Name = try container.decodeIfPresent(String.self, forKey: .playerB2Name)
+        teamAName = try container.decodeIfPresent(String.self, forKey: .teamAName)
+        teamBName = try container.decodeIfPresent(String.self, forKey: .teamBName)
+        averageHeartRate = try container.decodeIfPresent(Double.self, forKey: .averageHeartRate)
+        activeEnergyKilocalories = try container.decodeIfPresent(Double.self, forKey: .activeEnergyKilocalories)
+        distanceMeters = try container.decodeIfPresent(Double.self, forKey: .distanceMeters)
+        setLineups = try container.decodeIfPresent([MatchPlayerNames].self, forKey: .setLineups) ?? []
     }
 }

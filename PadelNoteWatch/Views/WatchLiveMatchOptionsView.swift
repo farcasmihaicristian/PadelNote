@@ -20,6 +20,12 @@ struct WatchLiveMatchOptionsView: View {
             ) {
                 coordinator.toggleLeftRightSides(for: .a)
             }
+
+            if !coordinator.canSwapSides {
+                Text(String(localized: "Switch sides only at the start of a new set (0-0)."))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .navigationTitle(String(localized: "Court"))
         .navigationBarTitleDisplayMode(.inline)
@@ -42,6 +48,7 @@ struct WatchLiveMatchOptionsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .disabled(!coordinator.canSwapSides)
         .accessibilityLabel(title)
     }
 }

@@ -54,15 +54,15 @@ public enum MatchFormatting {
 
     public static func rolePerformanceText(for stats: RolePerformanceStats) -> String {
         guard stats.matchCount > 0 else {
-            return String(localized: "No matches")
+            return String(localized: "No sets")
         }
 
         if let winRate = stats.winRate {
             return String(
-                localized: "\(stats.matchCount) matches · \(percentageText(for: winRate)) wins"
+                localized: "\(stats.matchCount) sets · \(percentageText(for: winRate)) wins"
             )
         }
 
-        return String(localized: "\(stats.matchCount) matches")
+        return String(localized: "\(stats.matchCount) sets")
     }
 }

@@ -93,6 +93,41 @@ import Testing
     #expect(decoded.playerNames == payload.playerNames)
 }
 
+@Test func matchTransferPayloadRoundTripsSetLineups() throws {
+    let setOne = MatchPlayerNames(playerA1: "Alex", playerA2: "Maria", playerB1: "Chris", playerB2: "Dana")
+    let setTwo = MatchPlayerNames(playerA1: "Maria", playerA2: "Alex", playerB1: "Chris", playerB2: "Dana")
+
+    let payload = MatchTransferPayload(
+        startedAt: .now,
+        endedAt: .now,
+        rules: .default,
+        events: [PointEvent(team: .a)],
+        playerNames: setTwo,
+        setLineups: [setOne, setTwo]
+    )
+
+    let data = try JSONEncoder().encode(payload)
+    let decoded = try JSONDecoder().decode(MatchTransferPayload.self, from: data)
+
+    #expect(decoded.setLineups == [setOne, setTwo])
+}
+
+@Test func matchTransferPayloadDecodesLegacyWithoutSetLineups() throws {
+    let json = """
+    {
+        "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+        "startedAt": 0,
+        "endedAt": 0,
+        "rules": { "setsToWin": 2, "gamesPerSet": 6, "winByTwoGames": true, "gamePointStyle": "goldenPoint", "setTieBreak": "classic", "finalSetTieBreak": "superTieBreak10" },
+        "events": []
+    }
+    """.data(using: .utf8)!
+
+    let decoded = try JSONDecoder().decode(MatchTransferPayload.self, from: json)
+
+    #expect(decoded.setLineups.isEmpty)
+}
+
 @Test func liveScoreSnapshotDecodesLegacyTeamNamesOnly() throws {
     let json = """
     {

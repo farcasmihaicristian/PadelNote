@@ -131,16 +131,19 @@ import Testing
 @Test func playerInsightsSplitWinRateByLeftAndRightSide() {
     let alexID = UUID()
     let rules = MatchRules(setsToWin: 1, gamePointStyle: .goldenPoint)
-    let winEvents: [PointEvent] = (0..<4).map { _ in PointEvent(team: .a) }
-    let lossEvents: [PointEvent] = (0..<4).map { _ in PointEvent(team: .b) }
+    // One full set (6-0) per match.
+    let setWinA: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .a) } }
+    let setWinB: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .b) } }
 
-    let leftSideRoster = MatchRoster(
+    // Alex on the right (player 1 = index 0).
+    let alexRightRoster = MatchRoster(
         playerA1ID: alexID, playerA1Name: "Alex",
         playerA2ID: nil, playerA2Name: "Maria",
         playerB1ID: nil, playerB1Name: "Chris",
         playerB2ID: nil, playerB2Name: "Dana"
     )
-    let rightSideRoster = MatchRoster(
+    // Alex on the left (player 2 = index 1).
+    let alexLeftRoster = MatchRoster(
         playerA1ID: nil, playerA1Name: "Maria",
         playerA2ID: alexID, playerA2Name: "Alex",
         playerB1ID: nil, playerB1Name: "Chris",
@@ -150,27 +153,27 @@ import Testing
     let summaries = [
         MatchSummary(
             rules: rules,
-            events: winEvents,
+            events: setWinA,
             winner: .a,
             duration: 3600,
             isCompleted: true,
-            roster: leftSideRoster
+            roster: alexRightRoster
         ),
         MatchSummary(
             rules: rules,
-            events: winEvents,
+            events: setWinA,
             winner: .a,
             duration: 3600,
             isCompleted: true,
-            roster: leftSideRoster
+            roster: alexRightRoster
         ),
         MatchSummary(
             rules: rules,
-            events: lossEvents,
+            events: setWinB,
             winner: .b,
             duration: 3600,
             isCompleted: true,
-            roster: rightSideRoster
+            roster: alexLeftRoster
         ),
     ]
 
@@ -187,4 +190,55 @@ import Testing
     #expect(insights.rightSideStats.matchCount == 2)
     #expect(insights.rightSideStats.wins == 2)
     #expect(insights.rightSideStats.winRate == 1)
+}
+
+@Test func playerInsightsTracksSideChangesPerSet() {
+    let alexID = UUID()
+    let rules = MatchRules(setsToWin: 2, gamePointStyle: .goldenPoint)
+    let setWinA: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .a) } }
+    let setWinB: [PointEvent] = (0..<6).flatMap { _ in (0..<4).map { _ in PointEvent(team: .b) } }
+    // A wins set 1, B wins set 2, A wins set 3 -> A takes the match 2-1.
+    let events = setWinA + setWinB + setWinA
+
+    let alexRightRoster = MatchRoster(
+        playerA1ID: alexID, playerA1Name: "Alex",
+        playerA2ID: nil, playerA2Name: "Maria",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+    let alexLeftRoster = MatchRoster(
+        playerA1ID: nil, playerA1Name: "Maria",
+        playerA2ID: alexID, playerA2Name: "Alex",
+        playerB1ID: nil, playerB1Name: "Chris",
+        playerB2ID: nil, playerB2Name: "Dana"
+    )
+
+    // Alex starts on the right, then switches to the left from set 2 onward.
+    let summary = MatchSummary(
+        rules: rules,
+        events: events,
+        winner: .a,
+        duration: 3600,
+        isCompleted: true,
+        roster: alexRightRoster,
+        setRosters: [alexRightRoster, alexLeftRoster, alexLeftRoster]
+    )
+
+    let insights = MatchStatistics.playerInsights(
+        for: alexID,
+        displayName: "Alex",
+        in: [summary]
+    )
+
+    #expect(insights.matchCount == 1)
+    #expect(insights.wins == 1)
+    // Set 1 on the right (won).
+    #expect(insights.rightSideStats.matchCount == 1)
+    #expect(insights.rightSideStats.wins == 1)
+    #expect(insights.rightSideStats.winRate == 1)
+    // Sets 2 (lost) and 3 (won) on the left.
+    #expect(insights.leftSideStats.matchCount == 2)
+    #expect(insights.leftSideStats.wins == 1)
+    #expect(insights.leftSideStats.losses == 1)
+    #expect(insights.leftSideStats.winRate == 0.5)
 }

@@ -57,6 +57,17 @@ public enum MatchPersistence {
             sideBPlayer2: .init(name: payload.playerNames.playerB2Name ?? "", playerID: nil)
         )
         let roster = PlayerPersistence.resolveRoster(context: context, setup: setup)
+        let setRosters = payload.setLineups.map { lineup in
+            PlayerPersistence.resolveRoster(
+                context: context,
+                setup: MatchPlayerSetup(
+                    sideAPlayer1: .init(name: lineup.playerA1Name ?? "", playerID: nil),
+                    sideAPlayer2: .init(name: lineup.playerA2Name ?? "", playerID: nil),
+                    sideBPlayer1: .init(name: lineup.playerB1Name ?? "", playerID: nil),
+                    sideBPlayer2: .init(name: lineup.playerB2Name ?? "", playerID: nil)
+                )
+            )
+        }
         let match: Match
 
         if let existing = try? context.fetch(descriptor).first {
@@ -74,7 +85,8 @@ public enum MatchPersistence {
                 roster: roster,
                 averageHeartRate: payload.averageHeartRate,
                 activeEnergyKilocalories: payload.activeEnergyKilocalories,
-                distanceMeters: payload.distanceMeters
+                distanceMeters: payload.distanceMeters,
+                setRosters: setRosters
             )
             context.insert(match)
             appendPoints(to: match, from: payload, context: context)
@@ -87,6 +99,7 @@ public enum MatchPersistence {
         match.winner = state.winner
         match.playerNames = payload.playerNames
         match.roster = roster
+        match.setRosters = setRosters
         match.averageHeartRate = payload.averageHeartRate
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters

@@ -22,6 +22,9 @@ public final class Match {
     public var averageHeartRate: Double?
     public var activeEnergyKilocalories: Double?
     public var distanceMeters: Double?
+    /// JSON-encoded `[MatchRoster]`, one entry per set, capturing left/right
+    /// side changes made between sets. Empty for matches without per-set tracking.
+    public var setRostersData: Data = Data()
 
     @Relationship(deleteRule: .cascade, inverse: \StoredPointEvent.match)
     public var points: [StoredPointEvent]
@@ -38,6 +41,7 @@ public final class Match {
         averageHeartRate: Double? = nil,
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
+        setRosters: [MatchRoster] = [],
         points: [StoredPointEvent] = []
     ) {
         self.id = id
@@ -59,6 +63,7 @@ public final class Match {
         self.averageHeartRate = averageHeartRate
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
+        self.setRostersData = (try? JSONEncoder().encode(setRosters)) ?? Data()
         self.points = points
     }
 
@@ -119,6 +124,17 @@ public final class Match {
         }
         set {
             completedSetsData = (try? JSONEncoder().encode(newValue)) ?? Data()
+        }
+    }
+
+    /// Court lineup per set (index = set number). Empty for matches recorded
+    /// without per-set side tracking.
+    public var setRosters: [MatchRoster] {
+        get {
+            (try? JSONDecoder().decode([MatchRoster].self, from: setRostersData)) ?? []
+        }
+        set {
+            setRostersData = (try? JSONEncoder().encode(newValue)) ?? Data()
         }
     }
 
@@ -200,7 +216,8 @@ public final class Match {
             winner: winner,
             duration: duration,
             isCompleted: isCompleted,
-            roster: roster
+            roster: roster,
+            setRosters: setRosters
         )
     }
 }

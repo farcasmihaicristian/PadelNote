@@ -23,6 +23,33 @@ enum WatchMatchStore {
         var rules: MatchRules
         var events: [PointEvent]
         var playerNames: MatchPlayerNames
+        var setLineups: [MatchPlayerNames]
+
+        init(
+            matchID: UUID,
+            startedAt: Date,
+            rules: MatchRules,
+            events: [PointEvent],
+            playerNames: MatchPlayerNames,
+            setLineups: [MatchPlayerNames] = []
+        ) {
+            self.matchID = matchID
+            self.startedAt = startedAt
+            self.rules = rules
+            self.events = events
+            self.playerNames = playerNames
+            self.setLineups = setLineups
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            matchID = try container.decode(UUID.self, forKey: .matchID)
+            startedAt = try container.decode(Date.self, forKey: .startedAt)
+            rules = try container.decode(MatchRules.self, forKey: .rules)
+            events = try container.decode([PointEvent].self, forKey: .events)
+            playerNames = try container.decode(MatchPlayerNames.self, forKey: .playerNames)
+            setLineups = try container.decodeIfPresent([MatchPlayerNames].self, forKey: .setLineups) ?? []
+        }
     }
 
     static func saveLiveMatch(_ match: LiveMatch) {
