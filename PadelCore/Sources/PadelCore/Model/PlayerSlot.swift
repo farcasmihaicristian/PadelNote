@@ -11,13 +11,13 @@ public enum PlayerSlot: String, CaseIterable, Codable, Sendable, Identifiable {
     public var label: String {
         switch self {
         case .sideAPlayer1:
-            String(localized: "Side A player 1")
+            String(localized: "Bottom side · Right")
         case .sideAPlayer2:
-            String(localized: "Side A player 2")
+            String(localized: "Bottom side · Left")
         case .sideBPlayer1:
-            String(localized: "Side B player 1")
+            String(localized: "Top side · Right")
         case .sideBPlayer2:
-            String(localized: "Side B player 2")
+            String(localized: "Top side · Left")
         }
     }
 

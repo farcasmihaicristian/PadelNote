@@ -123,19 +123,94 @@ struct SettingsView: View {
 }
 
 private struct MeSlotSettingsSection: View {
-    @Environment(CurrentUserStore.self) private var currentUserStore
     @Binding var preferredMeSlot: PlayerSlot
 
-    var body: some View {
-        if currentUserStore.isSignedIn {
-            Section(String(localized: "Your match setup")) {
-                Picker(String(localized: "Default position"), selection: $preferredMeSlot) {
-                    ForEach(PlayerSlot.allCases) { slot in
-                        Text(slot.label).tag(slot)
-                    }
-                }
-                .accessibilityLabel(String(localized: "Default position on new match"))
+    /// Top or bottom of the court. Bottom is side A, top is side B.
+    private enum CourtEnd: String, CaseIterable, Identifiable {
+        case bottom
+        case top
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .bottom: String(localized: "Bottom")
+            case .top: String(localized: "Top")
             }
+        }
+
+        var isTop: Bool { self == .top }
+    }
+
+    /// Left or right within a side. Right is player 1, left is player 2.
+    private enum CourtSide: String, CaseIterable, Identifiable {
+        case left
+        case right
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .left: String(localized: "Left")
+            case .right: String(localized: "Right")
+            }
+        }
+
+        var isLeft: Bool { self == .left }
+    }
+
+    private static func slot(end: CourtEnd, side: CourtSide) -> PlayerSlot {
+        switch (end, side) {
+        case (.bottom, .right): .sideAPlayer1
+        case (.bottom, .left): .sideAPlayer2
+        case (.top, .right): .sideBPlayer1
+        case (.top, .left): .sideBPlayer2
+        }
+    }
+
+    private var currentEnd: CourtEnd {
+        switch preferredMeSlot {
+        case .sideBPlayer1, .sideBPlayer2: .top
+        case .sideAPlayer1, .sideAPlayer2: .bottom
+        }
+    }
+
+    private var currentSide: CourtSide {
+        switch preferredMeSlot {
+        case .sideAPlayer2, .sideBPlayer2: .left
+        case .sideAPlayer1, .sideBPlayer1: .right
+        }
+    }
+
+    private var preferredEnd: Binding<CourtEnd> {
+        Binding(
+            get: { currentEnd },
+            set: { preferredMeSlot = Self.slot(end: $0, side: currentSide) }
+        )
+    }
+
+    private var preferredSide: Binding<CourtSide> {
+        Binding(
+            get: { currentSide },
+            set: { preferredMeSlot = Self.slot(end: currentEnd, side: $0) }
+        )
+    }
+
+    var body: some View {
+        Section(String(localized: "Your match setup")) {
+            Picker(String(localized: "Preferred side"), selection: preferredEnd) {
+                ForEach(CourtEnd.allCases) { end in
+                    Text(end.label).tag(end)
+                }
+            }
+            .accessibilityLabel(String(localized: "Preferred side on new match"))
+
+            Picker(String(localized: "Default side"), selection: preferredSide) {
+                ForEach(CourtSide.allCases) { side in
+                    Text(side.label).tag(side)
+                }
+            }
+            .accessibilityLabel(String(localized: "Default left or right on new match"))
         }
     }
 }

@@ -50,22 +50,22 @@ struct WatchStartView: View {
                 .padding(.top, 4)
 
             WatchPlayerSlotPicker(
-                title: String(localized: "Side A player 1"),
+                title: String(localized: "Bottom side · Right"),
                 slot: .sideAPlayer1,
                 coordinator: coordinator
             )
             WatchPlayerSlotPicker(
-                title: String(localized: "Side A player 2"),
+                title: String(localized: "Bottom side · Left"),
                 slot: .sideAPlayer2,
                 coordinator: coordinator
             )
             WatchPlayerSlotPicker(
-                title: String(localized: "Side B player 1"),
+                title: String(localized: "Top side · Right"),
                 slot: .sideBPlayer1,
                 coordinator: coordinator
             )
             WatchPlayerSlotPicker(
-                title: String(localized: "Side B player 2"),
+                title: String(localized: "Top side · Left"),
                 slot: .sideBPlayer2,
                 coordinator: coordinator
             )

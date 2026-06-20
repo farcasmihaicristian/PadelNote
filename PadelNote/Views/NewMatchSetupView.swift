@@ -40,31 +40,31 @@ struct NewMatchSetupView: View {
                 finalSetTieBreak: $finalSetTieBreak
             )
 
-            Section(String(localized: "Players (optional)")) {
+            Section(String(localized: "Bottom side")) {
                 PlayerNameField(
                     selection: $playerSetup.sideAPlayer1,
-                    label: String(localized: "Side A player 1"),
+                    label: String(localized: "Right"),
                     knownNames: knownPlayerNames,
                     linkedPlayers: linkedHistoryPlayers
                 )
                 PlayerNameField(
                     selection: $playerSetup.sideAPlayer2,
-                    label: String(localized: "Side A player 2"),
+                    label: String(localized: "Left"),
                     knownNames: knownPlayerNames,
                     linkedPlayers: linkedHistoryPlayers
                 )
             }
 
-            Section {
+            Section(String(localized: "Top side")) {
                 PlayerNameField(
                     selection: $playerSetup.sideBPlayer1,
-                    label: String(localized: "Side B player 1"),
+                    label: String(localized: "Right"),
                     knownNames: knownPlayerNames,
                     linkedPlayers: linkedHistoryPlayers
                 )
                 PlayerNameField(
                     selection: $playerSetup.sideBPlayer2,
-                    label: String(localized: "Side B player 2"),
+                    label: String(localized: "Left"),
                     knownNames: knownPlayerNames,
                     linkedPlayers: linkedHistoryPlayers
                 )

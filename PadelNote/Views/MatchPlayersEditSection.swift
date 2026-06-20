@@ -19,7 +19,7 @@ struct MatchPlayersEditSection: View {
                 .foregroundStyle(.secondary)
         }
 
-        Section(String(localized: "Side A")) {
+        Section(String(localized: "Bottom side")) {
             playerField(
                 title: String(localized: "Right side"),
                 subtitle: String(localized: "Right side"),
@@ -32,7 +32,7 @@ struct MatchPlayersEditSection: View {
             )
         }
 
-        Section(String(localized: "Side B")) {
+        Section(String(localized: "Top side")) {
             playerField(
                 title: String(localized: "Right side"),
                 subtitle: String(localized: "Right side"),
