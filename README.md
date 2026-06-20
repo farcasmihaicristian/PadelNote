@@ -3,6 +3,7 @@
 > The Padel scoring app for iPhone + Apple Watch, with HealthKit integration and a rich, journal-style match history. This single document is the source of truth for the project: positioning, scope, architecture, decisions, environment setup, and the full roadmap with current status.
 
 **Tagline:** *"Keep score. Keep history. Keep playing."*
+Record scores, track sessions, capture post-match notes, and discover trends that improve your padel game.
 
 **Bundle IDs:** `farca.PadelNote` (iOS), `farca.PadelNote.watchkitapp` (Watch)
 **Minimum OS:** iOS 17 / watchOS 10
