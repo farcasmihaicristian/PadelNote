@@ -20,12 +20,14 @@ struct WatchLiveMatchView: View {
             VStack(spacing: 0) {
                 teamZone(
                     team: .b,
-                    label: coordinator.displaySideLabel(for: .b)
+                    playerNames: coordinator.activePlayerNames.playersInCourtDisplayOrder(for: .b),
+                    fallbackLabel: coordinator.displaySideLabel(for: .b)
                 )
 
                 teamZone(
                     team: .a,
-                    label: coordinator.displaySideLabel(for: .a)
+                    playerNames: coordinator.activePlayerNames.playersInCourtDisplayOrder(for: .a),
+                    fallbackLabel: coordinator.displaySideLabel(for: .a)
                 )
             }
 
@@ -170,7 +172,7 @@ struct WatchLiveMatchView: View {
         return String(localized: "Completed sets \(completed), current set \(currentSet), game score \(game)")
     }
 
-    private func teamZone(team: Team, label: String) -> some View {
+    private func teamZone(team: Team, playerNames: [String], fallbackLabel: String) -> some View {
         Button {
             coordinator.addPoint(for: team)
         } label: {
@@ -178,13 +180,8 @@ struct WatchLiveMatchView: View {
                 teamBackground(for: team)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                Text(label)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-                    .padding(.horizontal, 8)
+                teamNameRow(playerNames: playerNames, fallbackLabel: fallbackLabel)
+                    .padding(.horizontal, 12)
                     .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -196,7 +193,37 @@ struct WatchLiveMatchView: View {
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .disabled(state.isMatchOver)
-        .accessibilityLabel(serveAccessibilityLabel(for: team, label: label))
+        .accessibilityLabel(serveAccessibilityLabel(for: team, label: fallbackLabel))
+    }
+
+    @ViewBuilder
+    private func teamNameRow(playerNames: [String], fallbackLabel: String) -> some View {
+        if playerNames.count >= 2 {
+            HStack(spacing: 0) {
+                Text(playerNames[0])
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 16)
+
+                Text(playerNames[1])
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        } else {
+            Text(fallbackLabel)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+        }
     }
 
     @ViewBuilder

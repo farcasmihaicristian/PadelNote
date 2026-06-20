@@ -19,6 +19,11 @@ public enum ScoreFormatter {
       return "SP"
     }
 
+    // Golden point: deuce is the deciding point, shown as "GP".
+    if isGoldenPointDeuce(in: state) {
+      return "GP"
+    }
+
     let points = team == .a ? state.pointA : state.pointB
     guard points >= 0, points < gamePointLabels.count else { return "0" }
     return gamePointLabels[points]
@@ -36,6 +41,14 @@ public enum ScoreFormatter {
       && state.pointA == 3
       && state.pointB == 3
       && state.deuceCount >= 3
+  }
+
+  /// True at 40-40 under golden-point rules (the next point decides the game).
+  private static func isGoldenPointDeuce(in state: MatchState) -> Bool {
+    state.rules.gamePointStyle == .goldenPoint
+      && state.advantageTeam == nil
+      && state.pointA == 3
+      && state.pointB == 3
   }
 
   /// "40-30" style readout for the current game.

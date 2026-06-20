@@ -126,6 +126,14 @@ private func reachGameScore(gamesA: Int, gamesB: Int) -> [Team] {
 
 // MARK: - Golden point
 
+@Test func goldenPointDeuceShowsGP() {
+    let s = matchState(
+        rules: MatchRules(gamePointStyle: .goldenPoint),
+        events: [.a, .a, .b, .b, .a, .b]
+    )
+    #expect(ScoreFormatter.currentGameScore(in: s) == "GP-GP")
+}
+
 @Test func goldenPointWinsGameAtDeuce() {
     let s = matchState(
         rules: MatchRules(gamePointStyle: .goldenPoint),
