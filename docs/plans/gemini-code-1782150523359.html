@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Padel Ultra - Cross Platform Theme Studio</title>
+    <style>
+        :root {
+            /* Theme defaults managed via JavaScript */
+            --glass-bg: rgba(30, 30, 35, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --playtomic-blue: #00E5FF;
+        }
+
+        body {
+            background-color: #050505;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            color: #fff;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        /* --- THEME SELECTOR SIDEBAR --- */
+        .theme-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #111;
+            padding: 24px;
+            border-radius: 24px;
+            border: 1px solid #222;
+            max-height: 85vh;
+            overflow-y: auto;
+            width: 250px;
+            flex-shrink: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .theme-picker h3 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1a1a1a;
+            border: 1px solid transparent;
+            color: #aaa;
+            padding: 12px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .theme-btn:hover { background: #222; color: #fff; }
+        .theme-btn.active { border-color: rgba(255,255,255,0.3); background: #262626; color: #fff; }
+
+        .theme-preview {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+        .tp-half { width: 50%; height: 100%; }
+
+        /* --- DEVICE CONTAINER LABELING --- */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .device-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #555;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* =========================================
+           1. APPLE WATCH ULTRA (ORIGINAL SEAMLESS LAYOUT)
+           ========================================= */
+        .ultra-bezel {
+            width: 370px;
+            height: 450px;
+            background: #121212;
+            border-radius: 65px;
+            padding: 16px;
+            box-shadow: inset 0 0 12px #000, 0 0 0 2px #2a2a2a, 0 25px 50px -12px rgba(0,0,0,0.9);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .watch-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 52px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 4px rgba(255,255,255,0.05);
+        }
+
+        .tap-zone {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .zone-top {
+            top: 0;
+            background: linear-gradient(180deg, var(--team1-top) 0%, var(--team1-bottom) 100%);
+        }
+
+        .zone-bottom {
+            bottom: 0;
+            background: linear-gradient(180deg, var(--team2-top) 0%, var(--team2-bottom) 100%);
+        }
+
+        .center-line {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 6;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .watch-ui-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+        }
+
+        .w-header { display: flex; justify-content: space-between; align-items: center; }
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .w-clock { color: white; font-weight: 600; font-size: 16px; letter-spacing: 0.5px; }
+
+        .w-player-name {
+            position: absolute;
+            color: white;
+            font-size: 15px;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .w-name-tl { top: 80px; left: 24px; }
+        .w-name-tr { top: 80px; right: 24px; }
+        .w-name-bl { bottom: 80px; left: 24px; }
+        .w-name-br { bottom: 80px; right: 24px; }
+
+        .w-player-name.serving {
+            text-decoration: underline;
+            text-decoration-color: var(--serve-color);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+            font-weight: 700;
+        }
+
+        .w-field-indicator {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--serve-color);
+            color: var(--serve-color);
+            font-weight: 800;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+        .w-pos-top-right { top: 120px; right: 24px; }
+
+        .w-scoreboard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid var(--glass-border);
+            border-radius: 36px;
+            width: 160px;
+            padding: 16px 0;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .w-completed-sets { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 1px; }
+        .w-score-games { font-size: 24px; font-weight: 700; color: rgba(255,255,255,0.95); letter-spacing: 1px; }
+        .w-score-divider { width: 60%; height: 1px; background: rgba(255,255,255,0.15); margin: 4px auto; }
+        .w-score-points { font-size: 46px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: 2px; }
+
+
+        /* =========================================
+           2. IPHONE 15 COMPANION APP (MODERN PREMIUM TINTED)
+           ========================================= */
+        .iphone-bezel {
+            width: 360px;
+            height: 720px;
+            background: #1a1a1e;
+            border-radius: 54px;
+            padding: 12px;
+            box-shadow: 0 0 0 3px #2c2c30, 0 30px 60px rgba(0,0,0,0.8);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .iphone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            border-radius: 44px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 44px 22px 24px 22px;
+            box-sizing: border-box;
+        }
+
+        /* Dynamic Ambient Blur Mesh Layer */
+        .iphone-ambient-glow {
+            position: absolute;
+            top: -120px;
+            left: -60px;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, var(--team1-top) 0%, transparent 65%);
+            opacity: 0.16;
+            filter: blur(70px);
+            pointer-events: none;
+            transition: background 0.5s ease;
+            z-index: 1;
+        }
+
+        .phone-ui-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .phone-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .phone-navbar h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+        .phone-nav-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+
+        /* Frosted Premium Cards */
+        .phone-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-card-meta {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .phone-match-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .phone-team-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* Solid Theme Colored Identifier Bars */
+        .phone-team-bar {
+            width: 4px;
+            height: 18px;
+            border-radius: 2px;
+            transition: background 0.4s;
+        }
+        .bar-t1 { background: var(--team1-top); }
+        .bar-t2 { background: var(--team2-top); }
+
+        .phone-score-strip {
+            display: flex;
+            gap: 14px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .ph-set { color: rgba(255,255,255,0.3); width: 14px; text-align: center; }
+        .ph-game { color: rgba(255,255,255,0.65); width: 14px; text-align: center; }
+        
+        /* Scores Glow with Variant's Native Colors */
+        .ph-point { width: 26px; text-align: right; transition: color 0.4s; }
+        .ph-point.t1 { color: var(--team1-top); text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+        .ph-point.t2 { color: var(--team2-top); text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        .phone-service-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--serve-color);
+            margin-left: 6px;
+            display: inline-block;
+            transition: background 0.4s;
+        }
+
+        .phone-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            padding: 4px 0;
+        }
+        .phone-accent-text { transition: color 0.4s; color: var(--team2-top); font-weight: 600; }
+
+        /* Dynamic Theme Fluid CTA Action Button */
+        .phone-action-btn {
+            background: linear-gradient(135deg, var(--team1-top), var(--team1-bottom));
+            border: none;
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            text-align: center;
+            transition: filter 0.2s;
+        }
+
+        @media (max-width: 1050px) {
+            body { flex-direction: column; height: auto; padding: 40px 20px; }
+            .theme-picker { width: 100%; max-height: 220px; flex-direction: row; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-picker" id="theme-container">
+        <h3>App Themes</h3>
+    </div>
+
+    <div class="workspace">
+        <div class="device-label">Apple Watch Layout</div>
+        <div class="ultra-bezel">
+            <div class="watch-screen">
+                <div class="tap-zone zone-top"></div>
+                <div class="center-line"></div>
+                <div class="tap-zone zone-bottom"></div>
+
+                <div class="watch-ui-layer">
+                    <div class="w-header">
+                        <button class="glass-btn">End</button>
+                        <div class="w-clock">18:07</div>
+                        <button class="glass-btn">Undo</button>
+                    </div>
+
+                    <div class="w-player-name w-name-tl serving">Mihai</div>
+                    <div class="w-player-name w-name-tr">Sergiu</div>
+                    <div class="w-player-name w-name-bl">Catalin</div>
+                    <div class="w-player-name w-name-br">Alex</div>
+
+                    <div class="w-field-indicator w-pos-top-right">R</div>
+
+                    <div class="w-scoreboard">
+                        <div class="w-completed-sets">6-4  3-6</div>
+                        <div class="w-score-games">2-3</div>
+                        <div class="w-score-divider"></div>
+                        <div class="w-score-points">40-15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="device-label">iPhone Application Layout</div>
+        <div class="iphone-bezel">
+            <div class="iphone-screen">
+                <div class="iphone-ambient-glow"></div>
+                
+                <div class="phone-ui-content">
+                    <div class="phone-navbar">
+                        <h1>Padel Analytics</h1>
+                        <div class="phone-nav-icon">📊</div>
+                    </div>
+
+                    <div class="phone-card">
+                        <div class="phone-card-meta">
+                            <span>Live Match • Tracker</span>
+                            <span style="color: #30d158; font-weight: 700; letter-spacing: 0.5px;">● Court 2</span>
+                        </div>
+                        
+                        <div class="phone-match-row">
+                            <div class="phone-team-label">
+                                <div class="phone-team-bar bar-t1"></div>
+                                <span>Mihai & Sergiu <span class="phone-service-dot"></span></span>
+                            </div>
+                            <div class="phone-score-strip">
+                                <span class="ph-set">6</span>
+                                <span class="ph-game">2</span>
+                                <span class="ph-point t1">40</span>
+                            </div>
+                        </div>
+
+                        <div style="height: 1px; background: rgba(255,255,255,0.06); margin: 10px 0;"></div>
+
+                        <div class="phone-match-row">
+                            <div class="phone-team-label">
+                                <div class="phone-team-bar bar-t2"></div>
+                                <span>Catalin & Alex</span>
+                            </div>
+                            <div class="phone-score-strip">
+                                <span class="ph-set">4</span>
+                                <span class="ph-game">3</span>
+                                <span class="ph-point t2">15</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="phone-card">
+                        <div class="phone-card-meta">Performance breakdown</div>
+                        <div class="phone-stat-row">
+                            <span>Golden Points Decided</span>
+                            <span class="phone-accent-text">3 Won / 1 Lost</span>
+                        </div>
+                        <div class="phone-stat-row" style="margin-top: 6px;">
+                            <span>Break Points Converted</span>
+                            <span style="color: #fff; font-weight: 600;">75% Ratio</span>
+                        </div>
+                    </div>
+
+                    <div class="phone-action-btn">End & Sync to Playtomic</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Full exact token library of all 20 options mapped accurately to hex structures
+        const themes = [
+            { id: "midnightEmerald", name: "Midnight Emerald", t1Top: "#5E56D6", t1Bot: "#302EA3", t2Top: "#30D158", t2Bot: "#158A30", serve: "#FF9F0A" },
+            { id: "cupertinoSunset", name: "Cupertino Sunset", t1Top: "#FF2D55", t1Bot: "#B30E31", t2Top: "#FF9500", t2Bot: "#B36400", serve: "#FFD60A" },
+            { id: "oceanBreeze", name: "Ocean Breeze", t1Top: "#5AC8FA", t1Bot: "#1D749B", t2Top: "#A2E6C8", t2Bot: "#4A9E7A", serve: "#FFCC00" },
+            { id: "berryFrost", name: "Berry Frost", t1Top: "#AF52DE", t1Bot: "#641E96", t2Top: "#0A84FF", t2Bot: "#0050B4", serve: "#30D158" },
+            { id: "graphiteTitanium", name: "Graphite Titanium", t1Top: "#8E8E93", t1Bot: "#48484A", t2Top: "#46464B", t2Bot: "#1C1C1E", serve: "#FF9F0A" },
+            { id: "lavenderDawn", name: "Lavender Dawn", t1Top: "#C8B4FA", t1Bot: "#785AC8", t2Top: "#FFCC99", t2Bot: "#C8783C", serve: "#FF3B30" },
+            { id: "candyApple", name: "Candy Apple", t1Top: "#FF3B30", t1Bot: "#B4140A", t2Top: "#0A84FF", t2Bot: "#0046A0", serve: "#FFD60A" },
+            { id: "neonCyber", name: "Neon Cyber", t1Top: "#FF00FF", t1Bot: "#960096", t2Top: "#00FFFF", t2Bot: "#009696", serve: "#39FF14" },
+            { id: "aquaMarine", name: "Aqua Marine", t1Top: "#009688", t1Bot: "#00645A", t2Top: "#40E0D0", t2Bot: "#1EA096", serve: "#FFCC00" },
+            { id: "solarFlare", name: "Solar Flare", t1Top: "#FFCC00", t1Bot: "#C89600", t2Top: "#FF3B30", t2Bot: "#B4140A", serve: "#FFFFFF" },
+            { id: "ultraAction", name: "Ultra Action", t1Top: "#0A0A32", t1Bot: "#05051E", t2Top: "#FF6900", t2Bot: "#C84B00", serve: "#FFFFFF" },
+            { id: "deepSpace", name: "Deep Space", t1Top: "#1E003C", t1Bot: "#0F001E", t2Top: "#00143C", t2Bot: "#000A1E", serve: "#00FFFF" },
+            { id: "cherryBlossom", name: "Cherry Blossom", t1Top: "#FFB7C5", t1Bot: "#C87385", t2Top: "#C8DCD7", t2Bot: "#829691", serve: "#FF6B81" },
+            { id: "arcticIce", name: "Arctic Ice", t1Top: "#B4F0FF", t1Bot: "#5BB4C8", t2Top: "#C8D2DC", t2Bot: "#78828C", serve: "#007AFF" },
+            { id: "sunsetBoulevard", name: "Sunset Boulevard", t1Top: "#641478", t1Bot: "#460A5A", t2Top: "#FF5000", t2Bot: "#C83200", serve: "#FFCC00" },
+            { id: "monochromeOled", name: "Monochrome OLED", t1Top: "#646464", t1Bot: "#3C3C3C", t2Top: "#B4B4B4", t2Bot: "#787878", serve: "#FFFFFF" },
+            { id: "goldenHour", name: "Golden Hour", t1Top: "#FFD700", t1Bot: "#A58200", t2Top: "#FF7F50", t2Bot: "#DC4614", serve: "#FFFFFF" },
+            { id: "forestCanopy", name: "Forest Canopy", t1Top: "#0A5A28", t1Bot: "#053C19", t2Top: "#96E632", t2Bot: "#5A960A", serve: "#FFFFFF" },
+            { id: "cobaltStrike", name: "Cobalt Strike", t1Top: "#0047AB", t1Bot: "#002878", t2Top: "#DC143C", t2Bot: "#A00A28", serve: "#FFD700" },
+            { id: "peachFuzz", name: "Peach Fuzz", t1Top: "#FFCCBC", t1Bot: "#D28068", t2Top: "#FFF5B4", t2Bot: "#DCC878", serve: "#FF8C00" }
+        ];
+
+        const container = document.getElementById('theme-container');
+        
+        function applyGlobalTheme(theme) {
+            document.documentElement.style.setProperty('--team1-top', theme.t1Top);
+            document.documentElement.style.setProperty('--team1-bottom', theme.t1Bot);
+            document.documentElement.style.setProperty('--team2-top', theme.t2Top);
+            document.documentElement.style.setProperty('--team2-bottom', theme.t2Bot);
+            document.documentElement.style.setProperty('--serve-color', theme.serve);
+        }
+
+        themes.forEach((theme, index) => {
+            const btn = document.createElement('button');
+            btn.className = `theme-btn ${index === 0 ? 'active' : ''}`;
+            
+            const preview = document.createElement('div');
+            preview.className = 'theme-preview';
+            preview.innerHTML = `
+                <div class="tp-half" style="background: ${theme.t1Top}"></div>
+                <div class="tp-half" style="background: ${theme.t2Top}"></div>
+            `;
+            
+            const label = document.createElement('span');
+            label.innerText = theme.name;
+
+            btn.appendChild(preview); btn.appendChild(label);
+
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyGlobalTheme(theme);
+            });
+            container.appendChild(btn);
+        });
+
+        // Initialize with default theme
+        applyGlobalTheme(themes[0]);
+    </script>
+</body>
+</html>
