@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Padel Ultra - Theme Engine</title>
+    <style>
+        :root {
+            /* Default: Variant 1 (Midnight Emerald) */
+            --team1-top: rgba(88, 86, 214, 0.85);   
+            --team1-bottom: rgba(48, 46, 163, 0.95);
+            --team2-top: rgba(48, 209, 88, 0.85);  
+            --team2-bottom: rgba(21, 138, 48, 0.95);
+            
+            --glass-bg: rgba(30, 30, 35, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --serve-color: #ff9f0a; 
+            --playtomic-blue: #00E5FF;
+        }
+
+        body {
+            background-color: #050505;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        /* --- Theme Picker UI (Outside the watch) --- */
+        .theme-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #111;
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .theme-picker h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: left;
+            width: 220px;
+        }
+
+        .theme-btn:hover { background: #333; }
+        .theme-btn.active { border-color: #fff; background: #2a2a2a; }
+
+        .theme-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tp-half { width: 50%; height: 100%; }
+
+        /* --- Watch UI --- */
+        .ultra-bezel {
+            width: 370px;
+            height: 450px;
+            background: #121212;
+            border-radius: 65px;
+            padding: 16px;
+            box-shadow: inset 0 0 12px #000, 0 0 0 2px #2a2a2a, 0 25px 50px -12px rgba(0,0,0,0.9);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 52px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 4px rgba(255,255,255,0.05);
+        }
+
+        .tap-zone {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            cursor: pointer;
+            z-index: 5;
+            -webkit-tap-highlight-color: transparent;
+            transition: filter 0.05s ease, background 0.3s ease;
+        }
+
+        .tap-zone.active-flash { filter: brightness(1.5) saturate(1.3); }
+
+        .zone-top {
+            top: 0;
+            background: linear-gradient(180deg, var(--team1-top) 0%, var(--team1-bottom) 100%);
+        }
+
+        .zone-bottom {
+            bottom: 0;
+            background: linear-gradient(180deg, var(--team2-top) 0%, var(--team2-bottom) 100%);
+        }
+
+        .center-line {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 6;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+            pointer-events: none;
+        }
+
+        .ui-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; }
+
+        .glass-btn {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+        }
+
+        .glass-btn:active { background: rgba(255, 255, 255, 0.3); transform: scale(0.92); }
+
+        .clock { color: white; font-weight: 600; font-size: 16px; letter-spacing: 0.5px; }
+
+        .player-name {
+            position: absolute;
+            color: white;
+            font-size: 15px;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+        }
+
+        .name-tl { top: 80px; left: 24px; }
+        .name-tr { top: 80px; right: 24px; }
+        .name-bl { bottom: 80px; left: 24px; }
+        .name-br { bottom: 80px; right: 24px; }
+
+        .player-name.serving {
+            text-decoration: underline;
+            text-decoration-color: var(--serve-color);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .field-indicator {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--serve-color);
+            color: var(--serve-color);
+            font-weight: 800;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 15;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pos-top-left { top: 120px; left: 24px; }
+        .pos-top-right { top: 120px; right: 24px; }
+        .pos-bottom-left { bottom: 120px; left: 24px; }
+        .pos-bottom-right { bottom: 120px; right: 24px; }
+
+        .scoreboard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid var(--glass-border);
+            border-radius: 36px;
+            width: 160px;
+            padding: 16px 0;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .completed-sets { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 1px; min-height: 14px; margin-bottom: 2px; }
+        .score-games { font-size: 24px; font-weight: 700; color: rgba(255,255,255,0.95); letter-spacing: 1px; }
+        .score-divider { width: 60%; height: 1px; background: rgba(255,255,255,0.15); margin: 4px auto; }
+        .score-points { font-size: 46px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: 2px; }
+        .tiebreak-mode { color: #00e676; }
+
+        .summary-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 12, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: auto; 
+        }
+
+        .summary-overlay.active { display: flex; opacity: 1; }
+        .summary-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+        .summary-scores { font-size: 18px; color: rgba(255,255,255,0.9); font-weight: 600; margin-bottom: 30px; text-align: center; }
+
+        .btn-playtomic {
+            pointer-events: auto;
+            background: rgba(0, 229, 255, 0.15);
+            border: 1px solid var(--playtomic-blue);
+            color: var(--playtomic-blue);
+            border-radius: 24px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 80%;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1);
+        }
+
+        .btn-playtomic:active { background: rgba(0, 229, 255, 0.3); transform: scale(0.95); }
+        .btn-playtomic.connected { background: var(--playtomic-blue); color: #000; }
+        .btn-playtomic.success { background: #30d158; border-color: #30d158; color: #000; pointer-events: none; }
+        .btn-close { pointer-events: auto; background: transparent; color: rgba(255,255,255,0.5); border: none; font-size: 14px; cursor: pointer; padding: 8px; }
+
+        @media (max-width: 800px) {
+            body { flex-direction: column; height: auto; padding: 40px 0; }
+            .theme-picker { width: 330px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Watch Prototype -->
+    <div class="ultra-bezel">
+        <div class="screen">
+            <div class="tap-zone zone-top" id="zone-top"></div>
+            <div class="center-line"></div>
+            <div class="tap-zone zone-bottom" id="zone-bottom"></div>
+
+            <div class="ui-layer">
+                <div class="header">
+                    <button class="glass-btn" id="btn-end">End</button>
+                    <div class="clock" id="clock">18:07</div>
+                    <button class="glass-btn" id="btn-undo">Undo</button>
+                </div>
+
+                <div class="player-name name-tl" id="player-tl">Mihai</div>
+                <div class="player-name name-tr" id="player-tr">Sergiu</div>
+                <div class="player-name name-bl" id="player-bl">Catalin</div>
+                <div class="player-name name-br" id="player-br">Alex</div>
+
+                <div id="field-serve-indicator" class="field-indicator pos-top-right">R</div>
+
+                <div class="scoreboard">
+                    <div class="completed-sets" id="display-sets"></div>
+                    <div class="score-games" id="display-games">0-0</div>
+                    <div class="score-divider"></div>
+                    <div class="score-points" id="display-points">0-0</div>
+                </div>
+            </div>
+
+            <div class="summary-overlay" id="summary-screen">
+                <div class="summary-title">Match Complete</div>
+                <div class="summary-scores" id="final-scores-display"></div>
+                <button class="btn-playtomic" id="btn-playtomic">Connect Playtomic</button>
+                <button class="btn-close" id="btn-close">Close & Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Switcher -->
+    <div class="theme-picker" id="theme-container">
+        <h3>macOS Color Variants</h3>
+        <!-- Buttons injected by JS -->
+    </div>
+
+    <script>
+        // --- THEME ENGINE --- //
+        const themes = [
+            {
+                name: "Midnight Emerald",
+                t1Top: "rgba(88, 86, 214, 0.85)", t1Bot: "rgba(48, 46, 163, 0.95)", // Indigo
+                t2Top: "rgba(48, 209, 88, 0.85)", t2Bot: "rgba(21, 138, 48, 0.95)", // Green
+                serve: "#ff9f0a"
+            },
+            {
+                name: "Cupertino Sunset",
+                t1Top: "rgba(255, 45, 85, 0.85)", t1Bot: "rgba(179, 14, 49, 0.95)", // Pink
+                t2Top: "rgba(255, 149, 0, 0.85)", t2Bot: "rgba(179, 100, 0, 0.95)", // Orange
+                serve: "#ffd60a"
+            },
+            {
+                name: "Ocean Breeze (Pastel)",
+                t1Top: "rgba(90, 200, 250, 0.85)", t1Bot: "rgba(40, 150, 200, 0.95)", // Soft Blue
+                t2Top: "rgba(162, 230, 200, 0.85)", t2Bot: "rgba(100, 180, 150, 0.95)", // Mint
+                serve: "#ffcc00"
+            },
+            {
+                name: "Berry Frost",
+                t1Top: "rgba(175, 82, 222, 0.85)", t1Bot: "rgba(100, 30, 150, 0.95)", // Purple
+                t2Top: "rgba(10, 132, 255, 0.85)", t2Bot: "rgba(0, 80, 180, 0.95)",   // Blue
+                serve: "#30d158"
+            },
+            {
+                name: "Graphite Titanium",
+                t1Top: "rgba(142, 142, 147, 0.85)", t1Bot: "rgba(72, 72, 74, 0.95)", // Light Gray
+                t2Top: "rgba(70, 70, 75, 0.85)", t2Bot: "rgba(28, 28, 30, 0.95)",  // Dark Gray
+                serve: "#ff9f0a"
+            },
+            {
+                name: "Lavender Dawn (Pastel)",
+                t1Top: "rgba(200, 180, 250, 0.85)", t1Bot: "rgba(150, 120, 200, 0.95)", // Lilac
+                t2Top: "rgba(255, 204, 153, 0.85)", t2Bot: "rgba(220, 160, 100, 0.95)", // Peach
+                serve: "#ff3b30"
+            },
+            {
+                name: "Candy Apple",
+                t1Top: "rgba(255, 59, 48, 0.85)", t1Bot: "rgba(180, 20, 10, 0.95)", // Red
+                t2Top: "rgba(10, 132, 255, 0.85)", t2Bot: "rgba(0, 70, 160, 0.95)", // Deep Blue
+                serve: "#ffd60a"
+            },
+            {
+                name: "Neon Cyber",
+                t1Top: "rgba(255, 0, 255, 0.85)", t1Bot: "rgba(150, 0, 150, 0.95)", // Magenta
+                t2Top: "rgba(0, 255, 255, 0.85)", t2Bot: "rgba(0, 150, 150, 0.95)", // Cyan
+                serve: "#39ff14"
+            },
+            {
+                name: "Aqua Marine",
+                t1Top: "rgba(0, 150, 136, 0.85)", t1Bot: "rgba(0, 100, 90, 0.95)", // Teal
+                t2Top: "rgba(64, 224, 208, 0.85)", t2Bot: "rgba(30, 160, 150, 0.95)", // Turquoise
+                serve: "#ffcc00"
+            },
+            {
+                name: "Solar Flare",
+                t1Top: "rgba(255, 204, 0, 0.85)", t1Bot: "rgba(200, 150, 0, 0.95)", // Gold
+                t2Top: "rgba(255, 59, 48, 0.85)", t2Bot: "rgba(180, 20, 10, 0.95)", // Red
+                serve: "#ffffff"
+            },
+            {
+                name: "Ultra Action",
+                t1Top: "rgba(10, 10, 50, 0.85)", t1Bot: "rgba(5, 5, 30, 0.95)", // Deep Navy
+                t2Top: "rgba(255, 105, 0, 0.85)", t2Bot: "rgba(200, 75, 0, 0.95)", // Ultra Orange
+                serve: "#ffffff"
+            },
+            {
+                name: "Deep Space",
+                t1Top: "rgba(30, 0, 60, 0.85)", t1Bot: "rgba(15, 0, 30, 0.95)", // Deep Violet
+                t2Top: "rgba(0, 20, 60, 0.85)", t2Bot: "rgba(0, 10, 30, 0.95)", // Deep Blue
+                serve: "#00ffff"
+            },
+            {
+                name: "Cherry Blossom (Pastel)",
+                t1Top: "rgba(255, 183, 197, 0.85)", t1Bot: "rgba(220, 140, 160, 0.95)", // Soft Pink
+                t2Top: "rgba(200, 220, 215, 0.85)", t2Bot: "rgba(160, 180, 175, 0.95)", // Soft Mint
+                serve: "#ff6b81"
+            },
+            {
+                name: "Arctic Ice",
+                t1Top: "rgba(180, 240, 255, 0.85)", t1Bot: "rgba(130, 200, 220, 0.95)", // Ice Blue
+                t2Top: "rgba(200, 210, 220, 0.85)", t2Bot: "rgba(150, 160, 170, 0.95)", // Cool Silver
+                serve: "#007aff"
+            },
+            {
+                name: "Sunset Boulevard",
+                t1Top: "rgba(100, 20, 120, 0.85)", t1Bot: "rgba(70, 10, 90, 0.95)", // Plum
+                t2Top: "rgba(255, 80, 0, 0.85)", t2Bot: "rgba(200, 50, 0, 0.95)", // Fiery Orange
+                serve: "#ffcc00"
+            },
+            {
+                name: "Monochrome OLED",
+                t1Top: "rgba(100, 100, 100, 0.85)", t1Bot: "rgba(60, 60, 60, 0.95)", // Mid Grey
+                t2Top: "rgba(180, 180, 180, 0.85)", t2Bot: "rgba(120, 120, 120, 0.95)", // Light Grey
+                serve: "#ffffff"
+            },
+            {
+                name: "Golden Hour",
+                t1Top: "rgba(255, 215, 0, 0.85)", t1Bot: "rgba(218, 165, 32, 0.95)", // Warm Gold
+                t2Top: "rgba(255, 127, 80, 0.85)", t2Bot: "rgba(220, 90, 50, 0.95)", // Soft Coral
+                serve: "#ffffff"
+            },
+            {
+                name: "Forest Canopy",
+                t1Top: "rgba(10, 90, 40, 0.85)", t1Bot: "rgba(5, 60, 25, 0.95)", // Pine Green
+                t2Top: "rgba(150, 230, 50, 0.85)", t2Bot: "rgba(100, 180, 20, 0.95)", // Lime
+                serve: "#ffffff"
+            },
+            {
+                name: "Cobalt Strike",
+                t1Top: "rgba(0, 71, 171, 0.85)", t1Bot: "rgba(0, 40, 120, 0.95)", // Cobalt
+                t2Top: "rgba(220, 20, 60, 0.85)", t2Bot: "rgba(160, 10, 40, 0.95)", // Crimson
+                serve: "#ffd700"
+            },
+            {
+                name: "Peach Fuzz (Pastel)",
+                t1Top: "rgba(255, 204, 188, 0.85)", t1Bot: "rgba(240, 160, 140, 0.95)", // Peach
+                t2Top: "rgba(255, 245, 180, 0.85)", t2Bot: "rgba(230, 210, 140, 0.95)", // Soft Lemon
+                serve: "#ff8c00"
+            }
+        ];
+
+        const themeContainer = document.getElementById('theme-container');
+        
+        themes.forEach((theme, index) => {
+            const btn = document.createElement('button');
+            btn.className = `theme-btn ${index === 0 ? 'active' : ''}`;
+            
+            // Create mini color preview
+            const preview = document.createElement('div');
+            preview.className = 'theme-preview';
+            preview.innerHTML = `
+                <div class="tp-half" style="background: ${theme.t1Top}"></div>
+                <div class="tp-half" style="background: ${theme.t2Top}"></div>
+            `;
+            
+            const label = document.createElement('span');
+            label.innerText = theme.name;
+
+            btn.appendChild(preview);
+            btn.appendChild(label);
+
+            btn.addEventListener('click', () => {
+                // Update UI active state
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Apply CSS Variables
+                document.documentElement.style.setProperty('--team1-top', theme.t1Top);
+                document.documentElement.style.setProperty('--team1-bottom', theme.t1Bot);
+                document.documentElement.style.setProperty('--team2-top', theme.t2Top);
+                document.documentElement.style.setProperty('--team2-bottom', theme.t2Bot);
+                document.documentElement.style.setProperty('--serve-color', theme.serve);
+            });
+
+            themeContainer.appendChild(btn);
+        });
+
+        // --- PADEL GAME ENGINE --- //
+        const standardPoints = [0, 15, 30, 40];
+        const serverSequence = ['tl', 'bl', 'tr', 'br'];
+        
+        let state = {
+            sets: [], 
+            topGames: 0, bottomGames: 0,
+            topPoints: 0, bottomPoints: 0,
+            serverIndex: 0, 
+            isTieBreak: false, tieBreakServeCount: 0
+        };
+
+        let history = [];
+        let isPlaytomicConnected = false;
+
+        function saveState() { history.push(JSON.parse(JSON.stringify(state))); }
+
+        function scorePoint(team) {
+            const tapZone = document.getElementById(`zone-${team}`);
+            tapZone.classList.add('active-flash');
+            setTimeout(() => tapZone.classList.remove('active-flash'), 80);
+
+            saveState();
+            const otherTeam = team === 'top' ? 'bottom' : 'top';
+
+            if (state.isTieBreak) {
+                state[`${team}Points`]++;
+                state.tieBreakServeCount++;
+                if (state.tieBreakServeCount % 2 === 1) advanceServer();
+                if (state[`${team}Points`] >= 7 && (state[`${team}Points`] - state[`${otherTeam}Points`] >= 2)) winSet(team);
+            } else {
+                state[`${team}Points`]++;
+                if (state[`${team}Points`] > 3) winGame(team);
+            }
+            updateUI();
+        }
+
+        function winGame(team) {
+            state[`${team}Games`]++;
+            state.topPoints = 0; state.bottomPoints = 0;
+            advanceServer();
+            checkSetStatus();
+        }
+
+        function checkSetStatus() {
+            const tg = state.topGames; const bg = state.bottomGames;
+            if ((tg >= 6 && tg - bg >= 2) || tg === 7) winSet('top');
+            else if ((bg >= 6 && bg - tg >= 2) || bg === 7) winSet('bottom');
+            else if (tg === 6 && bg === 6) { state.isTieBreak = true; state.tieBreakServeCount = 0; }
+        }
+
+        function winSet(winningTeam) {
+            state.sets.push(`${state.topGames}-${state.bottomGames}`);
+            state.topGames = 0; state.bottomGames = 0;
+            state.topPoints = 0; state.bottomPoints = 0;
+            state.isTieBreak = false;
+        }
+
+        function advanceServer() { state.serverIndex = (state.serverIndex + 1) % 4; }
+
+        function undo() {
+            if (history.length > 0) { state = history.pop(); updateUI(); }
+        }
+
+        function updateUI() {
+            document.getElementById('display-sets').innerText = state.sets.join("  ");
+            document.getElementById('display-games').innerText = `${state.topGames}-${state.bottomGames}`;
+            
+            let ptsUI = document.getElementById('display-points');
+            if (state.isTieBreak) {
+                ptsUI.innerText = `${state.topPoints}-${state.bottomPoints}`;
+                ptsUI.classList.add('tiebreak-mode');
+            } else {
+                ptsUI.innerText = `${standardPoints[state.topPoints] || 0}-${standardPoints[state.bottomPoints] || 0}`;
+                ptsUI.classList.remove('tiebreak-mode');
+            }
+
+            let totalPtsPlayed = state.isTieBreak ? state.tieBreakServeCount : (state.topPoints + state.bottomPoints);
+            let sideText = (totalPtsPlayed % 2 === 0) ? 'R' : 'L';
+            let servingId = serverSequence[state.serverIndex];
+            let isTopTeam = servingId.startsWith('t');
+
+            let indicatorEl = document.getElementById('field-serve-indicator');
+            indicatorEl.innerText = sideText;
+            indicatorEl.className = 'field-indicator'; 
+            if (isTopTeam) { indicatorEl.classList.add(sideText === 'L' ? 'pos-top-left' : 'pos-top-right'); } 
+            else { indicatorEl.classList.add(sideText === 'L' ? 'pos-bottom-left' : 'pos-bottom-right'); }
+
+            serverSequence.forEach((id, idx) => {
+                let playerEl = document.getElementById(`player-${id}`);
+                if (state.serverIndex === idx) playerEl.classList.add('serving');
+                else playerEl.classList.remove('serving');
+            });
+        }
+
+        function triggerEndMatch() {
+            const summaryUI = document.getElementById('summary-screen');
+            const scoreDisplay = document.getElementById('final-scores-display');
+            let finalSets = state.sets.join(" | ");
+            let currentSet = `${state.topGames}-${state.bottomGames}`;
+            scoreDisplay.innerText = finalSets ? `${finalSets} | ${currentSet}` : currentSet;
+            summaryUI.classList.add('active');
+        }
+
+        function handlePlaytomicAction() {
+            const btn = document.getElementById('btn-playtomic');
+            if (!isPlaytomicConnected) {
+                btn.innerText = "Connecting...";
+                setTimeout(() => {
+                    isPlaytomicConnected = true; btn.classList.add('connected'); btn.innerText = "Export to Playtomic";
+                }, 1200);
+            } else {
+                btn.innerText = "Exporting...";
+                setTimeout(() => {
+                    btn.classList.remove('connected'); btn.classList.add('success'); btn.innerText = "Match Exported ✓";
+                }, 1500);
+            }
+        }
+
+        function closeSummary() {
+            document.getElementById('summary-screen').classList.remove('active');
+            history = [];
+            state = { sets: [], topGames: 0, bottomGames: 0, topPoints: 0, bottomPoints: 0, serverIndex: 0, isTieBreak: false, tieBreakServeCount: 0 };
+            updateUI();
+            const btn = document.getElementById('btn-playtomic');
+            btn.classList.remove('success');
+            if (isPlaytomicConnected) { btn.classList.add('connected'); btn.innerText = "Export to Playtomic"; } 
+            else { btn.innerText = "Connect Playtomic"; }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours(); let minutes = now.getMinutes();
+            hours = hours < 10 ? '0' + hours : hours; minutes = minutes < 10 ? '0' + minutes : minutes;
+            document.getElementById('clock').innerText = `${hours}:${minutes}`;
+        }
+        setInterval(updateClock, 1000); updateClock(); updateUI(); 
+
+        document.getElementById('zone-top').addEventListener('pointerdown', e => { e.preventDefault(); scorePoint('top'); });
+        document.getElementById('zone-bottom').addEventListener('pointerdown', e => { e.preventDefault(); scorePoint('bottom'); });
+        document.getElementById('btn-undo').addEventListener('pointerdown', e => { e.preventDefault(); undo(); });
+        document.getElementById('btn-end').addEventListener('pointerdown', e => { e.preventDefault(); triggerEndMatch(); });
+        document.getElementById('btn-playtomic').addEventListener('pointerdown', e => { e.preventDefault(); handlePlaytomicAction(); });
+        document.getElementById('btn-close').addEventListener('pointerdown', e => { e.preventDefault(); closeSummary(); });
+    </script>
+</body>
+</html>
