@@ -13,7 +13,6 @@ struct LiveMatchView: View {
     @State private var session: ScoringSession
     @State private var startedAt = Date.now
     @State private var savedMatch: Match?
-    @State private var showEndConfirmation = false
     @State private var firstServer: PlayerSlot
     @State private var setServeOrders: [ServeOrder] = []
     @State private var decidingSideOverride: ServeSide?
@@ -85,49 +84,33 @@ struct LiveMatchView: View {
         // Compute the serve once per render; the banner and both point buttons
         // reuse it rather than each recomputing it via an event-log replay.
         let serve = currentServe
-        return VStack(spacing: 24) {
-            setsHeader
+        return GeometryReader { _ in
+            ZStack {
+                VStack(spacing: 0) {
+                    phoneTeamZone(
+                        team: .b,
+                        playerNames: [
+                            playerSetup.playerNames.playerB1Name,
+                            playerSetup.playerNames.playerB2Name,
+                        ].compactMap { $0 },
+                        playerSlots: [.sideBPlayer1, .sideBPlayer2],
+                        fallbackLabel: sideBLabel,
+                        serve: serve
+                    )
 
-            VStack(spacing: 8) {
-                gameScoreView(ScoreFormatter.currentGameScore(in: state))
-
-                currentSetScoreView
-            }
-
-            serveBanner(serve)
-
-            HStack(spacing: 16) {
-                pointButton(team: .a, label: sideALabel, serve: serve)
-                pointButton(team: .b, label: sideBLabel, serve: serve)
-            }
-            .padding(.horizontal)
-
-            HStack(spacing: 16) {
-                Button {
-                    undoPoint()
-                } label: {
-                    Label(String(localized: "Undo"), systemImage: "arrow.uturn.backward")
-                        .frame(maxWidth: .infinity)
+                    phoneTeamZone(
+                        team: .a,
+                        playerNames: playerSetup.playerNames.playersInCourtDisplayOrder(for: .a),
+                        playerSlots: [.sideAPlayer2, .sideAPlayer1],
+                        fallbackLabel: sideALabel,
+                        serve: serve
+                    )
                 }
-                .buttonStyle(.bordered)
-                .disabled(session.events.isEmpty || state.isMatchOver)
-                .accessibilityLabel(String(localized: "Undo last point"))
 
-                Button(role: .destructive) {
-                    showEndConfirmation = true
-                } label: {
-                    Label(String(localized: "End match"), systemImage: "flag.checkered")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .disabled(session.events.isEmpty)
-                .accessibilityLabel(String(localized: "End match"))
+                phoneScoreOverlay
             }
-            .padding(.horizontal)
-
-            Spacer()
         }
-        .padding(.top, 24)
+        .ignoresSafeArea(edges: [.horizontal, .bottom])
         .navigationTitle(String(localized: "Live match"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -136,16 +119,6 @@ struct LiveMatchView: View {
         }
         .onChange(of: state.isMatchOver) { _, isOver in
             if isOver { finishMatch() }
-        }
-        .confirmationDialog(
-            String(localized: "End this match?"),
-            isPresented: $showEndConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button(String(localized: "End match"), role: .destructive) {
-                finishMatch()
-            }
-            Button(String(localized: "Cancel"), role: .cancel) {}
         }
         .confirmationDialog(
             String(localized: "Deciding point — receiver picks the serve side"),
@@ -158,23 +131,6 @@ struct LiveMatchView: View {
             Button(String(localized: "Serve from left")) {
                 decidingSideOverride = .left
             }
-        }
-        .background(alignment: .top) {
-            ambientGlow
-        }
-    }
-
-    @ViewBuilder
-    private func serveBanner(_ serve: ServeContext?) -> some View {
-        if let serve {
-            HStack(spacing: 6) {
-                serveSideChip(for: serve.side)
-                Text(serveDescription(serve))
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(serveDescription(serve))
         }
     }
 
@@ -209,113 +165,181 @@ struct LiveMatchView: View {
         return slot.team == .a ? sideALabel : sideBLabel
     }
 
-    private var setsHeader: some View {
-        let sets = state.completedSets
-        return HStack(spacing: 12) {
-            if sets.isEmpty {
-                Text(String(localized: "No sets completed yet"))
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(Array(sets.enumerated()), id: \.offset) { index, set in
-                    VStack {
-                        Text(String(localized: "Set \(index + 1)"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+    private var phoneScoreOverlay: some View {
+        VStack(spacing: 8) {
+            if !state.completedSets.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(Array(state.completedSets.enumerated()), id: \.offset) { _, set in
                         Text(ScoreFormatter.formatSetScore(set))
-                            .font(.headline)
                     }
                 }
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var ambientGlow: some View {
-        RadialGradient(
-            colors: [
-                palette.sideAColor.opacity(0.35),
-                palette.sideAColor.opacity(0.12),
-                .clear,
-            ],
-            center: .top,
-            startRadius: 20,
-            endRadius: 280
-        )
-        .blur(radius: 38)
-        .frame(height: 360)
-        .offset(y: -150)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private func gameScoreView(_ score: String) -> some View {
-        coloredScoreText(score)
-            .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
-            .minimumScaleFactor(0.5)
-            .lineLimit(1)
-            .accessibilityLabel(String(localized: "Game score \(score)"))
-    }
-
-    private var currentSetScoreView: some View {
-        HStack(spacing: 4) {
-            Text(String(localized: "Set \(state.completedSets.count + 1):"))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
-            coloredScoreText(ScoreFormatter.currentSetGames(in: state))
-        }
-        .font(.title3)
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder
-    private func coloredScoreText(_ score: String) -> some View {
-        let parts = score.split(separator: "-", omittingEmptySubsequences: false).map(String.init)
-        if parts.count == 2 {
-            HStack(spacing: 4) {
-                Text(parts[0])
-                    .foregroundStyle(palette.sideAColor)
-                Text("-")
-                    .foregroundStyle(.secondary)
-                Text(parts[1])
-                    .foregroundStyle(palette.sideBColor)
             }
-        } else {
-            Text(score)
-                .foregroundStyle(.primary)
+
+            Text(ScoreFormatter.currentSetGames(in: state))
+                .font(.title3.weight(.semibold))
+
+            Text(ScoreFormatter.currentGameScore(in: state))
+                .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
         }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 18)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(scoreAccessibilityLabel)
+        .allowsHitTesting(false)
     }
 
-    private func pointButton(team: Team, label: String, serve: ServeContext?) -> some View {
+    private var scoreAccessibilityLabel: String {
+        let completed = state.completedSets.map(ScoreFormatter.formatSetScore(_:)).joined(separator: ", ")
+        let currentSet = ScoreFormatter.currentSetGames(in: state)
+        let game = ScoreFormatter.currentGameScore(in: state)
+
+        if completed.isEmpty {
+            return String(localized: "Set score \(currentSet), game score \(game)")
+        }
+        return String(localized: "Completed sets \(completed), current set \(currentSet), game score \(game)")
+    }
+
+    private func phoneTeamZone(
+        team: Team,
+        playerNames: [String],
+        playerSlots: [PlayerSlot],
+        fallbackLabel: String,
+        serve: ServeContext?
+    ) -> some View {
         Button {
             addPoint(for: team)
         } label: {
-            VStack(spacing: 8) {
-                if serve?.servingTeam == team {
-                    serveSideChip(for: serve?.side ?? .right)
-                        .accessibilityHidden(true)
+            ZStack {
+                palette.gradient(for: team)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                GeometryReader { proxy in
+                    phoneTeamNameRow(
+                        playerNames: playerNames,
+                        playerSlots: playerSlots,
+                        fallbackLabel: fallbackLabel,
+                        serve: serve
+                    )
+                    .padding(.horizontal, 28)
+                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .offset(y: team == .b ? proxy.size.height * 0.05 : 0)
                 }
-                Text(label)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                Text(String(localized: "Point"))
-                    .font(.title.bold())
             }
-            .frame(maxWidth: .infinity, minHeight: 120)
+            .overlay(alignment: serveAlignment(for: team, serve: serve)) {
+                serveIndicator(for: team, serve: serve)
+            }
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.borderedProminent)
-        .tint(palette.color(for: team))
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .disabled(state.isMatchOver)
-        .accessibilityLabel(String(localized: "Point \(label)"))
+        .accessibilityLabel(
+            serveAccessibilityLabel(
+                for: team,
+                label: fallbackLabel,
+                playerNames: playerNames,
+                playerSlots: playerSlots,
+                serve: serve
+            )
+        )
+    }
+
+    @ViewBuilder
+    private func phoneTeamNameRow(
+        playerNames: [String],
+        playerSlots: [PlayerSlot],
+        fallbackLabel: String,
+        serve: ServeContext?
+    ) -> some View {
+        if playerNames.count >= 2, playerSlots.count >= 2 {
+            HStack(spacing: 0) {
+                playerNameLabel(name: playerNames[0], slot: playerSlots[0], serve: serve)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 32)
+
+                playerNameLabel(name: playerNames[1], slot: playerSlots[1], serve: serve)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        } else {
+            Text(fallbackLabel)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    private func playerNameLabel(name: String, slot: PlayerSlot, serve: ServeContext?) -> some View {
+        let isServing = serve?.servingSlot == slot
+        return Text(name)
+            .font(.title2.weight(isServing ? .bold : .semibold))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, isServing ? 12 : 0)
+            .padding(.vertical, isServing ? 6 : 0)
+            .background(isServing ? .black.opacity(0.5) : .clear, in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(isServing ? palette.serveColor : .clear, lineWidth: 1)
+            }
+    }
+
+    @ViewBuilder
+    private func serveIndicator(for team: Team, serve: ServeContext?) -> some View {
+        if let serve, serve.servingTeam == team {
+            serveSideChip(for: serve.side)
+                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .padding(team == .a ? .top : .bottom, 18)
+                .padding(.horizontal, 24)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func serveAlignment(for team: Team, serve: ServeContext?) -> Alignment {
+        let vertical: VerticalAlignment = team == .a ? .top : .bottom
+        let onRight = serve?.side == .right
+        let trailing = team == .a ? onRight : !onRight
+        let horizontal: HorizontalAlignment = trailing ? .trailing : .leading
+        return Alignment(horizontal: horizontal, vertical: vertical)
+    }
+
+    private func serveAccessibilityLabel(
+        for team: Team,
+        label: String,
+        playerNames: [String],
+        playerSlots: [PlayerSlot],
+        serve: ServeContext?
+    ) -> String {
+        guard let serve, serve.servingTeam == team else {
+            return String(localized: "Point \(label)")
+        }
+        let side = serve.side == .right
+            ? String(localized: "right")
+            : String(localized: "left")
+        if let slotIndex = playerSlots.firstIndex(of: serve.servingSlot),
+           let serverName = playerNames[safe: slotIndex] {
+            return String(localized: "Point \(label). \(serverName) serving from the \(side).")
+        }
+        return String(localized: "Point \(label). Serving from the \(side).")
     }
 
     private func addPoint(for team: Team) {
         session.addPoint(for: team)
-        decidingSideOverride = nil
-        syncServeOrders()
-        showServeSidePrompt = needsDecidingSideChoice
-    }
-
-    private func undoPoint() {
-        session.undo()
         decidingSideOverride = nil
         syncServeOrders()
         showServeSidePrompt = needsDecidingSideChoice
@@ -342,6 +366,13 @@ struct LiveMatchView: View {
             playerSetup: playerSetup,
             setServeOrders: setServeOrders
         )
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int?) -> Element? {
+        guard let index, indices.contains(index) else { return nil }
+        return self[index]
     }
 }
 
