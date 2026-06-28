@@ -6,6 +6,7 @@ struct MatchPlayersEditSection: View {
     @Bindable var match: Match
     @Environment(\.modelContext) private var modelContext
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var sideAPlayer1 = ""
     @State private var sideAPlayer2 = ""
@@ -46,6 +47,13 @@ struct MatchPlayersEditSection: View {
         }
         .onAppear(perform: loadFromMatch)
         .onDisappear(perform: saveIfNeeded)
+        .onChange(of: scenePhase) { _, newPhase in
+            // `onDisappear` isn't guaranteed when the app is backgrounded or
+            // killed, so also persist edits when leaving the active state.
+            if newPhase != .active {
+                saveIfNeeded()
+            }
+        }
     }
 
     private func playerField(title: String, subtitle: String, text: Binding<String>) -> some View {
@@ -56,7 +64,7 @@ struct MatchPlayersEditSection: View {
             TextField(title, text: text)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
-                .accessibilityLabel("\(subtitle), \(title)")
+                .accessibilityLabel(String(localized: "\(subtitle), \(title)"))
                 .onSubmit(saveIfNeeded)
         }
     }

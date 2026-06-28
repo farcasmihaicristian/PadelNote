@@ -7,33 +7,23 @@ struct StatsView: View {
     @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @Query(sort: \Player.displayName) private var players: [Player]
 
-    private var summaries: [MatchSummary] {
-        matches.map(\.summary)
-    }
-
-    private var overview: MatchInsights {
-        MatchStatistics.insights(for: summaries)
-    }
-
-    private var playerNameLookup: [UUID: String] {
-        Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0.displayName) })
-    }
-
-    private var playerSummaries: [PlayerSummary] {
-        MatchStatistics.playerSummaries(for: summaries, displayNames: playerNameLookup)
-    }
-
-    private var meInsights: PlayerInsights? {
-        guard let mePlayer = currentUserStore.mePlayer else { return nil }
-        return MatchStatistics.playerInsights(
-            for: mePlayer.id,
-            displayName: mePlayer.displayName,
-            in: summaries
-        )
-    }
-
     var body: some View {
-        List {
+        // Derive everything once per render rather than from several computed
+        // properties that each re-walked the full match history.
+        let summaries = matches.map(\.summary)
+        let overview = MatchStatistics.insights(for: summaries)
+        let playerByID = Dictionary(players.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let nameLookup = playerByID.mapValues(\.displayName)
+        let playerSummaries = MatchStatistics.playerSummaries(for: summaries, displayNames: nameLookup)
+        let meInsights: PlayerInsights? = currentUserStore.mePlayer.map { mePlayer in
+            MatchStatistics.playerInsights(
+                for: mePlayer.id,
+                displayName: mePlayer.displayName,
+                in: summaries
+            )
+        }
+
+        return List {
             if overview.completedMatchCount == 0 {
                 ContentUnavailableView(
                     String(localized: "No stats yet"),
@@ -80,7 +70,7 @@ struct StatsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(playerSummaries) { summary in
-                            if let player = players.first(where: { $0.id == summary.id }) {
+                            if let player = playerByID[summary.id] {
                                 NavigationLink {
                                     PlayerDetailView(player: player)
                                 } label: {
@@ -116,24 +106,12 @@ private struct PlayerSummaryRowView: View {
     let summary: PlayerSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(summary.displayName)
-                .font(.headline)
-
-            HStack(spacing: 12) {
-                Text(String(localized: "\(summary.matchCount) matches"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                if let winRate = summary.winRate {
-                    Text(MatchFormatting.percentageText(for: winRate))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(rowAccessibilityLabel)
+        PlayerStatRowView(
+            displayName: summary.displayName,
+            countText: String(localized: "\(summary.matchCount) matches"),
+            winRate: summary.winRate,
+            accessibilityLabel: rowAccessibilityLabel
+        )
     }
 
     private var rowAccessibilityLabel: String {

@@ -228,7 +228,12 @@ public struct ScoringSession: Sendable {
     }
 
     public var state: MatchState {
-        stateHistory.last ?? MatchState(rules: rules)
+        // `stateHistory` always holds the initial state at index 0 and grows/
+        // shrinks in lockstep with `events`, so `last` is never nil. The assert
+        // catches a future change that breaks that invariant in debug; the
+        // fallback keeps release builds safe.
+        assert(!stateHistory.isEmpty, "stateHistory must always contain the initial state")
+        return stateHistory.last ?? MatchState(rules: rules)
     }
 
     public mutating func addPoint(for team: Team) {

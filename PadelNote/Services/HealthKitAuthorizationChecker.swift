@@ -8,10 +8,13 @@ enum HealthKitAuthorizationStatus: Equatable {
 }
 
 enum HealthKitAuthorizationChecker {
+    // Apple recommends a single long-lived HKHealthStore per app rather than a
+    // fresh instance on each query.
+    private static let healthStore = HKHealthStore()
+
     static func workoutAuthorizationStatus() -> HealthKitAuthorizationStatus {
         guard HKHealthStore.isHealthDataAvailable() else { return .unavailable }
 
-        let healthStore = HKHealthStore()
         let status = healthStore.authorizationStatus(for: HKObjectType.workoutType())
 
         switch status {

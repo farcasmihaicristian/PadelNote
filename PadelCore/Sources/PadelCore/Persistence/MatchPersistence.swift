@@ -3,6 +3,7 @@ import SwiftData
 
 public enum MatchPersistence {
     @MainActor
+    @discardableResult
     public static func saveCompletedMatch(
         context: ModelContext,
         rules: MatchRules,
@@ -10,7 +11,7 @@ public enum MatchPersistence {
         startedAt: Date,
         playerSetup: MatchPlayerSetup,
         setServeOrders: [ServeOrder] = []
-    ) -> Match {
+    ) -> Match? {
         let state = ScoringEngine.replay(events: events, rules: rules)
         let roster = PlayerPersistence.resolveRoster(context: context, setup: playerSetup)
         let match = Match(
@@ -36,8 +37,13 @@ public enum MatchPersistence {
             match.points.append(point)
         }
 
-        try? context.save()
-        return match
+        do {
+            try context.save()
+            return match
+        } catch {
+            assertionFailure("Failed to save completed match: \(error)")
+            return nil
+        }
     }
 
     @MainActor
@@ -52,29 +58,33 @@ public enum MatchPersistence {
         descriptor.fetchLimit = 1
 
         let state = ScoringEngine.replay(events: payload.events, rules: payload.rules)
-        let setup = MatchPlayerSetup(
-            sideAPlayer1: .init(name: payload.playerNames.playerA1Name ?? "", playerID: nil),
-            sideAPlayer2: .init(name: payload.playerNames.playerA2Name ?? "", playerID: nil),
-            sideBPlayer1: .init(name: payload.playerNames.playerB1Name ?? "", playerID: nil),
-            sideBPlayer2: .init(name: payload.playerNames.playerB2Name ?? "", playerID: nil)
-        )
-        let roster = PlayerPersistence.resolveRoster(context: context, setup: setup)
+        let setup = MatchPlayerSetup(playerNames: payload.playerNames)
+        // Share one player cache across the canonical roster and every per-set
+        // lineup so a name that recurs across them resolves to a single Player.
+        var playerCache: [String: Player] = [:]
+        let roster = PlayerPersistence.resolveRoster(context: context, setup: setup, cache: &playerCache)
         let setRosters = payload.setLineups.map { lineup in
             PlayerPersistence.resolveRoster(
                 context: context,
-                setup: MatchPlayerSetup(
-                    sideAPlayer1: .init(name: lineup.playerA1Name ?? "", playerID: nil),
-                    sideAPlayer2: .init(name: lineup.playerA2Name ?? "", playerID: nil),
-                    sideBPlayer1: .init(name: lineup.playerB1Name ?? "", playerID: nil),
-                    sideBPlayer2: .init(name: lineup.playerB2Name ?? "", playerID: nil)
-                )
+                setup: MatchPlayerSetup(playerNames: lineup),
+                cache: &playerCache
             )
         }
         let match: Match
 
         if let existing = try? context.fetch(descriptor).first {
+            // Ordering guard: a stale retransmit (older than what we already
+            // stored) must not clobber the newer record.
+            if let existingEnd = existing.endedAt, existingEnd > payload.endedAt {
+                return existing
+            }
             match = existing
-            replacePoints(on: match, from: payload, context: context)
+            // Skip the costly delete/recreate of every point row when the stored
+            // points already match the incoming payload exactly — the common case
+            // when the watch re-flushes an already-synced match.
+            if !storedEventsMatch(existing, payload.events) {
+                replacePoints(on: match, from: payload, context: context)
+            }
         } else {
             match = Match(
                 id: payload.id,
@@ -115,6 +125,18 @@ public enum MatchPersistence {
             assertionFailure("Failed to save transferred match: \(error)")
             return nil
         }
+    }
+
+    /// True when the match's stored points already match the payload's events
+    /// exactly (same count and per-position team), so no rebuild is needed.
+    @MainActor
+    private static func storedEventsMatch(_ match: Match, _ events: [PointEvent]) -> Bool {
+        let stored = match.sortedPoints
+        guard stored.count == events.count else { return false }
+        for (index, event) in events.enumerated() where stored[index].team != event.team {
+            return false
+        }
+        return true
     }
 
     @MainActor

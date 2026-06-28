@@ -33,6 +33,9 @@ final class CurrentUserStore {
 
         ASAuthorizationAppleIDProvider().getCredentialState(forUserID: accountID) { state, _ in
             Task { @MainActor in
+                // Ignore a stale result if the session changed (sign out / switch
+                // account) while the async credential check was in flight.
+                guard AuthSessionStore.loadAccountID() == accountID else { return }
                 switch state {
                 case .authorized:
                     self.loadStoredUser(accountID: accountID, context: modelContext)

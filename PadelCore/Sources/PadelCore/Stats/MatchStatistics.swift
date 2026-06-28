@@ -216,11 +216,9 @@ public enum MatchStatistics {
 
             // Per-set side attribution: each completed set is credited to the
             // side the player occupied during that set (falling back to the
-            // canonical lineup when no per-set data was recorded).
-            let completedSets = ScoringEngine.replay(
-                events: summary.events,
-                rules: summary.rules
-            ).completedSets
+            // canonical lineup when no per-set data was recorded). Reuses the
+            // sets from the single replay above rather than replaying again.
+            let completedSets = goldenCounts.completedSets
 
             for (index, set) in completedSets.enumerated() {
                 let roster = summary.setRosters[safe: index] ?? summary.roster
@@ -302,10 +300,13 @@ public enum MatchStatistics {
         )
     }
 
+    /// Single replay of a match: counts golden/sudden-death opportunities and
+    /// wins for `team`, and returns the final completed sets so callers don't
+    /// have to replay the match a second time for set data.
     private static func goldenPointCounts(
         for summary: MatchSummary,
         team: Team
-    ) -> (opportunities: Int, wins: Int) {
+    ) -> (opportunities: Int, wins: Int, completedSets: [SetScore]) {
         var state = MatchState(rules: summary.rules)
         var opportunities = 0
         var wins = 0
@@ -313,7 +314,7 @@ public enum MatchStatistics {
         for event in summary.events {
             guard !state.isMatchOver else { break }
 
-            if isGoldenPointSituation(state) {
+            if state.isSuddenDeathPoint {
                 opportunities += 1
                 let gamesBefore = state.gamesA + state.gamesB
                 state = ScoringEngine.apply(point: event.team, to: state)
@@ -326,24 +327,7 @@ public enum MatchStatistics {
             }
         }
 
-        return (opportunities, wins)
-    }
-
-    private static func isGoldenPointSituation(_ state: MatchState) -> Bool {
-        guard !state.isTieBreak,
-              state.pointA == 3,
-              state.pointB == 3,
-              state.advantageTeam == nil
-        else { return false }
-
-        switch state.rules.gamePointStyle {
-        case .goldenPoint:
-            return true
-        case .starPoint:
-            return state.deuceCount >= 3
-        case .advantage:
-            return false
-        }
+        return (opportunities, wins, state.completedSets)
     }
 }
 

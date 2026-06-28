@@ -14,6 +14,10 @@ struct NewMatchSetupView: View {
     @State private var playerSetup = MatchPlayerSetup.empty
     @State private var firstServer: PlayerSlot = MeProfilePreferences.preferredSlot()
     @State private var startLiveMatch = false
+    // Loaded once from history in `onAppear` rather than re-fetched from the
+    // database on every render / keystroke in the name fields.
+    @State private var knownPlayerNames: [String] = []
+    @State private var linkedHistoryPlayers: [Player] = []
 
     private var rules: MatchRules {
         MatchRulesSettingsForm.makeRules(
@@ -22,14 +26,6 @@ struct NewMatchSetupView: View {
             setTieBreak: setTieBreak,
             finalSetTieBreak: finalSetTieBreak
         )
-    }
-
-    private var knownPlayerNames: [String] {
-        PlayerPersistence.knownNamesFromMatchHistory(context: modelContext)
-    }
-
-    private var linkedHistoryPlayers: [Player] {
-        PlayerPersistence.playersFromMatchHistory(context: modelContext)
     }
 
     var body: some View {
@@ -77,6 +73,7 @@ struct NewMatchSetupView: View {
                         Text(serverLabel(for: slot)).tag(slot)
                     }
                 }
+                .accessibilityLabel(String(localized: "First server"))
             }
 
             Section {
@@ -94,6 +91,7 @@ struct NewMatchSetupView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             PlayerPersistence.pruneUnreferencedPlayers(context: modelContext)
+            reloadPlayerLists()
             loadDefaults()
             applyMeProfileIfNeeded()
         }
@@ -108,6 +106,11 @@ struct NewMatchSetupView: View {
                 onFinished: onFinished
             )
         }
+    }
+
+    private func reloadPlayerLists() {
+        knownPlayerNames = PlayerPersistence.knownNamesFromMatchHistory(context: modelContext)
+        linkedHistoryPlayers = PlayerPersistence.playersFromMatchHistory(context: modelContext)
     }
 
     private func serverLabel(for slot: PlayerSlot) -> String {

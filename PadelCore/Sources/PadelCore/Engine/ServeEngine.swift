@@ -241,12 +241,6 @@ public enum ServeEngine {
     }
 
     private static func isDecidingPoint(state: MatchState, rules: MatchRules) -> Bool {
-        guard !state.isTieBreak else { return false }
-        guard state.pointA == 3, state.pointB == 3, state.advantageTeam == nil else { return false }
-        switch rules.gamePointStyle {
-        case .goldenPoint: return true
-        case .starPoint: return state.deuceCount >= 3
-        case .advantage: return false
-        }
+        state.isSuddenDeathPoint
     }
 }

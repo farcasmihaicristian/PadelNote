@@ -59,6 +59,13 @@ public enum SyncPayloadCodec {
             dictionary[playerB2NameKey] = playerB2Name
         }
 
+        // Embed the full Codable snapshot so serve fields (servingTeam/serveSide/
+        // servingPlayerName) survive transit. The flat keys above remain as a
+        // legacy fallback for payloads produced by older app versions.
+        if let data = try? JSONEncoder().encode(snapshot) {
+            dictionary[payloadKey] = data
+        }
+
         return dictionary
     }
 

@@ -6,11 +6,16 @@ struct MatchDetailView: View {
     @Bindable var match: Match
 
     var body: some View {
-        List {
+        let score = MatchScoreText.rendered(for: match)
+        let partialSet = match.inProgressSetSummary
+        // Replay the engine once for the whole timeline rather than re-replaying a
+        // growing prefix for every point.
+        let scoreLines = match.scoreLinesBySequence()
+        return List {
             Section(String(localized: "Final score")) {
-                MatchScoreText.make(for: match)
+                score.text
                     .font(.title2.bold())
-                    .accessibilityLabel(String(localized: "Final score \(MatchScoreText.accessibilityLabel(for: match))"))
+                    .accessibilityLabel(String(localized: "Final score \(score.accessibilityLabel)"))
 
                 LabeledContent(String(localized: "Winner")) {
                     Text(MatchFormatting.winnerLabel(for: match))
@@ -20,7 +25,7 @@ struct MatchDetailView: View {
             MatchPlayersEditSection(match: match)
 
             Section(String(localized: "Sets")) {
-                if match.completedSets.isEmpty && match.inProgressSetSummary == nil {
+                if match.completedSets.isEmpty && partialSet == nil {
                     Text(String(localized: "No completed sets"))
                         .foregroundStyle(.secondary)
                 } else {
@@ -30,9 +35,9 @@ struct MatchDetailView: View {
                         }
                     }
 
-                    if let partial = match.inProgressSetSummary {
+                    if let partialSet {
                         LabeledContent(String(localized: "Unfinished set")) {
-                            Text(partial)
+                            Text(partialSet)
                                 .foregroundStyle(.red)
                         }
                     }
@@ -45,6 +50,7 @@ struct MatchDetailView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(match.sortedPoints, id: \.persistentModelID) { point in
+                        let line = scoreLines[point.sequence] ?? ""
                         VStack(alignment: .leading, spacing: 4) {
                             Text(
                                 String(
@@ -53,14 +59,14 @@ struct MatchDetailView: View {
                             )
                             .font(.headline)
 
-                            Text(match.scoreLine(afterPointCount: point.sequence + 1))
+                            Text(line)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel(
                             String(
-                                localized: "Point \(point.sequence + 1), \(match.teamName(for: point.team)), score \(match.scoreLine(afterPointCount: point.sequence + 1))"
+                                localized: "Point \(point.sequence + 1), \(match.teamName(for: point.team)), score \(line)"
                             )
                         )
                     }

@@ -33,12 +33,15 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         }
 
         let typesToShare: Set<HKSampleType> = [HKObjectType.workoutType()]
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.workoutType(),
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
+        var typesToRead: Set<HKObjectType> = [HKObjectType.workoutType()]
+        let readIdentifiers: [HKQuantityTypeIdentifier] = [
+            .heartRate, .activeEnergyBurned, .distanceWalkingRunning
         ]
+        for identifier in readIdentifiers {
+            if let type = HKObjectType.quantityType(forIdentifier: identifier) {
+                typesToRead.insert(type)
+            }
+        }
 
         do {
             try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
@@ -84,13 +87,21 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
 
         session.startActivity(with: startedAt)
         do {
+            // Cancellation can't interrupt the HealthKit awaits themselves, so
+            // check around them: if the owning task was cancelled (e.g. the match
+            // was abandoned mid-start), tear the session down rather than leaving
+            // it running with no matching `end()`.
+            try Task.checkCancellation()
             try await builder.beginCollection(at: startedAt)
+            try Task.checkCancellation()
             try await builder.addMetadata([
                 HKMetadataKeyWorkoutBrandName: "Padel",
                 "sport": "padel"
             ])
+            try Task.checkCancellation()
         } catch {
-            // Roll back so a failed start doesn't leave an orphan session running.
+            // Roll back so a failed/cancelled start doesn't leave an orphan
+            // session running.
             session.end()
             self.session = nil
             self.builder = nil

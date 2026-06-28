@@ -77,7 +77,10 @@ struct LiveMatchView: View {
     }
 
     private var liveScoringView: some View {
-        VStack(spacing: 24) {
+        // Compute the serve once per render; the banner and both point buttons
+        // reuse it rather than each recomputing it via an event-log replay.
+        let serve = currentServe
+        return VStack(spacing: 24) {
             setsHeader
 
             VStack(spacing: 8) {
@@ -96,11 +99,11 @@ struct LiveMatchView: View {
                 .foregroundStyle(.secondary)
             }
 
-            serveBanner
+            serveBanner(serve)
 
             HStack(spacing: 16) {
-                pointButton(team: .a, label: sideALabel)
-                pointButton(team: .b, label: sideBLabel)
+                pointButton(team: .a, label: sideALabel, serve: serve)
+                pointButton(team: .b, label: sideBLabel, serve: serve)
             }
             .padding(.horizontal)
 
@@ -164,8 +167,8 @@ struct LiveMatchView: View {
     }
 
     @ViewBuilder
-    private var serveBanner: some View {
-        if let serve = currentServe {
+    private func serveBanner(_ serve: ServeContext?) -> some View {
+        if let serve {
             HStack(spacing: 6) {
                 Image(systemName: "arrowtriangle.right.fill")
                     .foregroundStyle(.orange)
@@ -216,12 +219,12 @@ struct LiveMatchView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func pointButton(team: Team, label: String) -> some View {
+    private func pointButton(team: Team, label: String, serve: ServeContext?) -> some View {
         Button {
             addPoint(for: team)
         } label: {
             VStack(spacing: 8) {
-                if currentServe?.servingTeam == team {
+                if serve?.servingTeam == team {
                     Image(systemName: "arrowtriangle.up.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -258,16 +261,11 @@ struct LiveMatchView: View {
     /// order is fixed once a set starts: new sets inherit the previous set's
     /// order (or derive from `firstServer` for the first set).
     private func syncServeOrders() {
-        let activeSetIndex = state.completedSets.count
-        let targetCount = activeSetIndex + 1
-
-        if setServeOrders.count > targetCount {
-            setServeOrders = Array(setServeOrders.prefix(targetCount))
-        }
-        while setServeOrders.count < targetCount {
-            let order = setServeOrders.last ?? ServeOrder.standard(firstServer: firstServer)
-            setServeOrders.append(order)
-        }
+        setServeOrders = ServeOrder.aligned(
+            setServeOrders,
+            completedSetCount: state.completedSets.count,
+            firstServer: firstServer
+        )
     }
 
     private func finishMatch() {

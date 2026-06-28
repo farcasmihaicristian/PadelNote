@@ -46,6 +46,27 @@ public struct ServeOrder: Codable, Hashable, Sendable {
         let order = rotation
         return order[((gameIndexInSet % order.count) + order.count) % order.count]
     }
+
+    /// Aligns a per-set serve-order list to the sets played so far. The serving
+    /// order is fixed once a set starts: new sets inherit the previous set's
+    /// order (or derive from `firstServer` for the very first set), and orders
+    /// beyond the active set are trimmed. Shared by the iOS live view and the
+    /// watch coordinator so the rotation rule lives in one tested place.
+    public static func aligned(
+        _ orders: [ServeOrder],
+        completedSetCount: Int,
+        firstServer: PlayerSlot
+    ) -> [ServeOrder] {
+        let targetCount = completedSetCount + 1
+        var result = orders
+        if result.count > targetCount {
+            result = Array(result.prefix(targetCount))
+        }
+        while result.count < targetCount {
+            result.append(result.last ?? ServeOrder.standard(firstServer: firstServer))
+        }
+        return result
+    }
 }
 
 /// The serving situation for a single point.

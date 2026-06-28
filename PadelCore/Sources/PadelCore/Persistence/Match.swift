@@ -178,7 +178,9 @@ public final class Match {
     }
 
     public var isCompleted: Bool {
-        endedAt != nil && !sortedPoints.isEmpty
+        // Avoid `sortedPoints` here — emptiness doesn't depend on order, and this
+        // is evaluated frequently while filtering history.
+        endedAt != nil && !points.isEmpty
     }
 
     public var scoreSummary: String {
@@ -211,6 +213,23 @@ public final class Match {
         let events = Array(enginePointEvents.prefix(count))
         let state = ScoringEngine.replay(events: events, rules: rules)
         return ScoreFormatter.matchScoreLine(in: state)
+    }
+
+    /// The cumulative match score line after each played point, keyed by the
+    /// point's `sequence`. Replays the engine a single time, instead of
+    /// re-replaying a growing prefix for every point (which is O(n²) over a
+    /// timeline).
+    public func scoreLinesBySequence() -> [Int: String] {
+        let sorted = sortedPoints
+        let matchRules = rules
+        var state = MatchState(rules: matchRules)
+        var result: [Int: String] = [:]
+        result.reserveCapacity(sorted.count)
+        for point in sorted {
+            state = ScoringEngine.apply(point: point.team, to: state)
+            result[point.sequence] = ScoreFormatter.matchScoreLine(in: state)
+        }
+        return result
     }
 
     public func players(for team: Team) -> [String] {

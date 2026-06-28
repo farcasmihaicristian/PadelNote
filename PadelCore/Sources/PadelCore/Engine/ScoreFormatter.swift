@@ -36,19 +36,12 @@ public enum ScoreFormatter {
 
   /// True at the deciding 40-40 of a star-point game (third deuce, sudden death).
   private static func isStarPointSuddenDeath(in state: MatchState) -> Bool {
-    state.rules.gamePointStyle == .starPoint
-      && state.advantageTeam == nil
-      && state.pointA == 3
-      && state.pointB == 3
-      && state.deuceCount >= 3
+    state.rules.gamePointStyle == .starPoint && state.isSuddenDeathPoint
   }
 
   /// True at 40-40 under golden-point rules (the next point decides the game).
   private static func isGoldenPointDeuce(in state: MatchState) -> Bool {
-    state.rules.gamePointStyle == .goldenPoint
-      && state.advantageTeam == nil
-      && state.pointA == 3
-      && state.pointB == 3
+    state.rules.gamePointStyle == .goldenPoint && state.isAtDeuce
   }
 
   /// "40-30" style readout for the current game.

@@ -19,13 +19,13 @@ import Testing
         sideBPlayer2: .init(name: "Dana")
     )
 
-    let match = MatchPersistence.saveCompletedMatch(
+    let match = try #require(MatchPersistence.saveCompletedMatch(
         context: context,
         rules: rules,
         events: events,
         startedAt: .now,
         playerSetup: setup
-    )
+    ))
 
     #expect(match.isCompleted)
     #expect(match.playerA1Name == "Alex")

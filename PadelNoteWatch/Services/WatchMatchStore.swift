@@ -14,6 +14,10 @@ enum WatchMatchStore {
     private static let pendingKey = "watch.pendingCompletedMatches.v1"
 
     private static var defaults: UserDefaults { .standard }
+    // Reused across the many per-point live-state writes instead of allocating a
+    // fresh coder each time.
+    private static let encoder = JSONEncoder()
+    private static let decoder = JSONDecoder()
 
     // MARK: - Live match recovery
 
@@ -57,13 +61,13 @@ enum WatchMatchStore {
     }
 
     static func saveLiveMatch(_ match: LiveMatch) {
-        guard let data = try? JSONEncoder().encode(match) else { return }
+        guard let data = try? encoder.encode(match) else { return }
         defaults.set(data, forKey: liveKey)
     }
 
     static func loadLiveMatch() -> LiveMatch? {
         guard let data = defaults.data(forKey: liveKey) else { return nil }
-        return try? JSONDecoder().decode(LiveMatch.self, from: data)
+        return try? decoder.decode(LiveMatch.self, from: data)
     }
 
     static func clearLiveMatch() {
@@ -74,7 +78,7 @@ enum WatchMatchStore {
 
     static func pendingCompletedMatches() -> [MatchTransferPayload] {
         guard let data = defaults.data(forKey: pendingKey) else { return [] }
-        return (try? JSONDecoder().decode([MatchTransferPayload].self, from: data)) ?? []
+        return (try? decoder.decode([MatchTransferPayload].self, from: data)) ?? []
     }
 
     static func addPendingCompletedMatch(_ payload: MatchTransferPayload) {
@@ -93,7 +97,7 @@ enum WatchMatchStore {
             defaults.removeObject(forKey: pendingKey)
             return
         }
-        guard let data = try? JSONEncoder().encode(pending) else { return }
+        guard let data = try? encoder.encode(pending) else { return }
         defaults.set(data, forKey: pendingKey)
     }
 }

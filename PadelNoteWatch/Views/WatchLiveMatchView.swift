@@ -8,7 +8,9 @@ struct WatchLiveMatchView: View {
     @State private var showServeSidePrompt = false
 
     private var state: MatchState {
-        coordinator.currentState ?? ScoringEngine.replay(events: [], rules: coordinator.rules)
+        // In `.live` a session always exists; the fallback is the empty state and
+        // doesn't need a replay to construct.
+        coordinator.currentState ?? MatchState(rules: coordinator.rules)
     }
 
     private var serve: ServeContext? {

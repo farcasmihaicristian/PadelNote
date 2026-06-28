@@ -58,8 +58,11 @@ struct MatchHistoryView: View {
     }
 
     private func deleteMatches(at offsets: IndexSet, in matches: [Match]) {
-        for index in offsets {
-            modelContext.delete(matches[index])
+        // Resolve to the specific Match objects (by identity) before deleting,
+        // independent of the render-time-recomputed section arrays.
+        let toDelete = offsets.compactMap { matches.indices.contains($0) ? matches[$0] : nil }
+        for match in toDelete {
+            modelContext.delete(match)
         }
         try? modelContext.save()
         PlayerPersistence.pruneUnreferencedPlayers(context: modelContext)

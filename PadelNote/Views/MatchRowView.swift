@@ -6,12 +6,13 @@ struct MatchRowView: View {
     var focusPlayerID: UUID?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let score = MatchScoreText.rendered(for: match)
+        return VStack(alignment: .leading, spacing: 4) {
             Text(MatchFormatting.dayTitle(for: match.startedAt))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            MatchScoreText.make(for: match)
+            score.text
                 .font(.headline)
 
             if let focusPlayerID,
@@ -26,13 +27,13 @@ struct MatchRowView: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityLabel)
+        .accessibilityLabel(accessibilityLabel(score: score))
     }
 
-    private var accessibilityLabel: String {
+    private func accessibilityLabel(score: MatchScoreText.Rendered) -> String {
         var parts = [
             MatchFormatting.dayTitle(for: match.startedAt),
-            String(localized: "score \(MatchScoreText.accessibilityLabel(for: match))"),
+            String(localized: "score \(score.accessibilityLabel)"),
             String(localized: "winner \(MatchFormatting.winnerLabel(for: match))"),
         ]
 

@@ -14,21 +14,42 @@ public enum PlayerPersistence {
         context: ModelContext,
         displayName: String
     ) -> Player {
+        var cache: [String: Player] = [:]
+        return findOrCreatePlayer(context: context, displayName: displayName, cache: &cache)
+    }
+
+    /// Resolves (or creates) a `Player` for `displayName`, consulting `cache` so
+    /// repeated names within a single resolve batch reuse the same instance.
+    /// SwiftData doesn't reliably surface a freshly-inserted, unsaved object to a
+    /// later `fetch` in the same batch, so without this cache two slots sharing a
+    /// name could mint two `Player` rows (`normalizedName` isn't unique).
+    @MainActor
+    static func findOrCreatePlayer(
+        context: ModelContext,
+        displayName: String,
+        cache: inout [String: Player]
+    ) -> Player {
         let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = normalizeName(trimmed)
-        let normalizedCopy = normalized
 
+        if let cached = cache[normalized] {
+            return cached
+        }
+
+        let normalizedCopy = normalized
         var descriptor = FetchDescriptor<Player>(
             predicate: #Predicate { $0.normalizedName == normalizedCopy }
         )
         descriptor.fetchLimit = 1
 
         if let existing = try? context.fetch(descriptor).first {
+            cache[normalized] = existing
             return existing
         }
 
         let player = Player(displayName: trimmed, normalizedName: normalized)
         context.insert(player)
+        cache[normalized] = player
         return player
     }
 
@@ -47,6 +68,17 @@ public enum PlayerPersistence {
         name: String,
         selectedPlayerID: UUID?
     ) -> MatchPlayerRosterEntry {
+        var cache: [String: Player] = [:]
+        return resolveSlot(context: context, name: name, selectedPlayerID: selectedPlayerID, cache: &cache)
+    }
+
+    @MainActor
+    static func resolveSlot(
+        context: ModelContext,
+        name: String,
+        selectedPlayerID: UUID?,
+        cache: inout [String: Player]
+    ) -> MatchPlayerRosterEntry {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return MatchPlayerRosterEntry() }
 
@@ -55,7 +87,7 @@ public enum PlayerPersistence {
             return MatchPlayerRosterEntry(id: player.id, name: trimmed)
         }
 
-        let player = findOrCreatePlayer(context: context, displayName: trimmed)
+        let player = findOrCreatePlayer(context: context, displayName: trimmed, cache: &cache)
         return MatchPlayerRosterEntry(id: player.id, name: trimmed)
     }
 
@@ -64,10 +96,24 @@ public enum PlayerPersistence {
         context: ModelContext,
         setup: MatchPlayerSetup
     ) -> MatchRoster {
-        let a1 = resolveSlot(context: context, name: setup.sideAPlayer1.name, selectedPlayerID: setup.sideAPlayer1.playerID)
-        let a2 = resolveSlot(context: context, name: setup.sideAPlayer2.name, selectedPlayerID: setup.sideAPlayer2.playerID)
-        let b1 = resolveSlot(context: context, name: setup.sideBPlayer1.name, selectedPlayerID: setup.sideBPlayer1.playerID)
-        let b2 = resolveSlot(context: context, name: setup.sideBPlayer2.name, selectedPlayerID: setup.sideBPlayer2.playerID)
+        var cache: [String: Player] = [:]
+        return resolveRoster(context: context, setup: setup, cache: &cache)
+    }
+
+    /// Resolves a roster sharing `cache` across all four slots — and, when called
+    /// repeatedly with the same cache (e.g. a match's canonical roster plus its
+    /// per-set lineups), across every roster in the save — so a name appearing in
+    /// more than one slot maps to a single `Player`.
+    @MainActor
+    static func resolveRoster(
+        context: ModelContext,
+        setup: MatchPlayerSetup,
+        cache: inout [String: Player]
+    ) -> MatchRoster {
+        let a1 = resolveSlot(context: context, name: setup.sideAPlayer1.name, selectedPlayerID: setup.sideAPlayer1.playerID, cache: &cache)
+        let a2 = resolveSlot(context: context, name: setup.sideAPlayer2.name, selectedPlayerID: setup.sideAPlayer2.playerID, cache: &cache)
+        let b1 = resolveSlot(context: context, name: setup.sideBPlayer1.name, selectedPlayerID: setup.sideBPlayer1.playerID, cache: &cache)
+        let b2 = resolveSlot(context: context, name: setup.sideBPlayer2.name, selectedPlayerID: setup.sideBPlayer2.playerID, cache: &cache)
 
         return MatchRoster(
             playerA1ID: a1.id, playerA1Name: a1.name,
@@ -172,7 +218,7 @@ public enum PlayerPersistence {
         }
 
         if didDelete {
-            try? context.save()
+            context.saveOrLogFailure()
         }
     }
 
@@ -213,7 +259,7 @@ public enum PlayerPersistence {
     ) {
         let roster = resolveRoster(context: context, setup: setup)
         applyRoster(roster, to: match)
-        try? context.save()
+        context.saveOrLogFailure()
     }
 
     @MainActor
@@ -247,7 +293,7 @@ public enum PlayerPersistence {
         }
 
         if didChange {
-            try? context.save()
+            context.saveOrLogFailure()
         }
     }
 }

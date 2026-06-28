@@ -34,7 +34,7 @@ public enum UserAccountPersistence {
             existing.email = email ?? existing.email
             existing.lastSignedInAt = .now
             player.isOwnedByCurrentUser = true
-            try? context.save()
+            context.saveOrLogFailure()
             return existing
         }
 
@@ -54,7 +54,7 @@ public enum UserAccountPersistence {
             playerID: player.id
         )
         context.insert(user)
-        try? context.save()
+        context.saveOrLogFailure()
         return user
     }
 
@@ -63,12 +63,14 @@ public enum UserAccountPersistence {
         if let player = PlayerPersistence.fetchPlayer(id: user.playerID, context: context) {
             player.isOwnedByCurrentUser = false
         }
-        try? context.save()
+        context.saveOrLogFailure()
     }
 
     @MainActor
     public static func linkablePastMatchCount(for player: Player, context: ModelContext) -> Int {
-        guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return 0 }
+        guard !hasNamesake(player, context: context),
+              let matches = try? context.fetch(FetchDescriptor<Match>())
+        else { return 0 }
 
         return matches.reduce(into: 0) { count, match in
             guard match.isCompleted else { return }
@@ -79,7 +81,11 @@ public enum UserAccountPersistence {
     @MainActor
     @discardableResult
     public static func linkPastMatches(to player: Player, context: ModelContext) -> Int {
-        guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return 0 }
+        // Don't auto-link when another registered player shares this normalized
+        // name — the match slots are ambiguous and could merge two people's stats.
+        guard !hasNamesake(player, context: context),
+              let matches = try? context.fetch(FetchDescriptor<Match>())
+        else { return 0 }
 
         var linkedSlots = 0
         for match in matches where match.isCompleted {
@@ -87,9 +93,22 @@ public enum UserAccountPersistence {
         }
 
         if linkedSlots > 0 {
-            try? context.save()
+            context.saveOrLogFailure()
         }
         return linkedSlots
+    }
+
+    /// True when a different `Player` shares this player's normalized name, which
+    /// makes name-based auto-linking ambiguous.
+    @MainActor
+    private static func hasNamesake(_ player: Player, context: ModelContext) -> Bool {
+        let normalized = player.normalizedName
+        let selfID = player.id
+        var descriptor = FetchDescriptor<Player>(
+            predicate: #Predicate { $0.normalizedName == normalized && $0.id != selfID }
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor).first) != nil
     }
 
     @MainActor
@@ -124,7 +143,9 @@ public enum UserAccountPersistence {
 
         return slots.enumerated().compactMap { index, slot in
             guard let name = slot.0, !name.isEmpty else { return nil }
-            guard slot.1 != player.id else { return nil }
+            // Only claim a slot that isn't already attributed to a player —
+            // never re-point an existing distinct link.
+            guard slot.1 == nil else { return nil }
             guard PlayerPersistence.normalizeName(name) == player.normalizedName else { return nil }
             return index
         }

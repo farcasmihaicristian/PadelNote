@@ -43,4 +43,22 @@ public struct MatchState: Codable, Hashable, Sendable {
     public var isDecidingSet: Bool {
         setsWonA == rules.setsToWin - 1 && setsWonB == rules.setsToWin - 1
     }
+
+    /// True at 40-40 with no advantage held (the classic deuce position).
+    public var isAtDeuce: Bool {
+        !isTieBreak && pointA == 3 && pointB == 3 && advantageTeam == nil
+    }
+
+    /// True when the next point decides the game outright: golden point, or the
+    /// third deuce under star-point rules. Single source of truth shared by the
+    /// scoring display (`ScoreFormatter`), serve side (`ServeEngine`), and
+    /// statistics (`MatchStatistics`).
+    public var isSuddenDeathPoint: Bool {
+        guard isAtDeuce else { return false }
+        switch rules.gamePointStyle {
+        case .goldenPoint: return true
+        case .starPoint: return deuceCount >= 3
+        case .advantage: return false
+        }
+    }
 }

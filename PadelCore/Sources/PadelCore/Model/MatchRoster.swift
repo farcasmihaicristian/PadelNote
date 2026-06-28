@@ -134,6 +134,18 @@ public struct MatchPlayerSetup: Sendable, Hashable {
         self.sideBPlayer2 = sideBPlayer2
     }
 
+    /// Builds a name-only setup (no linked player IDs) from player names — the
+    /// common shape when reconstructing a setup from a transfer payload or a
+    /// per-set lineup.
+    public init(playerNames: MatchPlayerNames) {
+        self.init(
+            sideAPlayer1: .init(name: playerNames.playerA1Name ?? ""),
+            sideAPlayer2: .init(name: playerNames.playerA2Name ?? ""),
+            sideBPlayer1: .init(name: playerNames.playerB1Name ?? ""),
+            sideBPlayer2: .init(name: playerNames.playerB2Name ?? "")
+        )
+    }
+
     public var playerNames: MatchPlayerNames {
         MatchPlayerNames(
             playerA1: sideAPlayer1.name,

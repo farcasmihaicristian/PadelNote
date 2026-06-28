@@ -42,8 +42,16 @@ final class WatchMatchCoordinator {
     private var matchActivityEndedAt: Date?
     private var workoutStartTask: Task<Void, Never>?
     private var hasPrepared = false
-    private var rulesBeforeContinue: MatchRules?
-    private var continueBaselineEventCount: Int?
+
+    /// Tracks the "Continue new set" flow: after a decided match is continued,
+    /// the original decided result is restored if the user ends without playing
+    /// any further point. One explicit state replaces the prior pair of optionals.
+    private enum ContinuationState: Equatable {
+        case none
+        /// `rules`/`eventCount` captured at the moment the decided match was continued.
+        case pending(rules: MatchRules, eventCount: Int)
+    }
+    private var continuation: ContinuationState = .none
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
@@ -102,16 +110,39 @@ final class WatchMatchCoordinator {
         activePlayerNames.courtSideLabel(for: team)
     }
 
+    private struct ServeCacheKey: Equatable {
+        let eventCount: Int
+        let decidingSideOverride: ServeSide?
+        let serveOrders: [ServeOrder]
+    }
+
+    /// Memoizes the last `currentServe` result so the several reads per SwiftUI
+    /// render (and `publishSnapshot`) don't each replay the event log. Ignored by
+    /// observation so writing it during a body read doesn't invalidate the view.
+    @ObservationIgnored private var serveCache: (key: ServeCacheKey, value: ServeContext?)?
+
     /// The serve for the next point (which player serves, from which side),
     /// honoring any receiver side choice for a deciding point.
     var currentServe: ServeContext? {
         guard phase == .live, let session, !session.state.isMatchOver else { return nil }
-        return ServeEngine.currentServe(
+
+        let key = ServeCacheKey(
+            eventCount: session.events.count,
+            decidingSideOverride: decidingSideOverride,
+            serveOrders: setServeOrders
+        )
+        if let serveCache, serveCache.key == key {
+            return serveCache.value
+        }
+
+        let value = ServeEngine.currentServe(
             events: session.events,
             rules: rules,
             orders: setServeOrders,
             decidingSideOverride: decidingSideOverride
         )
+        serveCache = (key, value)
+        return value
     }
 
     /// True when the next point is a golden/star deciding point that still needs
@@ -207,17 +238,11 @@ final class WatchMatchCoordinator {
             return
         }
 
-        let activeSetIndex = session.state.completedSets.count
-        let targetCount = activeSetIndex + 1
-
-        if setServeOrders.count > targetCount {
-            setServeOrders = Array(setServeOrders.prefix(targetCount))
-        }
-
-        while setServeOrders.count < targetCount {
-            let order = setServeOrders.last ?? ServeOrder.standard(firstServer: firstServer)
-            setServeOrders.append(order)
-        }
+        setServeOrders = ServeOrder.aligned(
+            setServeOrders,
+            completedSetCount: session.state.completedSets.count,
+            firstServer: firstServer
+        )
     }
 
     private func makeSetup(from names: MatchPlayerNames) -> MatchPlayerSetup {
@@ -285,8 +310,7 @@ final class WatchMatchCoordinator {
         session = ScoringSession(rules: rules)
         workoutWarning = nil
         endedEarly = false
-        rulesBeforeContinue = nil
-        continueBaselineEventCount = nil
+        continuation = .none
         setLineups = []
         setServeOrders = []
         decidingSideOverride = nil
@@ -333,9 +357,8 @@ final class WatchMatchCoordinator {
 
         // A real point was played after "Continue new set", so the prior
         // completion no longer applies.
-        if let baseline = continueBaselineEventCount, session.events.count > baseline {
-            rulesBeforeContinue = nil
-            continueBaselineEventCount = nil
+        if case let .pending(_, eventCount) = continuation, session.events.count > eventCount {
+            continuation = .none
         }
 
         decidingSideOverride = nil
@@ -366,13 +389,11 @@ final class WatchMatchCoordinator {
 
         // If the user tapped "Continue new set" but played no further points,
         // restore the original rules so the decided winner is preserved.
-        if let baseline = continueBaselineEventCount,
-           events.count == baseline,
-           let originalRules = rulesBeforeContinue {
+        if case let .pending(originalRules, eventCount) = continuation,
+           events.count == eventCount {
             rules = originalRules
             session = ScoringSession(rules: originalRules, events: events)
-            rulesBeforeContinue = nil
-            continueBaselineEventCount = nil
+            continuation = .none
             transitionToSummary(endedEarly: false)
             return
         }
@@ -428,8 +449,7 @@ final class WatchMatchCoordinator {
         workoutWarning = nil
         endedEarly = false
         matchActivityEndedAt = nil
-        rulesBeforeContinue = nil
-        continueBaselineEventCount = nil
+        continuation = .none
         setLineups = []
         setServeOrders = []
         decidingSideOverride = nil
@@ -471,8 +491,7 @@ final class WatchMatchCoordinator {
 
         // Remember the decided match so we can restore it if the user ends without
         // playing any further points.
-        rulesBeforeContinue = rules
-        continueBaselineEventCount = session.events.count
+        continuation = .pending(rules: rules, eventCount: session.events.count)
 
         let setsA = session.state.setsWonA
         let setsB = session.state.setsWonB

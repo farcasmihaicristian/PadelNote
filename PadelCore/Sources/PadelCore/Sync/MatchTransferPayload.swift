@@ -2,6 +2,13 @@ import Foundation
 
 /// Full match record sent from Watch to iPhone on match completion.
 public struct MatchTransferPayload: Codable, Hashable, Sendable {
+    /// Current payload schema version. Bump when the wire shape changes in a way
+    /// that needs explicit migration on the receiving side.
+    public static let currentSchemaVersion = 1
+
+    /// Schema version of this payload. `nil` for payloads produced before
+    /// versioning was introduced; treat as version 0.
+    public let schemaVersion: Int?
     public let id: UUID
     public let startedAt: Date
     public let endedAt: Date
@@ -46,8 +53,10 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
         activeEnergyKilocalories: Double? = nil,
         distanceMeters: Double? = nil,
         setLineups: [MatchPlayerNames] = [],
-        setServeOrders: [ServeOrder] = []
+        setServeOrders: [ServeOrder] = [],
+        schemaVersion: Int = MatchTransferPayload.currentSchemaVersion
     ) {
+        self.schemaVersion = schemaVersion
         self.id = id
         self.startedAt = startedAt
         self.endedAt = endedAt
@@ -67,6 +76,7 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
+        case schemaVersion
         case id, startedAt, endedAt, rules, events
         case playerA1Name, playerA2Name, playerB1Name, playerB2Name
         case teamAName, teamBName
@@ -77,6 +87,7 @@ public struct MatchTransferPayload: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion)
         id = try container.decode(UUID.self, forKey: .id)
         startedAt = try container.decode(Date.self, forKey: .startedAt)
         endedAt = try container.decode(Date.self, forKey: .endedAt)
