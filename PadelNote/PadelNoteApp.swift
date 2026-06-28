@@ -24,6 +24,7 @@ struct PadelNoteApp: App {
                     syncCoordinator.activate(modelContext: modelContainer.mainContext)
                     currentUserStore.activate(modelContext: modelContainer.mainContext)
                     HistoryDriveImporter.importIfNeeded(context: modelContainer.mainContext)
+                    MatchPersistence.backfillCompletionFlags(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
                     syncCoordinator.syncPhoneContextToWatch()
                 }

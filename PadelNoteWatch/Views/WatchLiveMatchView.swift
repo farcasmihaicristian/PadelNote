@@ -83,10 +83,10 @@ struct WatchLiveMatchView: View {
             isPresented: $showServeSidePrompt,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "Receive right")) {
+            Button(String(localized: "Serve from right")) {
                 coordinator.chooseDecidingSide(.right)
             }
-            Button(String(localized: "Receive left")) {
+            Button(String(localized: "Serve from left")) {
                 coordinator.chooseDecidingSide(.left)
             }
         }

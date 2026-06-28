@@ -4,11 +4,20 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
-    @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @Query private var matches: [Match]
     @State private var showMatchFlow = false
 
     private var recentMatches: [Match] {
-        Array(matches.filter(\.isCompleted).prefix(5))
+        matches
+    }
+
+    init() {
+        var descriptor = FetchDescriptor<Match>(
+            predicate: #Predicate { $0.isComplete },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 5
+        _matches = Query(descriptor)
     }
 
     var body: some View {

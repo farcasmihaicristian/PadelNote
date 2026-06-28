@@ -1,3 +1,4 @@
+import PadelCore
 import SwiftUI
 
 /// A player/partner stats row: name, a count line, and an optional win-rate

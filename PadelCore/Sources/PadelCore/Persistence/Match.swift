@@ -22,6 +22,9 @@ public final class Match {
     public var averageHeartRate: Double?
     public var activeEnergyKilocalories: Double?
     public var distanceMeters: Double?
+    /// Stored completion flag for SwiftData predicates. Kept in sync with
+    /// `endedAt` + point presence by save/import paths and a startup backfill.
+    public var isComplete: Bool = false
     /// JSON-encoded `[MatchRoster]`, one entry per set, capturing left/right
     /// side changes made between sets. Empty for matches without per-set tracking.
     public var setRostersData: Data = Data()
@@ -67,6 +70,7 @@ public final class Match {
         self.averageHeartRate = averageHeartRate
         self.activeEnergyKilocalories = activeEnergyKilocalories
         self.distanceMeters = distanceMeters
+        self.isComplete = endedAt != nil && !points.isEmpty
         self.setRostersData = (try? JSONEncoder().encode(setRosters)) ?? Data()
         self.setServeOrdersData = (try? JSONEncoder().encode(setServeOrders)) ?? Data()
         self.points = points
@@ -178,9 +182,15 @@ public final class Match {
     }
 
     public var isCompleted: Bool {
-        // Avoid `sortedPoints` here — emptiness doesn't depend on order, and this
-        // is evaluated frequently while filtering history.
+        isComplete || completionStatusFromStoredFields
+    }
+
+    public var completionStatusFromStoredFields: Bool {
         endedAt != nil && !points.isEmpty
+    }
+
+    public func refreshCompletionStatus() {
+        isComplete = completionStatusFromStoredFields
     }
 
     public var scoreSummary: String {

@@ -36,6 +36,7 @@ public enum MatchPersistence {
             context.insert(point)
             match.points.append(point)
         }
+        match.refreshCompletionStatus()
 
         do {
             try context.save()
@@ -117,6 +118,7 @@ public enum MatchPersistence {
         match.averageHeartRate = payload.averageHeartRate
         match.activeEnergyKilocalories = payload.activeEnergyKilocalories
         match.distanceMeters = payload.distanceMeters
+        match.refreshCompletionStatus()
 
         do {
             try context.save()
@@ -167,6 +169,25 @@ public enum MatchPersistence {
             )
             context.insert(point)
             match.points.append(point)
+        }
+        match.refreshCompletionStatus()
+    }
+
+    @MainActor
+    public static func backfillCompletionFlags(context: ModelContext) {
+        guard let matches = try? context.fetch(FetchDescriptor<Match>()) else { return }
+
+        var didChange = false
+        for match in matches {
+            let before = match.isComplete
+            match.refreshCompletionStatus()
+            if match.isComplete != before {
+                didChange = true
+            }
+        }
+
+        if didChange {
+            context.saveOrLogFailure()
         }
     }
 }

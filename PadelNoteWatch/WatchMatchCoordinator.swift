@@ -11,6 +11,28 @@ final class WatchMatchCoordinator {
         case summary
     }
 
+    enum WorkoutWarning: Equatable {
+        case unavailable
+        case stoppedMidMatch(String)
+        case notSavedTooShort
+        case failed(String)
+
+        var message: String {
+            switch self {
+            case .unavailable:
+                String(localized: "Workout recording unavailable. Scoring will still work.")
+            case .stoppedMidMatch(let message), .failed(let message):
+                message
+            case .notSavedTooShort:
+                String(localized: "Workout not saved to Apple Health — match was under 10 minutes.")
+            }
+        }
+
+        var isInformational: Bool {
+            self == .notSavedTooShort
+        }
+    }
+
     var phase: Phase = .idle
     var session: ScoringSession?
     var matchID: UUID?
@@ -35,7 +57,7 @@ final class WatchMatchCoordinator {
     var knownPlayerNames: [String] = []
     var meProfile: WatchMeProfile?
     var healthAuthDenied = false
-    var workoutWarning: String?
+    var workoutWarning: WorkoutWarning?
     var isSaving = false
     var pendingSyncCount = 0
     private var endedEarly = false
@@ -65,7 +87,7 @@ final class WatchMatchCoordinator {
 
     private func configureWorkoutErrorHandling() {
         workoutRecorder.onRecordingError = { [weak self] message in
-            self?.workoutWarning = message
+            self?.workoutWarning = .stoppedMidMatch(message)
         }
     }
 
@@ -330,7 +352,7 @@ final class WatchMatchCoordinator {
                 try await workoutRecorder.start()
             } catch {
                 guard !Task.isCancelled else { return }
-                workoutWarning = String(localized: "Workout recording unavailable. Scoring will still work.")
+                workoutWarning = .unavailable
             }
         }
     }
@@ -410,10 +432,10 @@ final class WatchMatchCoordinator {
             await workoutStartTask?.value
             try await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
             if !workoutRecorder.savedToHealth {
-                workoutWarning = String(localized: "Workout not saved to Apple Health — match was under 10 minutes.")
+                workoutWarning = .notSavedTooShort
             }
         } catch {
-            workoutWarning = error.localizedDescription
+            workoutWarning = .failed(error.localizedDescription)
         }
 
         let payload = makeTransferPayload(matchID: matchID, events: session.events)

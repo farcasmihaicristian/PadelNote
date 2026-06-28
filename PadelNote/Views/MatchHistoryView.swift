@@ -5,10 +5,10 @@ import SwiftUI
 struct MatchHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
-    @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
 
     private var completedMatches: [Match] {
-        matches.filter(\.isCompleted)
+        matches
     }
 
     private var sections: [(title: String, matches: [Match])] {
