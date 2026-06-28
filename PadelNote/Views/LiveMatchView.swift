@@ -4,6 +4,7 @@ import SwiftUI
 
 struct LiveMatchView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppThemeStore.self) private var themeStore
 
     let rules: MatchRules
     let playerSetup: MatchPlayerSetup
@@ -33,6 +34,10 @@ struct LiveMatchView: View {
     }
 
     private var state: MatchState { session.state }
+
+    private var palette: ThemePalette {
+        themeStore.palette
+    }
 
     private var currentServe: ServeContext? {
         guard !state.isMatchOver else { return nil }
@@ -84,19 +89,9 @@ struct LiveMatchView: View {
             setsHeader
 
             VStack(spacing: 8) {
-                Text(ScoreFormatter.currentGameScore(in: state))
-                    .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .accessibilityLabel(String(localized: "Game score \(ScoreFormatter.currentGameScore(in: state))"))
+                gameScoreView(ScoreFormatter.currentGameScore(in: state))
 
-                Text(
-                    String(
-                        localized: "Set \(state.completedSets.count + 1): \(ScoreFormatter.currentSetGames(in: state))"
-                    )
-                )
-                .font(.title3)
-                .foregroundStyle(.secondary)
+                currentSetScoreView
             }
 
             serveBanner(serve)
@@ -157,12 +152,15 @@ struct LiveMatchView: View {
             isPresented: $showServeSidePrompt,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "Receive right")) {
+            Button(String(localized: "Serve from right")) {
                 decidingSideOverride = .right
             }
-            Button(String(localized: "Receive left")) {
+            Button(String(localized: "Serve from left")) {
                 decidingSideOverride = .left
             }
+        }
+        .background(alignment: .top) {
+            ambientGlow
         }
     }
 
@@ -170,8 +168,7 @@ struct LiveMatchView: View {
     private func serveBanner(_ serve: ServeContext?) -> some View {
         if let serve {
             HStack(spacing: 6) {
-                Image(systemName: "arrowtriangle.right.fill")
-                    .foregroundStyle(.orange)
+                serveSideChip(for: serve.side)
                 Text(serveDescription(serve))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
@@ -179,6 +176,20 @@ struct LiveMatchView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel(serveDescription(serve))
         }
+    }
+
+    private func serveSideChip(for side: ServeSide) -> some View {
+        Text(side == .right ? "R" : "L")
+            .font(.system(size: 11, weight: .black, design: .rounded))
+            .foregroundStyle(palette.serveColor)
+            .kerning(1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .background(.black.opacity(0.45), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(palette.serveColor, lineWidth: 1)
+            }
     }
 
     private func serveDescription(_ serve: ServeContext) -> String {
@@ -219,15 +230,67 @@ struct LiveMatchView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var ambientGlow: some View {
+        RadialGradient(
+            colors: [
+                palette.sideAColor.opacity(0.35),
+                palette.sideAColor.opacity(0.12),
+                .clear,
+            ],
+            center: .top,
+            startRadius: 20,
+            endRadius: 280
+        )
+        .blur(radius: 38)
+        .frame(height: 360)
+        .offset(y: -150)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func gameScoreView(_ score: String) -> some View {
+        coloredScoreText(score)
+            .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .accessibilityLabel(String(localized: "Game score \(score)"))
+    }
+
+    private var currentSetScoreView: some View {
+        HStack(spacing: 4) {
+            Text(String(localized: "Set \(state.completedSets.count + 1):"))
+                .foregroundStyle(.secondary)
+            coloredScoreText(ScoreFormatter.currentSetGames(in: state))
+        }
+        .font(.title3)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func coloredScoreText(_ score: String) -> some View {
+        let parts = score.split(separator: "-", omittingEmptySubsequences: false).map(String.init)
+        if parts.count == 2 {
+            HStack(spacing: 4) {
+                Text(parts[0])
+                    .foregroundStyle(palette.sideAColor)
+                Text("-")
+                    .foregroundStyle(.secondary)
+                Text(parts[1])
+                    .foregroundStyle(palette.sideBColor)
+            }
+        } else {
+            Text(score)
+                .foregroundStyle(.primary)
+        }
+    }
+
     private func pointButton(team: Team, label: String, serve: ServeContext?) -> some View {
         Button {
             addPoint(for: team)
         } label: {
             VStack(spacing: 8) {
                 if serve?.servingTeam == team {
-                    Image(systemName: "arrowtriangle.up.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                    serveSideChip(for: serve?.side ?? .right)
                         .accessibilityHidden(true)
                 }
                 Text(label)
@@ -239,6 +302,7 @@ struct LiveMatchView: View {
             .frame(maxWidth: .infinity, minHeight: 120)
         }
         .buttonStyle(.borderedProminent)
+        .tint(palette.color(for: team))
         .disabled(state.isMatchOver)
         .accessibilityLabel(String(localized: "Point \(label)"))
     }
@@ -294,4 +358,5 @@ struct LiveMatchView: View {
         )
     }
     .modelContainer(PreviewData.container)
+    .environment(AppThemeStore())
 }

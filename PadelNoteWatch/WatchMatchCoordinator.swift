@@ -77,6 +77,7 @@ final class WatchMatchCoordinator {
 
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
+    var onThemeChanged: ((AppTheme) -> Void)?
 
     init(workoutRecorder: any WorkoutRecording, syncService: any MatchSyncPublishing) {
         self.workoutRecorder = workoutRecorder
@@ -101,6 +102,10 @@ final class WatchMatchCoordinator {
     private func applyPhoneContext(_ payload: PhoneWatchSyncPayload) {
         MatchRulesPreferences.save(payload.rules)
         WorkoutActivityPreferences.save(payload.workoutActivity ?? .default)
+        if let themeID = payload.themeID {
+            AppThemePreferences.saveID(themeID)
+            onThemeChanged?(AppThemeCatalog.theme(withID: themeID))
+        }
         knownPlayerNames = payload.knownPlayerNames
         meProfile = payload.meProfile
         guard phase == .idle else { return }
@@ -426,32 +431,31 @@ final class WatchMatchCoordinator {
     func saveMatch() async {
         guard phase == .summary, let session, let matchID, !isSaving else { return }
         isSaving = true
-        defer { isSaving = false }
 
-        do {
-            await workoutStartTask?.value
-            try await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
-            if !workoutRecorder.savedToHealth {
-                workoutWarning = .notSavedTooShort
-            }
-        } catch {
-            workoutWarning = .failed(error.localizedDescription)
-        }
-
+        let workoutStartTask = workoutStartTask
+        let endedAt = matchActivityEndedAt ?? .now
         let payload = makeTransferPayload(matchID: matchID, events: session.events)
         WatchMatchStore.clearLiveMatch()
         syncService.publishCompletedMatch(payload)
         refreshPendingSyncCount()
         reset(clearLiveSession: false)
+        finishWorkoutInBackground(after: workoutStartTask, endedAt: endedAt)
     }
 
     func discardMatch() async {
-        if phase != .idle {
-            await workoutStartTask?.value
-            try? await workoutRecorder.end(endedAt: matchActivityEndedAt ?? .now)
-        }
+        guard !isSaving else { return }
+        let workoutStartTask = workoutStartTask
+        let endedAt = matchActivityEndedAt ?? .now
         WatchMatchStore.clearLiveMatch()
         reset(clearLiveSession: false)
+        finishWorkoutInBackground(after: workoutStartTask, endedAt: endedAt)
+    }
+
+    private func finishWorkoutInBackground(after startTask: Task<Void, Never>?, endedAt: Date) {
+        Task { [workoutRecorder] in
+            await startTask?.value
+            try? await workoutRecorder.end(endedAt: endedAt)
+        }
     }
 
     private func refreshPendingSyncCount() {
@@ -469,6 +473,7 @@ final class WatchMatchCoordinator {
         session = nil
         matchID = nil
         workoutWarning = nil
+        isSaving = false
         endedEarly = false
         matchActivityEndedAt = nil
         continuation = .none

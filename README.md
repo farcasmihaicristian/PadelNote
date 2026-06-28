@@ -278,6 +278,7 @@ Each decision: what was chosen, why, and status. `✅ Locked` · `⏳ Pending` �
 - **D-10 — Free app, optional one-time IAP later (no subscription).** Removes first-run friction; one-time IAP (advanced stats) planned for v1.2+. ✅ Locked for v1
 - **D-11 — Star Point (third deuce style).** Advantage for the first two deuces, then sudden death; caps game length while rewarding deuce wins. Default stays Golden Point; Star Point is opt-in. Kept the "Star Point" name, with a short "Deuce rules explained" note in Settings clarifying it means limited advantage (2 deuces only). ✅ Locked
 - **D-12 — Optional ME profile (local-first).** Scoring and history require no profile. ME personalization uses an on-device profile (name + linked `Player` record) via Settings. Sign in with Apple is the upgrade path after Apple Developer enrollment (M8); CloudKit sync follows in v1.1. ✅ Locked for v1
+- **D-13 — App color themes.** Theme selection is phone-only and syncs to Apple Watch; the watch persists the last synced theme for offline live matches. Themes are global cosmetic preferences, with serve accent as the app tint and live-match surfaces using team gradients/colors. ✅ Locked for v1
 
 > Record any new decision here with its rationale before moving on.
 

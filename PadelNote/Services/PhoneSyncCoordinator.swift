@@ -45,7 +45,8 @@ final class PhoneSyncCoordinator {
             rules: MatchRulesPreferences.load(),
             knownPlayerNames: PlayerPersistence.distinctDisplayNames(context: modelContext),
             meProfile: PlayerPersistence.watchMeProfile(context: modelContext),
-            workoutActivity: WorkoutActivityPreferences.load()
+            workoutActivity: WorkoutActivityPreferences.load(),
+            themeID: AppThemePreferences.loadID()
         )
         listener.publishPhoneContext(payload)
     }

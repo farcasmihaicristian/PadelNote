@@ -2,6 +2,8 @@ import PadelCore
 import SwiftUI
 
 struct WatchLiveMirrorView: View {
+    @Environment(AppThemeStore.self) private var themeStore
+
     let snapshot: LiveScoreSnapshot
 
     var body: some View {
@@ -25,9 +27,23 @@ struct WatchLiveMirrorView: View {
 
                 if let serveText {
                     LabeledContent(String(localized: "Serving")) {
-                        Label(serveText, systemImage: "arrowtriangle.right.fill")
-                            .labelStyle(.titleAndIcon)
-                            .foregroundStyle(.orange)
+                        HStack(spacing: 6) {
+                            if let side = snapshot.serveSide {
+                                Text(side == .right ? "R" : "L")
+                                    .font(.system(size: 11, weight: .black, design: .rounded))
+                                    .foregroundStyle(themeStore.palette.serveColor)
+                                    .kerning(1)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 3)
+                                    .background(.black.opacity(0.45), in: Capsule())
+                                    .overlay {
+                                        Capsule()
+                                            .stroke(themeStore.palette.serveColor, lineWidth: 1)
+                                    }
+                                    .accessibilityHidden(true)
+                            }
+                            Text(serveText)
+                        }
                     }
                 }
             } header: {
@@ -74,4 +90,5 @@ struct WatchLiveMirrorView: View {
             )
         )
     }
+    .environment(AppThemeStore())
 }
