@@ -1,8 +1,10 @@
 # Plan — Mac build & verification follow-up
 
-> The code-improvement work in [code-improvements.md](code-improvements.md) was implemented on a **Windows host with no Swift/Xcode toolchain**, so none of it is compile-verified. This document is the checklist to run **on the Mac**: verify the changes build and behave, then finish the items that were deliberately deferred because they couldn't be done safely without a compiler.
+> The code-improvement work in [code-improvements.md](code-improvements.md) **and** the post-game reflection survey (see §9) were implemented on a **Windows host with no Swift/Xcode toolchain**, so none of it is compile-verified. This document is the checklist to run **on the Mac**: verify the changes build and behave, then finish the items that were deliberately deferred because they couldn't be done safely without a compiler.
 
 **Branch:** changes were committed to `main`. Start from a clean pull.
+
+> ⚠️ **Not yet built or tested.** Everything below (including the new survey feature in §9) compiles only in principle. Build both targets and run `swift test` before relying on any of it.
 
 ---
 
@@ -113,3 +115,27 @@ These were **intentionally not done** on Windows because they need a compiler an
 - [ ] The §3 device behaviors verified on real iPhone + Watch.
 - [ ] Deferred items (§5) triaged — at least 5.1 (the remaining P1-5 perf) and 5.2/5.3/5.4 scheduled or done.
 - [ ] Then it's safe to proceed to the [app-themes](app-themes.md) work (do §5.1 and the serve/stats memoization verification first, since themes touch the same live/stats views).
+
+---
+
+## 9. Post-game reflection survey (NEW feature — not built/tested)
+
+A 5-question post-game reflection was added (design: `need-a-new-component` plan). Like everything else here it was authored on Windows and is **not compile-verified**. Build both targets, run `swift test`, and verify end-to-end.
+
+**New files:** `PadelCore/Sources/PadelCore/Model/PostGameSurvey.swift`; `PadelNote/Views/{RatingPicker,PostGameSurveyForm,PostGameSurveyScreen,MatchReflectionSection}.swift`; `PadelCore/Tests/PadelCoreTests/PostGameSurveyTests.swift`.
+**Modified:** `Match.swift` (`surveyData` blob + `survey`/`hasSurvey`), `MatchPersistence.swift` (`saveSurvey`), `LiveMatchView.swift` (survey step between finish and detail), `MatchDetailView.swift` (`MatchReflectionSection`).
+
+Build/compile spots to check first (riskiest blind edits):
+- `RatingPicker` `Picker` tag types must match the `ReflectionRating?` binding (`.tag(ReflectionRating?.none)` / `.tag(ReflectionRating?.some(rating))`).
+- `PostGameSurveyScreen` inline-vs-push behavior via `autoDismiss` (LiveMatchView uses inline `autoDismiss: false`; `MatchReflectionSection` pushes with `autoDismiss: true`).
+- `Match` lightweight migration for the new `surveyData: Data = Data()` attribute (no ModelContainer schema-list edits needed — confirm on a populated store).
+- `overviewHeadline` `switch` over `Double` range patterns.
+
+Verify (device/simulator):
+- [ ] `swift test` — new `PostGameSurveyTests` green (Codable round-trip, headline buckets, detail lines, `Match.survey`/`hasSurvey`, `saveSurvey`).
+- [ ] Phone-score a match → survey step appears before detail → answer → Save → overview shows in detail → Done unwinds; reopen from history → persists.
+- [ ] Phone-finish → Skip → no reflection → open from history → "Reflect on this game" → fill/save → overview shows → Edit → change → persists.
+- [ ] Watch-scored match → history → open detail → "Reflect on this game" works; nothing sent back to the Watch.
+- [ ] Accessibility (VoiceOver reads each rating picker + overview line) and Dynamic Type at XXL.
+
+**Localization follow-up:** all survey strings use `String(localized:)` and will auto-extract into `PadelNote/Localizable.xcstrings` on the next Xcode build, but the **Spanish translations are not filled in** — add them in the string catalog so the survey isn't English-only in ES.

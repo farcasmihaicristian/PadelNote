@@ -89,6 +89,8 @@ struct MatchDetailView: View {
                 }
             }
 
+            MatchReflectionSection(match: match)
+
             if hasHealthData {
                 Section(String(localized: "Workout")) {
                     if let heartRate = match.averageHeartRate {

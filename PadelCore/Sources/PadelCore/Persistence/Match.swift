@@ -28,6 +28,9 @@ public final class Match {
     /// JSON-encoded `[ServeOrder]`, one entry per set, capturing the serving
     /// rotation. Empty for matches recorded without serve tracking.
     public var setServeOrdersData: Data = Data()
+    /// JSON-encoded `PostGameSurvey` — the player's optional post-game
+    /// reflection. Empty until a reflection is saved (migration-safe default).
+    public var surveyData: Data = Data()
 
     @Relationship(deleteRule: .cascade, inverse: \StoredPointEvent.match)
     public var points: [StoredPointEvent]
@@ -46,6 +49,7 @@ public final class Match {
         distanceMeters: Double? = nil,
         setRosters: [MatchRoster] = [],
         setServeOrders: [ServeOrder] = [],
+        survey: PostGameSurvey? = nil,
         points: [StoredPointEvent] = []
     ) {
         self.id = id
@@ -69,6 +73,7 @@ public final class Match {
         self.distanceMeters = distanceMeters
         self.setRostersData = (try? JSONEncoder().encode(setRosters)) ?? Data()
         self.setServeOrdersData = (try? JSONEncoder().encode(setServeOrders)) ?? Data()
+        self.surveyData = survey.flatMap { try? JSONEncoder().encode($0) } ?? Data()
         self.points = points
     }
 
@@ -152,6 +157,22 @@ public final class Match {
         set {
             setServeOrdersData = (try? JSONEncoder().encode(newValue)) ?? Data()
         }
+    }
+
+    /// The player's optional post-game reflection. `nil` when none has been
+    /// recorded (empty blob), keeping legacy matches backward-compatible.
+    public var survey: PostGameSurvey? {
+        get {
+            surveyData.isEmpty ? nil : try? JSONDecoder().decode(PostGameSurvey.self, from: surveyData)
+        }
+        set {
+            surveyData = newValue.flatMap { try? JSONEncoder().encode($0) } ?? Data()
+        }
+    }
+
+    /// True once a reflection has been submitted (has a `completedAt`).
+    public var hasSurvey: Bool {
+        survey?.completedAt != nil
     }
 
     public var winner: Team? {

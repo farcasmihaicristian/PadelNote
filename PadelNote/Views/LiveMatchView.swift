@@ -12,6 +12,7 @@ struct LiveMatchView: View {
     @State private var session: ScoringSession
     @State private var startedAt = Date.now
     @State private var savedMatch: Match?
+    @State private var surveyDone = false
     @State private var showEndConfirmation = false
     @State private var firstServer: PlayerSlot
     @State private var setServeOrders: [ServeOrder] = []
@@ -60,15 +61,22 @@ struct LiveMatchView: View {
     var body: some View {
         Group {
             if let savedMatch {
-                MatchDetailView(match: savedMatch)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button(String(localized: "Done")) {
-                                onFinished()
+                if surveyDone {
+                    MatchDetailView(match: savedMatch)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(String(localized: "Done")) {
+                                    onFinished()
+                                }
+                                .accessibilityLabel(String(localized: "Done"))
                             }
-                            .accessibilityLabel(String(localized: "Done"))
                         }
+                } else {
+                    // One-time reflection step between finishing and the detail view.
+                    PostGameSurveyScreen(match: savedMatch) {
+                        surveyDone = true
                     }
+                }
             } else {
                 liveScoringView
             }

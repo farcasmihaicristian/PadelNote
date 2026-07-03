@@ -46,6 +46,19 @@ public enum MatchPersistence {
         }
     }
 
+    /// Attaches (or replaces) a post-game reflection on an already-persisted
+    /// match and saves. The reflection is phone-authored only and never part of
+    /// the Watch transfer payload.
+    @MainActor
+    public static func saveSurvey(
+        context: ModelContext,
+        match: Match,
+        survey: PostGameSurvey
+    ) {
+        match.survey = survey
+        context.saveOrLogFailure()
+    }
+
     @MainActor
     public static func saveTransferredMatch(
         context: ModelContext,
