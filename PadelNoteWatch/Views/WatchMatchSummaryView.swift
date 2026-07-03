@@ -19,9 +19,9 @@ struct WatchMatchSummaryView: View {
                 }
 
                 if let warning = coordinator.workoutWarning {
-                    Text(warning)
+                    Text(warning.message)
                         .font(.caption2)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(warning.isInformational ? Color.secondary : Color.orange)
                 }
 
                 if coordinator.canContinueNewSet {

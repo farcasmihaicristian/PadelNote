@@ -184,6 +184,23 @@ import Testing
     #expect(lines[events.count - 1] == match.scoreLine(afterPointCount: events.count))
 }
 
+// MARK: - P1-5 — stored completion flag for SwiftData predicates
+
+@Test @MainActor func completionFlagBackfillMarksFinishedMatches() throws {
+    let container = try makeContainer()
+    let context = container.mainContext
+    let match = Match(startedAt: .now, endedAt: .now)
+    context.insert(match)
+    match.points.append(StoredPointEvent(sequence: 0, team: .a, match: match))
+    match.isComplete = false
+    try context.save()
+
+    MatchPersistence.backfillCompletionFlags(context: context)
+
+    #expect(match.isComplete)
+    #expect(match.isCompleted)
+}
+
 @MainActor
 private func makeContainer() throws -> ModelContainer {
     let configuration = ModelConfiguration(isStoredInMemoryOnly: true)

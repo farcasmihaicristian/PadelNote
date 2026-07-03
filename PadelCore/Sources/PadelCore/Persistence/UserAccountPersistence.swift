@@ -74,7 +74,7 @@ public enum UserAccountPersistence {
 
         return matches.reduce(into: 0) { count, match in
             guard match.isCompleted else { return }
-            count += linkableSlots(on: match, for: player).count
+            count += linkableSlots(on: match, for: player, context: context).count
         }
     }
 
@@ -89,7 +89,7 @@ public enum UserAccountPersistence {
 
         var linkedSlots = 0
         for match in matches where match.isCompleted {
-            linkedSlots += applyLinks(on: match, for: player)
+            linkedSlots += applyLinks(on: match, for: player, context: context)
         }
 
         if linkedSlots > 0 {
@@ -117,7 +117,7 @@ public enum UserAccountPersistence {
         player: Player,
         preferredSlot: PlayerSlot = MeProfilePreferences.preferredSlot()
     ) {
-        var slot = preferredSlot
+        let slot = preferredSlot
         slot.applySelection(
             MatchPlayerSlotSelection(name: player.displayName, playerID: player.id),
             to: &setup
@@ -133,7 +133,7 @@ public enum UserAccountPersistence {
     }
 
     @MainActor
-    private static func linkableSlots(on match: Match, for player: Player) -> [Int] {
+    private static func linkableSlots(on match: Match, for player: Player, context: ModelContext) -> [Int] {
         let slots: [(String?, UUID?)] = [
             (match.playerA1Name, match.playerA1ID),
             (match.playerA2Name, match.playerA2ID),
@@ -143,17 +143,23 @@ public enum UserAccountPersistence {
 
         return slots.enumerated().compactMap { index, slot in
             guard let name = slot.0, !name.isEmpty else { return nil }
-            // Only claim a slot that isn't already attributed to a player —
-            // never re-point an existing distinct link.
-            guard slot.1 == nil else { return nil }
             guard PlayerPersistence.normalizeName(name) == player.normalizedName else { return nil }
+            if let linkedID = slot.1 {
+                if linkedID == player.id { return nil }
+                guard let linkedPlayer = PlayerPersistence.fetchPlayer(id: linkedID, context: context) else {
+                    return index
+                }
+                // Repair stale/mismatched links, but don't steal an already
+                // consistent attribution from another player.
+                guard linkedPlayer.normalizedName != PlayerPersistence.normalizeName(name) else { return nil }
+            }
             return index
         }
     }
 
     @MainActor
-    private static func applyLinks(on match: Match, for player: Player) -> Int {
-        let indices = linkableSlots(on: match, for: player)
+    private static func applyLinks(on match: Match, for player: Player, context: ModelContext) -> Int {
+        let indices = linkableSlots(on: match, for: player, context: context)
         guard !indices.isEmpty else { return 0 }
 
         for index in indices {

@@ -7,11 +7,19 @@ struct PadelNoteWatchApp: App {
         workoutRecorder: HealthKitWorkoutRecorder(),
         syncService: WatchConnectivityPublisher()
     )
+    @State private var themeStore = AppThemeStore()
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 WatchStartView(coordinator: coordinator)
+            }
+            .environment(themeStore)
+            .tint(themeStore.palette.accent)
+            .onAppear {
+                coordinator.onThemeChanged = { theme in
+                    themeStore.apply(theme)
+                }
             }
         }
     }

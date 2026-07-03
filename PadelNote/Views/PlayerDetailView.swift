@@ -5,7 +5,7 @@ import SwiftUI
 struct PlayerDetailView: View {
     let player: Player
 
-    @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @Query(sort: \Player.displayName) private var players: [Player]
 
     var body: some View {
@@ -25,7 +25,7 @@ struct PlayerDetailView: View {
             displayNames: playerByID.mapValues(\.displayName)
         )
         let recentMatches = matches
-            .filter { $0.isCompleted && $0.roster.contains(playerID: player.id) }
+            .filter { $0.roster.contains(playerID: player.id) }
             .prefix(10)
             .map { $0 }
 

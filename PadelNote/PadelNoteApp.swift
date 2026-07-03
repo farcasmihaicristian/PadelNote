@@ -7,6 +7,7 @@ struct PadelNoteApp: App {
     private let modelContainer: ModelContainer
     @State private var syncCoordinator = PhoneSyncCoordinator(syncListener: PhoneConnectivityListener())
     @State private var currentUserStore = CurrentUserStore()
+    @State private var themeStore = AppThemeStore()
     @State private var showPastMatchLinkDialog = false
 
     init() {
@@ -20,10 +21,13 @@ struct PadelNoteApp: App {
             HomeView()
                 .environment(syncCoordinator)
                 .environment(currentUserStore)
+                .environment(themeStore)
+                .tint(themeStore.palette.accent)
                 .onAppear {
                     syncCoordinator.activate(modelContext: modelContainer.mainContext)
                     currentUserStore.activate(modelContext: modelContainer.mainContext)
                     HistoryDriveImporter.importIfNeeded(context: modelContainer.mainContext)
+                    MatchPersistence.backfillCompletionFlags(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
                     syncCoordinator.syncPhoneContextToWatch()
                 }

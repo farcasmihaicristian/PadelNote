@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(CurrentUserStore.self) private var currentUserStore
+    @Environment(AppThemeStore.self) private var themeStore
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
@@ -36,6 +37,8 @@ struct SettingsView: View {
             )
 
             meSlotSection
+
+            themeSection
 
             Section(String(localized: "Health")) {
                 LabeledContent(String(localized: "HealthKit access")) {
@@ -102,6 +105,27 @@ struct SettingsView: View {
         MeSlotSettingsSection(preferredMeSlot: $preferredMeSlot)
     }
 
+    private var themeSection: some View {
+        Section(String(localized: "Appearance")) {
+            NavigationLink {
+                ThemeSelectionView()
+            } label: {
+                HStack {
+                    Text(String(localized: "Theme"))
+                    Spacer()
+                    ThemeSwatch(theme: themeStore.activeTheme)
+                    Text(String(localized: String.LocalizationValue(themeStore.activeTheme.name)))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel(String(localized: "App color theme"))
+
+            Text(String(localized: "Theme changes apply to live scoring on iPhone and Apple Watch."))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private func loadDefaults() {
         let values = MatchRulesSettingsForm.loadValues(from: MatchRulesPreferences.load())
         bestOfSets = values.bestOfSets
@@ -119,6 +143,27 @@ struct SettingsView: View {
         )
         MatchRulesPreferences.save(rules)
         syncCoordinator.syncDefaultRulesToWatch()
+    }
+}
+
+private struct ThemeSwatch: View {
+    let theme: AppTheme
+
+    var body: some View {
+        Circle()
+            .fill(Color(hex: theme.team1Top))
+            .overlay(alignment: .trailing) {
+                Rectangle()
+                    .fill(Color(hex: theme.team2Top))
+                    .frame(width: 11)
+            }
+            .clipShape(Circle())
+            .overlay {
+                Circle()
+                    .stroke(.white.opacity(0.25), lineWidth: 1)
+            }
+            .frame(width: 22, height: 22)
+            .accessibilityHidden(true)
     }
 }
 
@@ -221,4 +266,5 @@ private struct MeSlotSettingsSection: View {
     }
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
     .environment(CurrentUserStore())
+    .environment(AppThemeStore())
 }

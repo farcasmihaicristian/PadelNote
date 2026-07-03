@@ -2,6 +2,7 @@ import PadelCore
 import SwiftUI
 
 struct WatchLiveMatchView: View {
+    @Environment(AppThemeStore.self) private var themeStore
     @Bindable var coordinator: WatchMatchCoordinator
     @State private var showEndConfirmation = false
     @State private var showCourtOptions = false
@@ -15,6 +16,10 @@ struct WatchLiveMatchView: View {
 
     private var serve: ServeContext? {
         coordinator.currentServe
+    }
+
+    private var palette: ThemePalette {
+        themeStore.palette
     }
 
     var body: some View {
@@ -83,10 +88,10 @@ struct WatchLiveMatchView: View {
             isPresented: $showServeSidePrompt,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "Receive right")) {
+            Button(String(localized: "Serve from right")) {
                 coordinator.chooseDecidingSide(.right)
             }
-            Button(String(localized: "Receive left")) {
+            Button(String(localized: "Serve from left")) {
                 coordinator.chooseDecidingSide(.left)
             }
         }
@@ -99,16 +104,20 @@ struct WatchLiveMatchView: View {
     }
 
     private func liveControlButton(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(title, action: action)
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(.white.opacity(0.95))
-            .padding(.horizontal, 4)
-            .padding(.vertical, 1)
-            .background(.black.opacity(0.5), in: Capsule())
-            .overlay {
-                Capsule()
-                    .stroke(.black.opacity(0.6), lineWidth: 0.5)
-            }
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.95))
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+                .frame(width: 31, height: 31)
+                .background(.black.opacity(0.5), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.black.opacity(0.6), lineWidth: 0.5)
+                }
+        }
+        .buttonStyle(.plain)
     }
 
     private var courtOptionsEdgeZone: some View {
@@ -242,17 +251,19 @@ struct WatchLiveMatchView: View {
     }
 
     private func playerNameLabel(name: String, slot: PlayerSlot) -> some View {
-        VStack(spacing: 3) {
-            Text(name)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
-            Capsule()
-                .fill(serve?.servingSlot == slot ? .orange : .clear)
-                .frame(width: 24, height: 2)
-        }
+        let isServing = serve?.servingSlot == slot
+        return Text(name)
+            .font(.headline.weight(isServing ? .bold : .semibold))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, isServing ? 8 : 0)
+            .padding(.vertical, isServing ? 3 : 0)
+            .background(isServing ? .black.opacity(0.5) : .clear, in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(isServing ? palette.serveColor : .clear, lineWidth: 1)
+            }
     }
 
     private func teamNameVerticalOffset(for team: Team, height: CGFloat) -> CGFloat {
@@ -262,12 +273,20 @@ struct WatchLiveMatchView: View {
     @ViewBuilder
     private func serveIndicator(for team: Team) -> some View {
         if let serve, serve.servingTeam == team {
-            Image(systemName: team == .a ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.orange)
-                .shadow(color: .black.opacity(0.35), radius: 1, y: 0.5)
-                .padding(team == .a ? .top : .bottom, 5)
-                .padding(.horizontal, 10)
+            Text(serve.side == .right ? "R" : "L")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(palette.serveColor)
+                .kerning(1)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(.black.opacity(0.5), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .stroke(palette.serveColor, lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .padding(team == .a ? .top : .bottom, 8)
+                .padding(.horizontal, 12)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
@@ -303,13 +322,8 @@ struct WatchLiveMatchView: View {
         return String(localized: "Point \(label). Serving from the \(side).")
     }
 
-    private func teamBackground(for team: Team) -> Color {
-        switch team {
-        case .a:
-            Color(red: 0.20, green: 0.36, blue: 0.55)
-        case .b:
-            Color(red: 0.18, green: 0.44, blue: 0.30)
-        }
+    private func teamBackground(for team: Team) -> LinearGradient {
+        palette.gradient(for: team)
     }
 }
 
@@ -340,4 +354,5 @@ private extension Array {
             }()
         )
     }
+    .environment(AppThemeStore())
 }

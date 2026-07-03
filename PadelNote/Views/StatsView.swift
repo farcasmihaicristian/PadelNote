@@ -4,7 +4,7 @@ import SwiftUI
 
 struct StatsView: View {
     @Environment(CurrentUserStore.self) private var currentUserStore
-    @Query(sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @Query(sort: \Player.displayName) private var players: [Player]
 
     var body: some View {
