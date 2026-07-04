@@ -23,7 +23,7 @@ struct WatchLiveMatchOptionsView: View {
 
             if coordinator.canSwapSides {
                 Picker(
-                    String(localized: "First serve"),
+                    String(localized: "Switch Server"),
                     selection: Binding(
                         get: { coordinator.firstServer },
                         set: { coordinator.setFirstServerForCurrentSet($0) }
