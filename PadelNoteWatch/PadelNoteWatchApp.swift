@@ -20,6 +20,9 @@ struct PadelNoteWatchApp: App {
                 coordinator.onThemeChanged = { theme in
                     themeStore.apply(theme)
                 }
+                coordinator.onServeIndicatorStyleChanged = { style in
+                    themeStore.applyServeIndicatorStyle(style)
+                }
             }
         }
     }

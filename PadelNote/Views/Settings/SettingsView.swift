@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var healthStatus = HealthKitAuthorizationChecker.workoutAuthorizationStatus()
     @State private var workoutActivity = WorkoutActivityPreferences.load()
     @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
+    @State private var serveIndicatorStyle = ServeIndicatorStylePreferences.load()
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -82,6 +83,7 @@ struct SettingsView: View {
             workoutActivity = WorkoutActivityPreferences.load()
             syncCoordinator.syncDefaultRulesToWatch()
             preferredMeSlot = MeProfilePreferences.preferredSlot()
+            serveIndicatorStyle = themeStore.serveIndicatorStyle
         }
         .onChange(of: bestOfSets) { _, _ in saveDefaults() }
         .onChange(of: gamePointStyle) { _, _ in saveDefaults() }
@@ -93,6 +95,11 @@ struct SettingsView: View {
         }
         .onChange(of: preferredMeSlot) { _, newValue in
             MeProfilePreferences.savePreferredSlot(newValue)
+            syncCoordinator.syncPhoneContextToWatch()
+        }
+        .onChange(of: serveIndicatorStyle) { _, newValue in
+            ServeIndicatorStylePreferences.save(newValue)
+            themeStore.applyServeIndicatorStyle(newValue, persist: false)
             syncCoordinator.syncPhoneContextToWatch()
         }
         .onChange(of: currentUserStore.isSignedIn) { _, _ in
@@ -120,7 +127,14 @@ struct SettingsView: View {
             }
             .accessibilityLabel(String(localized: "App color theme"))
 
-            Text(String(localized: "Theme changes apply to live scoring on iPhone and Apple Watch."))
+            Picker(String(localized: "Serve indicator"), selection: $serveIndicatorStyle) {
+                ForEach(ServeIndicatorStyle.allCases) { style in
+                    Text(style.displayName).tag(style)
+                }
+            }
+            .accessibilityLabel(String(localized: "Serve indicator style"))
+
+            Text(String(localized: "Theme and serve indicator apply to live scoring on iPhone and Apple Watch."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

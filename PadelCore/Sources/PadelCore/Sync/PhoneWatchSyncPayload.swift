@@ -11,18 +11,23 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
     /// Optional for backward compatibility with payloads sent before app themes.
     /// Consumers should fall back to `AppThemeCatalog.default`.
     public var themeID: String?
+    /// Optional for backward compatibility with payloads sent before the serve
+    /// indicator style was configurable. Consumers should fall back to `.default`.
+    public var serveIndicatorStyle: ServeIndicatorStyle?
 
     public init(
         rules: MatchRules,
         knownPlayerNames: [String] = [],
         meProfile: WatchMeProfile? = nil,
         workoutActivity: WorkoutActivityKind? = nil,
-        themeID: String? = nil
+        themeID: String? = nil,
+        serveIndicatorStyle: ServeIndicatorStyle? = nil
     ) {
         self.rules = rules
         self.knownPlayerNames = knownPlayerNames
         self.meProfile = meProfile
         self.workoutActivity = workoutActivity
         self.themeID = themeID
+        self.serveIndicatorStyle = serveIndicatorStyle
     }
 }

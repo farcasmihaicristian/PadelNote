@@ -273,22 +273,27 @@ struct WatchLiveMatchView: View {
     @ViewBuilder
     private func serveIndicator(for team: Team) -> some View {
         if let serve, serve.servingTeam == team {
-            Text(serve.side == .right ? "R" : "L")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(palette.serveColor)
-                .kerning(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .background(.black.opacity(0.5), in: Capsule())
-                .overlay {
-                    Capsule()
-                        .stroke(palette.serveColor, lineWidth: 1)
-                }
-                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
-                .padding(team == .a ? .top : .bottom, 8)
-                .padding(.horizontal, 12)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
+            switch themeStore.serveIndicatorStyle {
+            case .sideLabels:
+                Text(serve.side == .right ? "R" : "L")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(palette.serveColor)
+                    .kerning(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(.black.opacity(0.5), in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(palette.serveColor, lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                    .padding(team == .a ? .top : .bottom, 8)
+                    .padding(.horizontal, 12)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            case .movingBall:
+                ServeBallIndicator(color: palette.serveColor, atTopEdge: team == .a)
+            }
         }
     }
 

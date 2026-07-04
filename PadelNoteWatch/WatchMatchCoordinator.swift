@@ -78,6 +78,7 @@ final class WatchMatchCoordinator {
     let workoutRecorder: any WorkoutRecording
     let syncService: any MatchSyncPublishing
     var onThemeChanged: ((AppTheme) -> Void)?
+    var onServeIndicatorStyleChanged: ((ServeIndicatorStyle) -> Void)?
 
     init(workoutRecorder: any WorkoutRecording, syncService: any MatchSyncPublishing) {
         self.workoutRecorder = workoutRecorder
@@ -105,6 +106,10 @@ final class WatchMatchCoordinator {
         if let themeID = payload.themeID {
             AppThemePreferences.saveID(themeID)
             onThemeChanged?(AppThemeCatalog.theme(withID: themeID))
+        }
+        if let serveIndicatorStyle = payload.serveIndicatorStyle {
+            ServeIndicatorStylePreferences.save(serveIndicatorStyle)
+            onServeIndicatorStyleChanged?(serveIndicatorStyle)
         }
         knownPlayerNames = payload.knownPlayerNames
         meProfile = payload.meProfile

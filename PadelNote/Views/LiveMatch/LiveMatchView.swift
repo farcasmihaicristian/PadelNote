@@ -194,11 +194,16 @@ struct LiveMatchView: View {
     @ViewBuilder
     private func serveIndicator(for team: Team, snapshot: LiveScoreSnapshot) -> some View {
         if let serveSide = snapshot.serveSide, snapshot.servingTeam == team {
-            serveSideChip(for: serveSide)
-                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
-                .padding(team == .a ? .top : .bottom, 18)
-                .padding(.horizontal, 24)
-                .accessibilityHidden(true)
+            switch themeStore.serveIndicatorStyle {
+            case .sideLabels:
+                serveSideChip(for: serveSide)
+                    .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                    .padding(team == .a ? .top : .bottom, 18)
+                    .padding(.horizontal, 24)
+                    .accessibilityHidden(true)
+            case .movingBall:
+                ServeBallIndicator(color: palette.serveColor, atTopEdge: team == .a)
+            }
         }
     }
 

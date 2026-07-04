@@ -59,9 +59,14 @@ struct ThemePalette {
 @MainActor
 final class AppThemeStore {
     var activeTheme: AppTheme
+    var serveIndicatorStyle: ServeIndicatorStyle
 
-    init(activeTheme: AppTheme = AppThemePreferences.load()) {
+    init(
+        activeTheme: AppTheme = AppThemePreferences.load(),
+        serveIndicatorStyle: ServeIndicatorStyle = ServeIndicatorStylePreferences.load()
+    ) {
         self.activeTheme = activeTheme
+        self.serveIndicatorStyle = serveIndicatorStyle
     }
 
     var palette: ThemePalette {
@@ -77,5 +82,44 @@ final class AppThemeStore {
 
     func applyThemeID(_ id: String?, persist: Bool = true) {
         apply(AppThemeCatalog.theme(withID: id), persist: persist)
+    }
+
+    func applyServeIndicatorStyle(_ style: ServeIndicatorStyle, persist: Bool = true) {
+        serveIndicatorStyle = style
+        if persist {
+            ServeIndicatorStylePreferences.save(style)
+        }
+    }
+}
+
+/// Serve indicator for the `.movingBall` style: a ball that animates
+/// horizontally (left ↔ right) near the serving team's net edge, tinted with
+/// the theme's serve color. Uses the `tennisball.fill` SF Symbol as a
+/// placeholder — swap in a custom paddle/ball image asset if desired.
+struct ServeBallIndicator: View {
+    let color: Color
+    /// True for the bottom team (net edge is the top of its zone); false for the
+    /// top team (net edge is the bottom of its zone).
+    var atTopEdge: Bool
+
+    @State private var atRight = false
+
+    var body: some View {
+        GeometryReader { proxy in
+            let inset: CGFloat = 22
+            let y = atTopEdge ? inset : max(inset, proxy.size.height - inset)
+            Image(systemName: "tennisball.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(color)
+                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .position(
+                    x: atRight ? max(inset, proxy.size.width - inset) : inset,
+                    y: y
+                )
+                .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: atRight)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .onAppear { atRight = true }
     }
 }
