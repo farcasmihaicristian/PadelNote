@@ -28,7 +28,7 @@ struct HomeView: View {
                 if let snapshot = syncCoordinator.liveSnapshot, snapshot.isVisibleOnPhone {
                     Section {
                         NavigationLink {
-                            WatchLiveMirrorView(snapshot: snapshot)
+                            LiveMatchView()
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Label(String(localized: "Live on Apple Watch"), systemImage: "applewatch")

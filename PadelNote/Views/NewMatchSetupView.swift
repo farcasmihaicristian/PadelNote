@@ -6,6 +6,7 @@ struct NewMatchSetupView: View {
     var onFinished: () -> Void = {}
 
     @Environment(CurrentUserStore.self) private var currentUserStore
+    @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(\.modelContext) private var modelContext
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
@@ -13,7 +14,6 @@ struct NewMatchSetupView: View {
     @State private var finalSetTieBreak = MatchRules.default.finalSetTieBreak
     @State private var playerSetup = MatchPlayerSetup.empty
     @State private var firstServer: PlayerSlot = MeProfilePreferences.preferredSlot()
-    @State private var startLiveMatch = false
     // Loaded once from history in `onAppear` rather than re-fetched from the
     // database on every render / keystroke in the name fields.
     @State private var knownPlayerNames: [String] = []
@@ -78,13 +78,15 @@ struct NewMatchSetupView: View {
 
             Section {
                 Button {
-                    startLiveMatch = true
+                    saveRulesForWatch()
+                    onFinished()
                 } label: {
-                    Text(String(localized: "Start scoring"))
+                    Text(String(localized: "Save for Apple Watch"))
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
-                .accessibilityLabel(String(localized: "Start scoring"))
+                .accessibilityLabel(String(localized: "Save for Apple Watch"))
+                .accessibilityHint(String(localized: "Save match settings and score on your Apple Watch"))
             }
         }
         .navigationTitle(String(localized: "New match"))
@@ -98,14 +100,11 @@ struct NewMatchSetupView: View {
         .onChange(of: currentUserStore.mePlayer?.id) { _, _ in
             applyMeProfileIfNeeded()
         }
-        .navigationDestination(isPresented: $startLiveMatch) {
-            LiveMatchView(
-                rules: rules,
-                playerSetup: playerSetup,
-                firstServer: firstServer,
-                onFinished: onFinished
-            )
-        }
+    }
+
+    private func saveRulesForWatch() {
+        MatchRulesPreferences.save(rules)
+        syncCoordinator.syncDefaultRulesToWatch()
     }
 
     private func reloadPlayerLists() {
@@ -146,4 +145,5 @@ struct NewMatchSetupView: View {
     }
     .modelContainer(PreviewData.container)
     .environment(CurrentUserStore())
+    .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
 }

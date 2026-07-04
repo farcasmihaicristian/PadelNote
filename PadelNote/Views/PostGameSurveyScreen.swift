@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 /// Hosts the post-game reflection form with Save / Skip actions. Shared by the
-/// end-of-game step in `LiveMatchView` (shown inline; `autoDismiss == false`)
+/// end-of-game step after a completed match (shown inline; `autoDismiss == false`)
 /// and the "Reflect / Edit" entry pushed from `MatchDetailView`
 /// (`autoDismiss == true`, so it pops itself on finish).
 struct PostGameSurveyScreen: View {

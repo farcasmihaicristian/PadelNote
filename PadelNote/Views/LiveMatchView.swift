@@ -1,145 +1,64 @@
 import PadelCore
-import SwiftData
 import SwiftUI
 
 struct LiveMatchView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(AppThemeStore.self) private var themeStore
 
-    let rules: MatchRules
-    let playerSetup: MatchPlayerSetup
-    var onFinished: () -> Void = {}
-
-    @State private var session: ScoringSession
-    @State private var startedAt = Date.now
-    @State private var savedMatch: Match?
-    @State private var surveyDone = false
-    @State private var firstServer: PlayerSlot
-    @State private var setServeOrders: [ServeOrder] = []
-    @State private var decidingSideOverride: ServeSide?
-    @State private var showServeSidePrompt = false
     @ScaledMetric(relativeTo: .largeTitle) private var gameScoreFontSize = 56
 
-    init(
-        rules: MatchRules,
-        playerSetup: MatchPlayerSetup,
-        firstServer: PlayerSlot = .sideAPlayer1,
-        onFinished: @escaping () -> Void = {}
-    ) {
-        self.rules = rules
-        self.playerSetup = playerSetup
-        self.onFinished = onFinished
-        _session = State(initialValue: ScoringSession(rules: rules))
-        _firstServer = State(initialValue: firstServer)
+    private var snapshot: LiveScoreSnapshot? {
+        syncCoordinator.liveSnapshot
     }
-
-    private var state: MatchState { session.state }
 
     private var palette: ThemePalette {
         themeStore.palette
     }
 
-    private var currentServe: ServeContext? {
-        guard !state.isMatchOver else { return nil }
-        return ServeEngine.currentServe(
-            events: session.events,
-            rules: rules,
-            orders: setServeOrders,
-            decidingSideOverride: decidingSideOverride
-        )
-    }
-
-    private var needsDecidingSideChoice: Bool {
-        guard let serve = currentServe else { return false }
-        return serve.isDecidingPoint && decidingSideOverride == nil
-    }
-
-    private var sideALabel: String {
-        playerSetup.playerNames.courtSideLabel(for: .a)
-    }
-
-    private var sideBLabel: String {
-        playerSetup.playerNames.courtSideLabel(for: .b)
-    }
-
     var body: some View {
         Group {
-            if let savedMatch {
-                if surveyDone {
-                    MatchDetailView(match: savedMatch)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button(String(localized: "Done")) {
-                                    onFinished()
-                                }
-                                .accessibilityLabel(String(localized: "Done"))
-                            }
-                        }
-                } else {
-                    // One-time reflection step between finishing and the detail view.
-                    PostGameSurveyScreen(match: savedMatch) {
-                        surveyDone = true
-                    }
-                }
+            if let snapshot {
+                liveMirrorView(snapshot)
             } else {
-                liveScoringView
+                ContentUnavailableView(
+                    String(localized: "No live match"),
+                    systemImage: "applewatch",
+                    description: Text(String(localized: "Start scoring on your Apple Watch to see the live score here."))
+                )
             }
         }
-        .navigationBarBackButtonHidden(savedMatch != nil)
+        .navigationTitle(String(localized: "Live match"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 
-    private var liveScoringView: some View {
-        // Compute the serve once per render; the banner and both point buttons
-        // reuse it rather than each recomputing it via an event-log replay.
-        let serve = currentServe
+    private func liveMirrorView(_ snapshot: LiveScoreSnapshot) -> some View {
+        let playerNames = snapshot.playerNames
+
         return GeometryReader { _ in
             ZStack {
                 VStack(spacing: 0) {
                     phoneTeamZone(
                         team: .b,
                         playerNames: [
-                            playerSetup.playerNames.playerB1Name,
-                            playerSetup.playerNames.playerB2Name,
+                            playerNames.playerB1Name,
+                            playerNames.playerB2Name,
                         ].compactMap { $0 },
-                        playerSlots: [.sideBPlayer1, .sideBPlayer2],
-                        fallbackLabel: sideBLabel,
-                        serve: serve
+                        fallbackLabel: playerNames.courtSideLabel(for: .b),
+                        snapshot: snapshot
                     )
 
                     phoneTeamZone(
                         team: .a,
-                        playerNames: playerSetup.playerNames.playersInCourtDisplayOrder(for: .a),
-                        playerSlots: [.sideAPlayer2, .sideAPlayer1],
-                        fallbackLabel: sideALabel,
-                        serve: serve
+                        playerNames: playerNames.playersInCourtDisplayOrder(for: .a),
+                        fallbackLabel: playerNames.courtSideLabel(for: .a),
+                        snapshot: snapshot
                     )
                 }
 
-                phoneScoreOverlay
+                phoneScoreOverlay(snapshot)
             }
         }
         .ignoresSafeArea(edges: [.horizontal, .bottom])
-        .navigationTitle(String(localized: "Live match"))
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            syncServeOrders()
-            showServeSidePrompt = needsDecidingSideChoice
-        }
-        .onChange(of: state.isMatchOver) { _, isOver in
-            if isOver { finishMatch() }
-        }
-        .confirmationDialog(
-            String(localized: "Deciding point — receiver picks the serve side"),
-            isPresented: $showServeSidePrompt,
-            titleVisibility: .visible
-        ) {
-            Button(String(localized: "Serve from right")) {
-                decidingSideOverride = .right
-            }
-            Button(String(localized: "Serve from left")) {
-                decidingSideOverride = .left
-            }
-        }
     }
 
     private func serveSideChip(for side: ServeSide) -> some View {
@@ -156,39 +75,22 @@ struct LiveMatchView: View {
             }
     }
 
-    private func serveDescription(_ serve: ServeContext) -> String {
-        let server = serverName(serve.servingSlot)
-        let side = serve.side == .right
-            ? String(localized: "right")
-            : String(localized: "left")
-        if serve.isDecidingPoint, decidingSideOverride == nil {
-            return String(localized: "\(server) to serve — deciding point")
-        }
-        return String(localized: "\(server) serving from the \(side)")
-    }
-
-    private func serverName(_ slot: PlayerSlot) -> String {
-        let name = slot.selection(from: playerSetup).trimmedName
-        if !name.isEmpty { return name }
-        return slot.team == .a ? sideALabel : sideBLabel
-    }
-
-    private var phoneScoreOverlay: some View {
+    private func phoneScoreOverlay(_ snapshot: LiveScoreSnapshot) -> some View {
         VStack(spacing: 8) {
-            if !state.completedSets.isEmpty {
+            if !snapshot.completedSetScores.isEmpty {
                 HStack(spacing: 8) {
-                    ForEach(Array(state.completedSets.enumerated()), id: \.offset) { _, set in
-                        Text(ScoreFormatter.formatSetScore(set))
+                    ForEach(Array(snapshot.completedSetScores.enumerated()), id: \.offset) { _, score in
+                        Text(score)
                     }
                 }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
             }
 
-            Text(ScoreFormatter.currentSetGames(in: state))
+            Text(snapshot.setGames)
                 .font(.title3.weight(.semibold))
 
-            Text(ScoreFormatter.currentGameScore(in: state))
+            Text(snapshot.gameScore)
                 .font(.system(size: gameScoreFontSize, weight: .bold, design: .rounded))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
@@ -202,14 +104,14 @@ struct LiveMatchView: View {
                 .stroke(.white.opacity(0.12), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(scoreAccessibilityLabel)
+        .accessibilityLabel(scoreAccessibilityLabel(for: snapshot))
         .allowsHitTesting(false)
     }
 
-    private var scoreAccessibilityLabel: String {
-        let completed = state.completedSets.map(ScoreFormatter.formatSetScore(_:)).joined(separator: ", ")
-        let currentSet = ScoreFormatter.currentSetGames(in: state)
-        let game = ScoreFormatter.currentGameScore(in: state)
+    private func scoreAccessibilityLabel(for snapshot: LiveScoreSnapshot) -> String {
+        let completed = snapshot.completedSetScores.joined(separator: ", ")
+        let currentSet = snapshot.setGames
+        let game = snapshot.gameScore
 
         if completed.isEmpty {
             return String(localized: "Set score \(currentSet), game score \(game)")
@@ -220,64 +122,47 @@ struct LiveMatchView: View {
     private func phoneTeamZone(
         team: Team,
         playerNames: [String],
-        playerSlots: [PlayerSlot],
         fallbackLabel: String,
-        serve: ServeContext?
+        snapshot: LiveScoreSnapshot
     ) -> some View {
-        Button {
-            addPoint(for: team)
-        } label: {
-            ZStack {
-                palette.gradient(for: team)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack {
+            palette.gradient(for: team)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                GeometryReader { proxy in
-                    phoneTeamNameRow(
-                        playerNames: playerNames,
-                        playerSlots: playerSlots,
-                        fallbackLabel: fallbackLabel,
-                        serve: serve
-                    )
-                    .padding(.horizontal, 28)
-                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .offset(y: team == .b ? proxy.size.height * 0.05 : 0)
-                }
+            GeometryReader { proxy in
+                phoneTeamNameRow(
+                    playerNames: playerNames,
+                    fallbackLabel: fallbackLabel,
+                    snapshot: snapshot
+                )
+                .padding(.horizontal, 28)
+                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .offset(y: team == .b ? proxy.size.height * 0.05 : 0)
             }
-            .overlay(alignment: serveAlignment(for: team, serve: serve)) {
-                serveIndicator(for: team, serve: serve)
-            }
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .overlay(alignment: serveAlignment(for: team, snapshot: snapshot)) {
+            serveIndicator(for: team, snapshot: snapshot)
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .disabled(state.isMatchOver)
-        .accessibilityLabel(
-            serveAccessibilityLabel(
-                for: team,
-                label: fallbackLabel,
-                playerNames: playerNames,
-                playerSlots: playerSlots,
-                serve: serve
-            )
-        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(teamAccessibilityLabel(for: team, label: fallbackLabel, playerNames: playerNames, snapshot: snapshot))
     }
 
     @ViewBuilder
     private func phoneTeamNameRow(
         playerNames: [String],
-        playerSlots: [PlayerSlot],
         fallbackLabel: String,
-        serve: ServeContext?
+        snapshot: LiveScoreSnapshot
     ) -> some View {
-        if playerNames.count >= 2, playerSlots.count >= 2 {
+        if playerNames.count >= 2 {
             HStack(spacing: 0) {
-                playerNameLabel(name: playerNames[0], slot: playerSlots[0], serve: serve)
+                playerNameLabel(name: playerNames[0], snapshot: snapshot)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer(minLength: 32)
 
-                playerNameLabel(name: playerNames[1], slot: playerSlots[1], serve: serve)
+                playerNameLabel(name: playerNames[1], snapshot: snapshot)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         } else {
@@ -290,8 +175,8 @@ struct LiveMatchView: View {
         }
     }
 
-    private func playerNameLabel(name: String, slot: PlayerSlot, serve: ServeContext?) -> some View {
-        let isServing = serve?.servingSlot == slot
+    private func playerNameLabel(name: String, snapshot: LiveScoreSnapshot) -> some View {
+        let isServing = snapshot.servingPlayerName == name
         return Text(name)
             .font(.title2.weight(isServing ? .bold : .semibold))
             .foregroundStyle(.white)
@@ -307,95 +192,60 @@ struct LiveMatchView: View {
     }
 
     @ViewBuilder
-    private func serveIndicator(for team: Team, serve: ServeContext?) -> some View {
-        if let serve, serve.servingTeam == team {
-            serveSideChip(for: serve.side)
+    private func serveIndicator(for team: Team, snapshot: LiveScoreSnapshot) -> some View {
+        if let serveSide = snapshot.serveSide, snapshot.servingTeam == team {
+            serveSideChip(for: serveSide)
                 .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
                 .padding(team == .a ? .top : .bottom, 18)
                 .padding(.horizontal, 24)
-                .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
     }
 
-    private func serveAlignment(for team: Team, serve: ServeContext?) -> Alignment {
+    private func serveAlignment(for team: Team, snapshot: LiveScoreSnapshot) -> Alignment {
         let vertical: VerticalAlignment = team == .a ? .top : .bottom
-        let onRight = serve?.side == .right
+        let onRight = snapshot.serveSide == .right
         let trailing = team == .a ? onRight : !onRight
         let horizontal: HorizontalAlignment = trailing ? .trailing : .leading
         return Alignment(horizontal: horizontal, vertical: vertical)
     }
 
-    private func serveAccessibilityLabel(
+    private func teamAccessibilityLabel(
         for team: Team,
         label: String,
         playerNames: [String],
-        playerSlots: [PlayerSlot],
-        serve: ServeContext?
+        snapshot: LiveScoreSnapshot
     ) -> String {
-        guard let serve, serve.servingTeam == team else {
-            return String(localized: "Point \(label)")
+        guard let serveSide = snapshot.serveSide, snapshot.servingTeam == team else {
+            return label
         }
-        let side = serve.side == .right
+        let side = serveSide == .right
             ? String(localized: "right")
             : String(localized: "left")
-        if let slotIndex = playerSlots.firstIndex(of: serve.servingSlot),
-           let serverName = playerNames[safe: slotIndex] {
-            return String(localized: "Point \(label). \(serverName) serving from the \(side).")
+        if let serverName = snapshot.servingPlayerName {
+            return String(localized: "\(label). \(serverName) serving from the \(side).")
         }
-        return String(localized: "Point \(label). Serving from the \(side).")
-    }
-
-    private func addPoint(for team: Team) {
-        session.addPoint(for: team)
-        decidingSideOverride = nil
-        syncServeOrders()
-        showServeSidePrompt = needsDecidingSideChoice
-    }
-
-    /// Keeps `setServeOrders` aligned with the sets played so far. The serving
-    /// order is fixed once a set starts: new sets inherit the previous set's
-    /// order (or derive from `firstServer` for the first set).
-    private func syncServeOrders() {
-        setServeOrders = ServeOrder.aligned(
-            setServeOrders,
-            completedSetCount: state.completedSets.count,
-            firstServer: firstServer
-        )
-    }
-
-    private func finishMatch() {
-        guard savedMatch == nil else { return }
-        savedMatch = MatchPersistence.saveCompletedMatch(
-            context: modelContext,
-            rules: rules,
-            events: session.events,
-            startedAt: startedAt,
-            playerSetup: playerSetup,
-            setServeOrders: setServeOrders
-        )
-    }
-}
-
-private extension Array {
-    subscript(safe index: Int?) -> Element? {
-        guard let index, indices.contains(index) else { return nil }
-        return self[index]
+        return String(localized: "\(label). Serving from the \(side).")
     }
 }
 
 #Preview {
-    NavigationStack {
-        LiveMatchView(
-            rules: .default,
-            playerSetup: MatchPlayerSetup(
-                sideAPlayer1: .init(name: "Alex"),
-                sideAPlayer2: .init(name: "Maria"),
-                sideBPlayer1: .init(name: "Chris"),
-                sideBPlayer2: .init(name: "Dana")
-            )
-        )
+    let coordinator = PhoneSyncCoordinator(syncListener: PhoneConnectivityListener())
+    coordinator.liveSnapshot = LiveScoreSnapshot(
+        matchID: UUID(),
+        state: ScoringEngine.replay(events: [.init(team: .a), .init(team: .b)], rules: .default),
+        playerNames: MatchPlayerNames(
+            playerA1: "Alex",
+            playerA2: "Maria",
+            playerB1: "Chris",
+            playerB2: "Dana"
+        ),
+        pointCount: 2
+    )
+
+    return NavigationStack {
+        LiveMatchView()
     }
-    .modelContainer(PreviewData.container)
+    .environment(coordinator)
     .environment(AppThemeStore())
 }
