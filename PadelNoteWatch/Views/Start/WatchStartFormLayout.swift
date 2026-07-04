@@ -1,43 +1,22 @@
 import SwiftUI
 
-private enum WatchStartFormMetrics {
-    static let widthRatio: CGFloat = 0.7
-    static let rowMinHeight: CGFloat = 44
-}
-
-/// Centers start-screen controls at ~70% of the watch width with room to read labels.
+/// Full-width, sectioned form for the start screen, matching the native list style used elsewhere in the watch app.
 struct WatchStartFormLayout<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        GeometryReader { geometry in
-            let formWidth = geometry.size.width * WatchStartFormMetrics.widthRatio
-
-            ScrollView {
-                VStack(alignment: .center, spacing: 10) {
-                    content()
-                }
-                .frame(width: formWidth)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-            }
+        Form {
+            content()
         }
     }
 }
 
 extension View {
     func watchStartPickerRow() -> some View {
-        self
-            .pickerStyle(.navigationLink)
-            .font(.body)
-            .frame(minHeight: WatchStartFormMetrics.rowMinHeight)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        self.pickerStyle(.navigationLink)
     }
 
     func watchStartPrimaryButton() -> some View {
-        self
-            .controlSize(.large)
-            .frame(minHeight: WatchStartFormMetrics.rowMinHeight)
-            .frame(maxWidth: .infinity)
+        self.controlSize(.large)
     }
 }
