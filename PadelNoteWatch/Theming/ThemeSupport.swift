@@ -93,11 +93,11 @@ final class AppThemeStore {
 }
 
 /// Serve indicator for the `.movingBall` style: a ball that animates
-/// horizontally (left ↔ right) near the serving team's net edge, tinted with
-/// the theme's serve color. Uses the `tennisball.fill` SF Symbol as a
-/// placeholder — swap in a custom paddle/ball image asset if desired.
+/// horizontally (left ↔ right) near the serving team's net edge. Loads the
+/// `ServeBall` image shipped in each target (`Theming/ServeBall.png`) and shows
+/// it in its own colors. To tint it with the theme serve color instead, use a
+/// monochrome image and add `.renderingMode(.template).foregroundStyle(...)`.
 struct ServeBallIndicator: View {
-    let color: Color
     /// True for the bottom team (net edge is the top of its zone); false for the
     /// top team (net edge is the bottom of its zone).
     var atTopEdge: Bool
@@ -108,9 +108,10 @@ struct ServeBallIndicator: View {
         GeometryReader { proxy in
             let inset: CGFloat = 22
             let y = atTopEdge ? inset : max(inset, proxy.size.height - inset)
-            Image(systemName: "tennisball.fill")
-                .font(.system(size: 18))
-                .foregroundStyle(color)
+            Image("ServeBall")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
                 .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
                 .position(
                     x: atRight ? max(inset, proxy.size.width - inset) : inset,

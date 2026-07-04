@@ -292,7 +292,7 @@ struct WatchLiveMatchView: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             case .movingBall:
-                ServeBallIndicator(color: palette.serveColor, atTopEdge: team == .a)
+                ServeBallIndicator(atTopEdge: team == .a)
             }
         }
     }

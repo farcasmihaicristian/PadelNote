@@ -202,7 +202,7 @@ struct LiveMatchView: View {
                     .padding(.horizontal, 24)
                     .accessibilityHidden(true)
             case .movingBall:
-                ServeBallIndicator(color: palette.serveColor, atTopEdge: team == .a)
+                ServeBallIndicator(atTopEdge: team == .a)
             }
         }
     }
