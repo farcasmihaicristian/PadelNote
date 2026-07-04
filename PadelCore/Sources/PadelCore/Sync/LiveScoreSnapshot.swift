@@ -22,6 +22,10 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
     public let serveSide: ServeSide?
     /// Display name of the serving player (nil when serve isn't tracked).
     public let servingPlayerName: String?
+    /// Court slot of the serving player (nil when serve isn't tracked). Preferred
+    /// over `servingPlayerName` when identifying the server, since two players can
+    /// share the same display name.
+    public let servingSlot: PlayerSlot?
 
     public var playerNames: MatchPlayerNames {
         MatchPlayerNames(
@@ -61,6 +65,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         self.servingTeam = serve?.servingTeam
         self.serveSide = serve?.side
         self.servingPlayerName = servingPlayerName
+        self.servingSlot = serve?.servingSlot
     }
 
     public static func sessionEnded(matchID: UUID) -> LiveScoreSnapshot {
@@ -89,7 +94,8 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         isSessionActive: Bool,
         servingTeam: Team? = nil,
         serveSide: ServeSide? = nil,
-        servingPlayerName: String? = nil
+        servingPlayerName: String? = nil,
+        servingSlot: PlayerSlot? = nil
     ) {
         self.matchID = matchID
         self.gameScore = gameScore
@@ -108,6 +114,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         self.servingTeam = servingTeam
         self.serveSide = serveSide
         self.servingPlayerName = servingPlayerName
+        self.servingSlot = servingSlot
     }
 
     public var isVisibleOnPhone: Bool {
@@ -132,6 +139,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         case servingTeam
         case serveSide
         case servingPlayerName
+        case servingSlot
     }
 
     public init(from decoder: Decoder) throws {
@@ -153,6 +161,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         servingTeam = try container.decodeIfPresent(Team.self, forKey: .servingTeam)
         serveSide = try container.decodeIfPresent(ServeSide.self, forKey: .serveSide)
         servingPlayerName = try container.decodeIfPresent(String.self, forKey: .servingPlayerName)
+        servingSlot = try container.decodeIfPresent(PlayerSlot.self, forKey: .servingSlot)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -174,6 +183,7 @@ public struct LiveScoreSnapshot: Codable, Hashable, Sendable {
         try container.encodeIfPresent(servingTeam, forKey: .servingTeam)
         try container.encodeIfPresent(serveSide, forKey: .serveSide)
         try container.encodeIfPresent(servingPlayerName, forKey: .servingPlayerName)
+        try container.encodeIfPresent(servingSlot, forKey: .servingSlot)
     }
 
     public var scoreLine: String {

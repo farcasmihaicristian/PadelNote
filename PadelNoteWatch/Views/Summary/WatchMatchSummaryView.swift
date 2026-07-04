@@ -80,6 +80,7 @@ struct WatchMatchSummaryView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     let coordinator = WatchMatchCoordinator(
         workoutRecorder: NoOpWorkoutRecorder(),
@@ -89,3 +90,4 @@ struct WatchMatchSummaryView: View {
     coordinator.phase = .summary
     return WatchMatchSummaryView(coordinator: coordinator)
 }
+#endif

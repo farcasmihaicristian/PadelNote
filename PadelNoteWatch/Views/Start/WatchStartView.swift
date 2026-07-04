@@ -109,6 +109,7 @@ struct WatchStartView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     WatchStartView(
         coordinator: WatchMatchCoordinator(
@@ -117,3 +118,4 @@ struct WatchStartView: View {
         )
     )
 }
+#endif

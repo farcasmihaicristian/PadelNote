@@ -121,7 +121,7 @@ struct SettingsView: View {
                     Text(String(localized: "Theme"))
                     Spacer()
                     ThemeSwatch(theme: themeStore.activeTheme)
-                    Text(String(localized: String.LocalizationValue(themeStore.activeTheme.name)))
+                    Text(verbatim: themeStore.activeTheme.name)
                         .foregroundStyle(.secondary)
                 }
             }

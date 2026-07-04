@@ -330,9 +330,3 @@ public enum MatchStatistics {
         return (opportunities, wins, state.completedSets)
     }
 }
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}

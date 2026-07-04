@@ -1,3 +1,4 @@
+#if DEBUG
 import PadelCore
 import SwiftData
 import SwiftUI
@@ -14,3 +15,4 @@ enum PreviewData {
         return container
     }()
 }
+#endif

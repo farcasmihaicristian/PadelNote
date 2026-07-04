@@ -124,6 +124,7 @@ private struct PlayerSummaryRowView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         StatsView()
@@ -131,3 +132,4 @@ private struct PlayerSummaryRowView: View {
     .modelContainer(PreviewData.container)
     .environment(CurrentUserStore())
 }
+#endif

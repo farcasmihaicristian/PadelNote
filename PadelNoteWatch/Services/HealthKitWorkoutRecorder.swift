@@ -18,7 +18,6 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
     private(set) var averageHeartRate: Double?
     private(set) var activeEnergyKilocalories: Double?
     private(set) var distanceMeters: Double?
-    private(set) var savedToHealth = false
 
     var onRecordingError: ((String) -> Void)?
 
@@ -68,7 +67,6 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         averageHeartRate = nil
         activeEnergyKilocalories = nil
         distanceMeters = nil
-        savedToHealth = false
         hasEnded = false
 
         let configuration = HKWorkoutConfiguration()
@@ -126,13 +124,11 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
 
         if duration >= Self.minimumSaveDuration {
             try await builder.finishWorkout()
-            savedToHealth = true
             if !heartRateSamples.isEmpty {
                 averageHeartRate = heartRateSamples.reduce(0, +) / Double(heartRateSamples.count)
             }
         } else {
             builder.discardWorkout()
-            savedToHealth = false
             averageHeartRate = nil
             activeEnergyKilocalories = nil
             distanceMeters = nil

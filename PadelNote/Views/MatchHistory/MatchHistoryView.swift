@@ -70,6 +70,7 @@ struct MatchHistoryView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         MatchHistoryView()
@@ -77,3 +78,4 @@ struct MatchHistoryView: View {
     .modelContainer(PreviewData.container)
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
 }
+#endif

@@ -1,8 +1,8 @@
+import Foundation
 import Observation
-import PadelCore
 import SwiftUI
 
-extension Color {
+public extension Color {
     init(hex: String) {
         let trimmed = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
         var value: UInt64 = 0
@@ -16,10 +16,14 @@ extension Color {
     }
 }
 
-struct ThemePalette {
-    let theme: AppTheme
+public struct ThemePalette {
+    public let theme: AppTheme
 
-    var sideAGradient: LinearGradient {
+    public init(theme: AppTheme) {
+        self.theme = theme
+    }
+
+    public var sideAGradient: LinearGradient {
         LinearGradient(
             colors: [Color(hex: theme.team1Top), Color(hex: theme.team1Bottom)],
             startPoint: .top,
@@ -27,7 +31,7 @@ struct ThemePalette {
         )
     }
 
-    var sideBGradient: LinearGradient {
+    public var sideBGradient: LinearGradient {
         LinearGradient(
             colors: [Color(hex: theme.team2Top), Color(hex: theme.team2Bottom)],
             startPoint: .top,
@@ -35,19 +39,19 @@ struct ThemePalette {
         )
     }
 
-    var sideAColor: Color { Color(hex: theme.team1Top) }
-    var sideBColor: Color { Color(hex: theme.team2Top) }
-    var serveColor: Color { Color(hex: theme.serve) }
-    var accent: Color { serveColor }
+    public var sideAColor: Color { Color(hex: theme.team1Top) }
+    public var sideBColor: Color { Color(hex: theme.team2Top) }
+    public var serveColor: Color { Color(hex: theme.serve) }
+    public var accent: Color { serveColor }
 
-    func gradient(for team: Team) -> LinearGradient {
+    public func gradient(for team: Team) -> LinearGradient {
         switch team {
         case .a: sideAGradient
         case .b: sideBGradient
         }
     }
 
-    func color(for team: Team) -> Color {
+    public func color(for team: Team) -> Color {
         switch team {
         case .a: sideAColor
         case .b: sideBColor
@@ -57,11 +61,11 @@ struct ThemePalette {
 
 @Observable
 @MainActor
-final class AppThemeStore {
-    var activeTheme: AppTheme
-    var serveIndicatorStyle: ServeIndicatorStyle
+public final class AppThemeStore {
+    public var activeTheme: AppTheme
+    public var serveIndicatorStyle: ServeIndicatorStyle
 
-    init(
+    public init(
         activeTheme: AppTheme = AppThemePreferences.load(),
         serveIndicatorStyle: ServeIndicatorStyle = ServeIndicatorStylePreferences.load()
     ) {
@@ -69,22 +73,22 @@ final class AppThemeStore {
         self.serveIndicatorStyle = serveIndicatorStyle
     }
 
-    var palette: ThemePalette {
+    public var palette: ThemePalette {
         ThemePalette(theme: activeTheme)
     }
 
-    func apply(_ theme: AppTheme, persist: Bool = true) {
+    public func apply(_ theme: AppTheme, persist: Bool = true) {
         activeTheme = theme
         if persist {
             AppThemePreferences.save(theme)
         }
     }
 
-    func applyThemeID(_ id: String?, persist: Bool = true) {
+    public func applyThemeID(_ id: String?, persist: Bool = true) {
         apply(AppThemeCatalog.theme(withID: id), persist: persist)
     }
 
-    func applyServeIndicatorStyle(_ style: ServeIndicatorStyle, persist: Bool = true) {
+    public func applyServeIndicatorStyle(_ style: ServeIndicatorStyle, persist: Bool = true) {
         serveIndicatorStyle = style
         if persist {
             ServeIndicatorStylePreferences.save(style)
@@ -95,19 +99,25 @@ final class AppThemeStore {
 /// Serve indicator for the `.movingBall` style: a ball parked on the deuce/ad
 /// box side where the server will serve. Uses the `ServeBall` asset in each
 /// target's `Assets.xcassets`.
-struct ServeBallIndicator: View {
+public struct ServeBallIndicator: View {
     /// True for the bottom team (net edge is the top of its zone); false for the
     /// top team (net edge is the bottom of its zone).
-    var atTopEdge: Bool
-    var serveSide: ServeSide
-    var team: Team
+    public var atTopEdge: Bool
+    public var serveSide: ServeSide
+    public var team: Team
+
+    public init(atTopEdge: Bool, serveSide: ServeSide, team: Team) {
+        self.atTopEdge = atTopEdge
+        self.serveSide = serveSide
+        self.team = team
+    }
 
     private var onRightScreenSide: Bool {
         let onRight = serveSide == .right
         return team == .a ? onRight : !onRight
     }
 
-    var body: some View {
+    public var body: some View {
         GeometryReader { proxy in
             let inset: CGFloat = 22
             let y = atTopEdge ? inset : max(inset, proxy.size.height - inset)

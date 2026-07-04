@@ -77,6 +77,7 @@ struct PostGameSurveyScreen: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         PostGameSurveyScreen(
@@ -92,3 +93,4 @@ struct PostGameSurveyScreen: View {
     }
     .modelContainer(PreviewData.container)
 }
+#endif

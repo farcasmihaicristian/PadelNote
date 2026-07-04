@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 import PadelCore
 
@@ -9,7 +10,6 @@ final class NoOpWorkoutRecorder: WorkoutRecording {
     var activeEnergyKilocalories: Double?
     var distanceMeters: Double?
     private(set) var elapsedDuration: TimeInterval = 0
-    var savedToHealth = false
     var onRecordingError: ((String) -> Void)?
 
     private var startedAt = Date.now
@@ -24,3 +24,4 @@ final class NoOpWorkoutRecorder: WorkoutRecording {
         elapsedDuration = endedAt.timeIntervalSince(startedAt)
     }
 }
+#endif

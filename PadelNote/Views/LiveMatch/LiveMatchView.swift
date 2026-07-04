@@ -33,23 +33,33 @@ struct LiveMatchView: View {
 
     private func liveMirrorView(_ snapshot: LiveScoreSnapshot) -> some View {
         let playerNames = snapshot.playerNames
+        // Pair each displayed name with its court slot (same order/compaction the
+        // rows render in) so the serving highlight can match by slot rather than by
+        // name — two players can share a name.
+        let teamBEntries: [(slot: PlayerSlot, name: String)] = [
+            (PlayerSlot.sideBPlayer1, playerNames.playerB1Name),
+            (PlayerSlot.sideBPlayer2, playerNames.playerB2Name),
+        ].compactMap { slot, name in name.map { (slot: slot, name: $0) } }
+        let teamAEntries: [(slot: PlayerSlot, name: String)] = [
+            (PlayerSlot.sideAPlayer2, playerNames.playerA2Name),
+            (PlayerSlot.sideAPlayer1, playerNames.playerA1Name),
+        ].compactMap { slot, name in name.map { (slot: slot, name: $0) } }
 
         return GeometryReader { _ in
             ZStack {
                 VStack(spacing: 0) {
                     phoneTeamZone(
                         team: .b,
-                        playerNames: [
-                            playerNames.playerB1Name,
-                            playerNames.playerB2Name,
-                        ].compactMap { $0 },
+                        playerNames: teamBEntries.map(\.name),
+                        playerSlots: teamBEntries.map(\.slot),
                         fallbackLabel: playerNames.courtSideLabel(for: .b),
                         snapshot: snapshot
                     )
 
                     phoneTeamZone(
                         team: .a,
-                        playerNames: playerNames.playersInCourtDisplayOrder(for: .a),
+                        playerNames: teamAEntries.map(\.name),
+                        playerSlots: teamAEntries.map(\.slot),
                         fallbackLabel: playerNames.courtSideLabel(for: .a),
                         snapshot: snapshot
                     )
@@ -62,7 +72,9 @@ struct LiveMatchView: View {
     }
 
     private func serveSideChip(for side: ServeSide) -> some View {
-        Text(side == .right ? "R" : "L")
+        // Universal serve-side glyphs (VoiceOver reads the localized "right"/"left"
+        // via the combined accessibility label), so keep them out of the catalog.
+        Text(verbatim: side == .right ? "R" : "L")
             .font(.system(size: 11, weight: .black, design: .rounded))
             .foregroundStyle(palette.serveColor)
             .kerning(1)
@@ -122,6 +134,7 @@ struct LiveMatchView: View {
     private func phoneTeamZone(
         team: Team,
         playerNames: [String],
+        playerSlots: [PlayerSlot],
         fallbackLabel: String,
         snapshot: LiveScoreSnapshot
     ) -> some View {
@@ -132,6 +145,7 @@ struct LiveMatchView: View {
             GeometryReader { proxy in
                 phoneTeamNameRow(
                     playerNames: playerNames,
+                    playerSlots: playerSlots,
                     fallbackLabel: fallbackLabel,
                     snapshot: snapshot
                 )
@@ -159,17 +173,18 @@ struct LiveMatchView: View {
     @ViewBuilder
     private func phoneTeamNameRow(
         playerNames: [String],
+        playerSlots: [PlayerSlot],
         fallbackLabel: String,
         snapshot: LiveScoreSnapshot
     ) -> some View {
-        if playerNames.count >= 2 {
+        if playerNames.count >= 2, playerSlots.count >= 2 {
             HStack(spacing: 0) {
-                playerNameLabel(name: playerNames[0], snapshot: snapshot)
+                playerNameLabel(name: playerNames[0], slot: playerSlots[0], snapshot: snapshot)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer(minLength: 32)
 
-                playerNameLabel(name: playerNames[1], snapshot: snapshot)
+                playerNameLabel(name: playerNames[1], slot: playerSlots[1], snapshot: snapshot)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         } else {
@@ -182,8 +197,10 @@ struct LiveMatchView: View {
         }
     }
 
-    private func playerNameLabel(name: String, snapshot: LiveScoreSnapshot) -> some View {
-        let isServing = snapshot.servingPlayerName == name
+    private func playerNameLabel(name: String, slot: PlayerSlot, snapshot: LiveScoreSnapshot) -> some View {
+        // Prefer slot identity (collision-safe when two players share a name); fall
+        // back to name matching for legacy snapshots that carry no serving slot.
+        let isServing = snapshot.servingSlot.map { $0 == slot } ?? (snapshot.servingPlayerName == name)
         return Text(name)
             .font(.title2.weight(isServing ? .bold : .semibold))
             .foregroundStyle(.white)

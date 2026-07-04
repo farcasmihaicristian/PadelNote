@@ -11,9 +11,22 @@ struct PadelNoteApp: App {
     @State private var showPastMatchLinkDialog = false
 
     init() {
-        modelContainer = try! ModelContainer(
-            for: Match.self, StoredPointEvent.self, Player.self, AppUser.self
-        )
+        do {
+            modelContainer = try ModelContainer(
+                for: Match.self, StoredPointEvent.self, Player.self, AppUser.self
+            )
+        } catch {
+            // A failed lightweight migration (likely across evolving test builds) or a
+            // corrupt store would otherwise hard-crash on launch. Fall back to an
+            // in-memory store so the app still opens; the on-disk data is left intact
+            // for a later fix rather than being wiped here.
+            assertionFailure("Persistent ModelContainer failed to load: \(error)")
+            let schema = Schema([Match.self, StoredPointEvent.self, Player.self, AppUser.self])
+            modelContainer = try! ModelContainer(
+                for: schema,
+                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            )
+        }
     }
 
     var body: some Scene {
@@ -26,7 +39,13 @@ struct PadelNoteApp: App {
                 .onAppear {
                     syncCoordinator.activate(modelContext: modelContainer.mainContext)
                     currentUserStore.activate(modelContext: modelContainer.mainContext)
+                    #if DEBUG
+                    // Debug-only: seeds the local store from the bundled sample CSV for a
+                    // populated Insights view during development. This is destructive
+                    // (replaces all matches on an import-version bump), so it must never
+                    // run in Release/TestFlight builds where testers record real matches.
                     HistoryDriveImporter.importIfNeeded(context: modelContainer.mainContext)
+                    #endif
                     MatchPersistence.backfillCompletionFlags(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
                     syncCoordinator.syncPhoneContextToWatch()

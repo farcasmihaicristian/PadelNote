@@ -151,9 +151,11 @@ private struct PartnerSummaryRowView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         PlayerDetailView(player: Player(displayName: "Alex"))
     }
     .modelContainer(PreviewData.container)
 }
+#endif

@@ -352,9 +352,3 @@ private func columnIndex(_ name: String, in headers: [String]) -> Int? {
             .caseInsensitiveCompare(name) == .orderedSame
     }
 }
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}

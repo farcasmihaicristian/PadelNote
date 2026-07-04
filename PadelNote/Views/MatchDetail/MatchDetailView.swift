@@ -133,6 +133,7 @@ struct MatchDetailView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         MatchDetailView(match: Match(
@@ -151,3 +152,4 @@ struct MatchDetailView: View {
     }
     .modelContainer(PreviewData.container)
 }
+#endif

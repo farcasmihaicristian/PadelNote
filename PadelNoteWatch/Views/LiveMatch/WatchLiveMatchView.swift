@@ -282,7 +282,9 @@ struct WatchLiveMatchView: View {
         if let serve, serve.servingTeam == team {
             switch themeStore.serveIndicatorStyle {
             case .sideLabels:
-                Text(serve.side == .right ? "R" : "L")
+                // Universal serve-side glyphs; VoiceOver reads the localized side
+                // via the combined accessibility label, so keep them out of the catalog.
+                Text(verbatim: serve.side == .right ? "R" : "L")
                     .font(.system(size: 12, weight: .black, design: .rounded))
                     .foregroundStyle(palette.serveColor)
                     .kerning(1)
@@ -340,12 +342,12 @@ struct WatchLiveMatchView: View {
 }
 
 private extension Array {
-    subscript(safe index: Int?) -> Element? {
-        guard let index, indices.contains(index) else { return nil }
-        return self[index]
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         WatchLiveMatchView(
@@ -368,3 +370,4 @@ private extension Array {
     }
     .environment(AppThemeStore())
 }
+#endif

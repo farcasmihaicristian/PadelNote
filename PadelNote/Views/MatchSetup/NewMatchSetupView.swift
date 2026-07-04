@@ -139,6 +139,7 @@ struct NewMatchSetupView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         NewMatchSetupView()
@@ -147,3 +148,4 @@ struct NewMatchSetupView: View {
     .environment(CurrentUserStore())
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
 }
+#endif

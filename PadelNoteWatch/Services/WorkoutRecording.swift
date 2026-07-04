@@ -8,7 +8,6 @@ protocol WorkoutRecording: AnyObject {
     var activeEnergyKilocalories: Double? { get }
     var distanceMeters: Double? { get }
     var elapsedDuration: TimeInterval { get }
-    var savedToHealth: Bool { get }
 
     /// Invoked when the underlying workout session fails after it has started.
     var onRecordingError: ((String) -> Void)? { get set }

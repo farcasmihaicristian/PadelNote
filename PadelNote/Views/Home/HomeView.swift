@@ -99,9 +99,11 @@ struct HomeView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     HomeView()
         .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
         .environment(CurrentUserStore())
         .modelContainer(PreviewData.container)
 }
+#endif

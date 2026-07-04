@@ -29,6 +29,7 @@ import Testing
     #expect(decoded?.servingTeam == .b)
     #expect(decoded?.serveSide == .left)
     #expect(decoded?.servingPlayerName == "C")
+    #expect(decoded?.servingSlot == .sideBPlayer1)
 }
 
 // MARK: - P2-1 — serve-order alignment
@@ -208,10 +209,4 @@ private func makeContainer() throws -> ModelContainer {
         for: Match.self, StoredPointEvent.self, Player.self, AppUser.self,
         configurations: configuration
     )
-}
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
 }

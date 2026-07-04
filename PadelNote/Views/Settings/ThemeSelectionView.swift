@@ -24,9 +24,7 @@ struct ThemeSelectionView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        String(localized: "\(String(localized: String.LocalizationValue(theme.name))) theme")
-                    )
+                    .accessibilityLabel(String(localized: "\(theme.name) theme"))
                     .accessibilityHint(
                         theme.id == themeStore.activeTheme.id
                             ? String(localized: "Currently selected")
@@ -54,7 +52,7 @@ private struct ThemePreviewRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 SmallThemeSwatch(theme: theme)
-                Text(String(localized: String.LocalizationValue(theme.name)))
+                Text(verbatim: theme.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
                 Spacer()
@@ -86,13 +84,13 @@ private struct WatchThemePreview: View {
             VStack(spacing: 0) {
                 teamZone(
                     gradient: palette.sideBGradient,
-                    names: ("Mihai", "Catalin"),
+                    names: ("Sam", "Casey"),
                     underlineFirst: true
                 )
 
                 teamZone(
                     gradient: palette.sideAGradient,
-                    names: ("Alex", "Maria"),
+                    names: ("Jordan", "Riley"),
                     underlineFirst: false
                 )
             }
@@ -100,12 +98,12 @@ private struct WatchThemePreview: View {
             .padding(5)
 
             VStack(spacing: 2) {
-                Text("6-4")
+                Text(verbatim: "6-4")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text("2-1")
+                Text(verbatim: "2-1")
                     .font(.caption.weight(.semibold))
-                Text("40-30")
+                Text(verbatim: "40-30")
                     .font(.system(.title3, design: .rounded).weight(.bold))
             }
             .foregroundStyle(.white)
@@ -113,7 +111,7 @@ private struct WatchThemePreview: View {
             .padding(.vertical, 7)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            Text("R")
+            Text(verbatim: "R")
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(palette.serveColor)
                 .kerning(1)

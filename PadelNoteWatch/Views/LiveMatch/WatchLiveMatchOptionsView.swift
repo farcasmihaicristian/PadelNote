@@ -60,6 +60,7 @@ struct WatchLiveMatchOptionsView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     @Previewable @State var isPresented = true
 
@@ -73,3 +74,4 @@ struct WatchLiveMatchOptionsView: View {
         )
     }
 }
+#endif
