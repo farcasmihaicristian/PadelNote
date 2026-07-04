@@ -210,8 +210,15 @@ struct WatchLiveMatchView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay {
+                if themeStore.serveIndicatorStyle == .movingBall {
+                    serveIndicator(for: team)
+                }
+            }
             .overlay(alignment: serveAlignment(for: team)) {
-                serveIndicator(for: team)
+                if themeStore.serveIndicatorStyle == .sideLabels {
+                    serveIndicator(for: team)
+                }
             }
             .contentShape(Rectangle())
         }
@@ -292,7 +299,7 @@ struct WatchLiveMatchView: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             case .movingBall:
-                ServeBallIndicator(atTopEdge: team == .a)
+                ServeBallIndicator(atTopEdge: team == .a, serveSide: serve.side, team: team)
             }
         }
     }

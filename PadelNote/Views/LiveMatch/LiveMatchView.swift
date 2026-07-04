@@ -141,8 +141,15 @@ struct LiveMatchView: View {
                 .offset(y: team == .b ? proxy.size.height * 0.05 : 0)
             }
         }
+        .overlay {
+            if themeStore.serveIndicatorStyle == .movingBall {
+                serveIndicator(for: team, snapshot: snapshot)
+            }
+        }
         .overlay(alignment: serveAlignment(for: team, snapshot: snapshot)) {
-            serveIndicator(for: team, snapshot: snapshot)
+            if themeStore.serveIndicatorStyle == .sideLabels {
+                serveIndicator(for: team, snapshot: snapshot)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
@@ -202,7 +209,7 @@ struct LiveMatchView: View {
                     .padding(.horizontal, 24)
                     .accessibilityHidden(true)
             case .movingBall:
-                ServeBallIndicator(atTopEdge: team == .a)
+                ServeBallIndicator(atTopEdge: team == .a, serveSide: serveSide, team: team)
             }
         }
     }

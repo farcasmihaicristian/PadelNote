@@ -92,17 +92,20 @@ final class AppThemeStore {
     }
 }
 
-/// Serve indicator for the `.movingBall` style: a ball that animates
-/// horizontally (left ↔ right) near the serving team's net edge. Loads the
-/// `ServeBall` image shipped in each target (`Theming/ServeBall.png`) and shows
-/// it in its own colors. To tint it with the theme serve color instead, use a
-/// monochrome image and add `.renderingMode(.template).foregroundStyle(...)`.
+/// Serve indicator for the `.movingBall` style: a ball parked on the deuce/ad
+/// box side where the server will serve. Uses the `ServeBall` asset in each
+/// target's `Assets.xcassets`.
 struct ServeBallIndicator: View {
     /// True for the bottom team (net edge is the top of its zone); false for the
     /// top team (net edge is the bottom of its zone).
     var atTopEdge: Bool
+    var serveSide: ServeSide
+    var team: Team
 
-    @State private var atRight = false
+    private var onRightScreenSide: Bool {
+        let onRight = serveSide == .right
+        return team == .a ? onRight : !onRight
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -110,17 +113,18 @@ struct ServeBallIndicator: View {
             let y = atTopEdge ? inset : max(inset, proxy.size.height - inset)
             Image("ServeBall")
                 .resizable()
+                .interpolation(.high)
                 .scaledToFit()
                 .frame(width: 24, height: 24)
                 .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
                 .position(
-                    x: atRight ? max(inset, proxy.size.width - inset) : inset,
+                    x: onRightScreenSide ? max(inset, proxy.size.width - inset) : inset,
                     y: y
                 )
-                .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: atRight)
+                .animation(.easeInOut(duration: 0.35), value: serveSide)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .onAppear { atRight = true }
     }
 }
