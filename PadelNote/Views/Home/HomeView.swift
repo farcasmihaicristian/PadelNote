@@ -5,7 +5,6 @@ import SwiftUI
 struct HomeView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Query private var matches: [Match]
-    @State private var showMatchFlow = false
 
     private var recentMatches: [Match] {
         matches
@@ -43,16 +42,6 @@ struct HomeView: View {
                 }
 
                 Section {
-                    Button {
-                        showMatchFlow = true
-                    } label: {
-                        Label(String(localized: "Start match"), systemImage: "plus.circle.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .accessibilityLabel(String(localized: "Start match"))
-                    .accessibilityHint(String(localized: "Set up a new padel match"))
-
                     NavigationLink {
                         StatsView()
                     } label: {
@@ -62,6 +51,16 @@ struct HomeView: View {
                     }
                     .accessibilityLabel(String(localized: "Insights"))
                     .accessibilityHint(String(localized: "View match statistics and trends"))
+
+                    NavigationLink {
+                        MatchHistoryView()
+                    } label: {
+                        Label(String(localized: "History"), systemImage: "clock.arrow.circlepath")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .accessibilityLabel(String(localized: "Match history"))
+                    .accessibilityHint(String(localized: "Browse your past matches"))
                 }
 
                 Section(String(localized: "Recent matches")) {
@@ -87,14 +86,6 @@ struct HomeView: View {
             }
             .navigationTitle(String(localized: "PadelNote"))
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink {
-                        MatchHistoryView()
-                    } label: {
-                        Text(String(localized: "History"))
-                    }
-                    .accessibilityLabel(String(localized: "Match history"))
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView()
@@ -102,11 +93,6 @@ struct HomeView: View {
                         Text(String(localized: "Settings"))
                     }
                     .accessibilityLabel(String(localized: "Settings"))
-                }
-            }
-            .navigationDestination(isPresented: $showMatchFlow) {
-                NewMatchSetupView {
-                    showMatchFlow = false
                 }
             }
         }

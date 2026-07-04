@@ -20,30 +20,34 @@ struct MatchPlayersEditSection: View {
                 .foregroundStyle(.secondary)
         }
 
-        Section(String(localized: "Bottom side")) {
-            playerField(
-                title: String(localized: "Right side"),
-                subtitle: String(localized: "Right side"),
-                text: $sideAPlayer1
-            )
-            playerField(
-                title: String(localized: "Left side"),
-                subtitle: String(localized: "Left side"),
-                text: $sideAPlayer2
-            )
+        Section(String(localized: "Top side")) {
+            HStack(alignment: .top, spacing: 16) {
+                playerField(
+                    title: String(localized: "Left side"),
+                    subtitle: String(localized: "Left side"),
+                    text: $sideBPlayer2
+                )
+                playerField(
+                    title: String(localized: "Right side"),
+                    subtitle: String(localized: "Right side"),
+                    text: $sideBPlayer1
+                )
+            }
         }
 
-        Section(String(localized: "Top side")) {
-            playerField(
-                title: String(localized: "Right side"),
-                subtitle: String(localized: "Right side"),
-                text: $sideBPlayer1
-            )
-            playerField(
-                title: String(localized: "Left side"),
-                subtitle: String(localized: "Left side"),
-                text: $sideBPlayer2
-            )
+        Section(String(localized: "Bottom side")) {
+            HStack(alignment: .top, spacing: 16) {
+                playerField(
+                    title: String(localized: "Left side"),
+                    subtitle: String(localized: "Left side"),
+                    text: $sideAPlayer2
+                )
+                playerField(
+                    title: String(localized: "Right side"),
+                    subtitle: String(localized: "Right side"),
+                    text: $sideAPlayer1
+                )
+            }
         }
         .onAppear(perform: loadFromMatch)
         .onDisappear(perform: saveIfNeeded)
@@ -67,6 +71,7 @@ struct MatchPlayersEditSection: View {
                 .accessibilityLabel(String(localized: "\(subtitle), \(title)"))
                 .onSubmit(saveIfNeeded)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func loadFromMatch() {

@@ -44,35 +44,6 @@ struct MatchDetailView: View {
                 }
             }
 
-            Section(String(localized: "Point timeline")) {
-                if match.sortedPoints.isEmpty {
-                    Text(String(localized: "No points recorded"))
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(match.sortedPoints, id: \.persistentModelID) { point in
-                        let line = scoreLines[point.sequence] ?? ""
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(
-                                String(
-                                    localized: "Point \(point.sequence + 1) · \(match.teamName(for: point.team))"
-                                )
-                            )
-                            .font(.headline)
-
-                            Text(line)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel(
-                            String(
-                                localized: "Point \(point.sequence + 1), \(match.teamName(for: point.team)), score \(line)"
-                            )
-                        )
-                    }
-                }
-            }
-
             Section(String(localized: "Match info")) {
                 LabeledContent(String(localized: "Started")) {
                     Text(MatchFormatting.dayTitle(for: match.startedAt))
@@ -107,6 +78,35 @@ struct MatchDetailView: View {
                         LabeledContent(String(localized: "Distance")) {
                             Text(MatchFormatting.distanceText(for: distance))
                         }
+                    }
+                }
+            }
+
+            Section(String(localized: "Point timeline")) {
+                if match.sortedPoints.isEmpty {
+                    Text(String(localized: "No points recorded"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(match.sortedPoints, id: \.persistentModelID) { point in
+                        let line = scoreLines[point.sequence] ?? ""
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(
+                                String(
+                                    localized: "Point \(point.sequence + 1) · \(match.teamName(for: point.team))"
+                                )
+                            )
+                            .font(.headline)
+
+                            Text(line)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(
+                            String(
+                                localized: "Point \(point.sequence + 1), \(match.teamName(for: point.team)), score \(line)"
+                            )
+                        )
                     }
                 }
             }
