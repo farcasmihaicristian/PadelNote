@@ -8,15 +8,13 @@ struct WatchLiveMatchOptionsView: View {
     var body: some View {
         List {
             optionButton(
-                title: String(localized: "Swap Top Team"),
-                subtitle: String(localized: "Swap left and right for the top team.")
+                title: String(localized: "Swap Top Team Players")
             ) {
                 coordinator.toggleLeftRightSides(for: .b)
             }
 
             optionButton(
-                title: String(localized: "Swap Bottom Team"),
-                subtitle: String(localized: "Swap left and right for the bottom team.")
+                title: String(localized: "Swap Bottom Team Players")
             ) {
                 coordinator.toggleLeftRightSides(for: .a)
             }
@@ -48,20 +46,14 @@ struct WatchLiveMatchOptionsView: View {
 
     private func optionButton(
         title: String,
-        subtitle: String,
         action: @escaping () -> Void
     ) -> some View {
         Button {
             action()
             isPresented = false
         } label: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+            Text(title)
+                .font(.headline)
         }
         .disabled(!coordinator.canSwapSides)
         .accessibilityLabel(title)
