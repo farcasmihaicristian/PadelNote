@@ -437,14 +437,20 @@ final class WatchMatchCoordinator {
         guard phase == .summary, let session, let matchID, !isSaving else { return }
         isSaving = true
 
-        let workoutStartTask = workoutStartTask
+        // End the workout *before* building the payload: the recorder's
+        // averages/totals are only final after `end()`, and the phone displays
+        // exactly what this payload carries. Building it earlier shipped a
+        // mid-rest heart-rate snapshot instead of the true workout average.
         let endedAt = matchActivityEndedAt ?? .now
+        await workoutStartTask?.value
+        workoutStartTask = nil
+        try? await workoutRecorder.end(endedAt: endedAt)
+
         let payload = makeTransferPayload(matchID: matchID, events: session.events)
         WatchMatchStore.clearLiveMatch()
         syncService.publishCompletedMatch(payload)
         refreshPendingSyncCount()
         reset(clearLiveSession: false)
-        finishWorkoutInBackground(after: workoutStartTask, endedAt: endedAt)
     }
 
     func discardMatch() async {
