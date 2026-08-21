@@ -10,7 +10,6 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
     private var startedAt = Date.now
-    private var heartRateSamples: [Double] = []
     private var hasEnded = false
 
     private(set) var isAuthorized = false
@@ -63,7 +62,6 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         }
 
         startedAt = .now
-        heartRateSamples = []
         averageHeartRate = nil
         activeEnergyKilocalories = nil
         distanceMeters = nil
@@ -123,10 +121,10 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         try await builder.endCollection(at: endedAt)
 
         if duration >= Self.minimumSaveDuration {
+            // Capture final statistics after collection has ended so the values
+            // match the saved workout (and what the Fitness app will show).
+            refreshStatistics(from: builder)
             try await builder.finishWorkout()
-            if !heartRateSamples.isEmpty {
-                averageHeartRate = heartRateSamples.reduce(0, +) / Double(heartRateSamples.count)
-            }
         } else {
             builder.discardWorkout()
             averageHeartRate = nil
@@ -135,25 +133,23 @@ final class HealthKitWorkoutRecorder: NSObject, WorkoutRecording {
         }
     }
 
-    private func updateStatistics(from workoutBuilder: HKLiveWorkoutBuilder, collectedTypes: Set<HKSampleType>) {
+    /// Reads the builder's cumulative statistics. HealthKit maintains the true
+    /// time-weighted heart-rate average across the whole workout, which is what
+    /// the Fitness app reports — never average instantaneous samples manually.
+    private func refreshStatistics(from workoutBuilder: HKLiveWorkoutBuilder) {
         if let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
-           collectedTypes.contains(heartRateType),
            let statistics = workoutBuilder.statistics(for: heartRateType),
-           let latest = statistics.mostRecentQuantity() {
-            let bpm = latest.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
-            heartRateSamples.append(bpm)
-            averageHeartRate = bpm
+           let average = statistics.averageQuantity() {
+            averageHeartRate = average.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
         }
 
         if let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
-           collectedTypes.contains(energyType),
            let statistics = workoutBuilder.statistics(for: energyType),
            let total = statistics.sumQuantity() {
             activeEnergyKilocalories = total.doubleValue(for: .kilocalorie())
         }
 
         if let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning),
-           collectedTypes.contains(distanceType),
            let statistics = workoutBuilder.statistics(for: distanceType),
            let total = statistics.sumQuantity() {
             distanceMeters = total.doubleValue(for: .meter())
@@ -186,7 +182,7 @@ extension HealthKitWorkoutRecorder: HKLiveWorkoutBuilderDelegate {
         didCollectDataOf collectedTypes: Set<HKSampleType>
     ) {
         Task { @MainActor in
-            updateStatistics(from: workoutBuilder, collectedTypes: collectedTypes)
+            refreshStatistics(from: workoutBuilder)
         }
     }
 }
