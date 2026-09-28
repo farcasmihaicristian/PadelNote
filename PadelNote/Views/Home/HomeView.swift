@@ -4,10 +4,13 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
+    @Environment(ProEntitlementStore.self) private var proStore
     @Query private var matches: [Match]
 
     private var recentMatches: [Match] {
-        matches
+        matches.filter {
+            ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: proStore.isPro)
+        }
     }
 
     init() {
@@ -104,6 +107,7 @@ struct HomeView: View {
     HomeView()
         .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
         .environment(CurrentUserStore())
+        .environment(ProEntitlementStore())
         .modelContainer(PreviewData.container)
 }
 #endif

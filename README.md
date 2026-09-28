@@ -5,9 +5,9 @@
 **Tagline:** *"Keep score. Keep history. Keep playing."*
 Record scores, track sessions, capture post-match notes, and discover trends that improve your padel game.
 
-**Bundle IDs:** `farca.PadelNote` (iOS), `farca.PadelNote.watchkitapp` (Watch)
+**Bundle IDs:** `com.farcasmc.padelnote` (iOS), `com.farcasmc.padelnote.watchkitapp` (Watch)
 **Minimum OS:** iOS 17 / watchOS 10
-**Status:** Milestones 0–6 complete. Next up: branding (M7), then Apple Developer enrollment + TestFlight (M8).
+**Status:** Milestones 0–6 complete. M7 branding + M8 TestFlight prep in progress (bundle IDs locked, SIWA enabled).
 
 ---
 
@@ -61,11 +61,11 @@ Record scores, track sessions, capture post-match notes, and discover trends tha
 
 The padel scoring category is crowded (Padely, Padel Tally, Padel Point, Padel Score, Padelio, and more). PadelNote's hooks:
 
-1. **The "Note" angle** — every match is a journal entry. Rich history & point-by-point timeline are first-class, not paywalled.
+1. **The "Note" angle** — every match is a journal entry. The last 30 days of history are free; older journal + Appearance extras are Pro.
 2. **Rule transparency** — Golden Point vs Advantage vs Star Point, classic vs super tie-break, configurable per match and explained in the UI.
-3. **No subscription for the core experience** — scoring + history + HealthKit are always free. Optional one-time IAP for advanced stats later.
+3. **Core scoring always free** — Watch scoring, HealthKit, live mirror, and recent history never require a subscription. Optional **PadelNote Pro** unlocks themes, moving-ball serve indicator, and full history.
 4. **Apple Watch first** — the Watch app is standalone and the canonical scoring surface.
-5. **Privacy-first** — no analytics SDKs in v1. Scoring and history work without any profile. Optional ME profile is stored on-device only (Sign in with Apple + iCloud sync deferred until Apple Developer enrollment — see [four-players plan](docs/plans/four-players-insights.md)).
+5. **Privacy-first** — no analytics SDKs in v1. Scoring and history work without any profile. Optional ME profile is stored on-device; Sign in with Apple available after enrollment.
 
 Keep these pillars visible in the App Store description, screenshots, and reviewer notes.
 
@@ -227,18 +227,18 @@ Insights screen, Settings (default rules + HealthKit status + about), workout me
 Four player name fields on match setup and display; `Player` registry with stable IDs; Insights revamp (Overview + Players + optional You); local ME profile in Settings (name, preferred slot, past-match linking, New Match pre-fill); partner stats; 54+ PadelCore unit tests. Sign in with Apple and CloudKit deferred to M8+ — see [docs/plans/four-players-insights.md](docs/plans/four-players-insights.md).
 
 ### ⏭️ Next — Milestone 7: Branding
-- [ ] 7.1 App icon — 1024×1024 single-size asset catalog (no Apple logos, no padel-association logos).
+- [x] 7.1 App icon — 1024×1024 single-size asset catalog (no Apple logos, no padel-association logos).
 - [ ] 7.2 Launch screen.
-- [ ] 7.3 Watch app icon.
+- [x] 7.3 Watch app icon.
 
-**Done when:** the app looks shippable on a home screen.
+**Done when:** the app looks shippable on a home screen. (Icons shipped for TestFlight; launch screen optional for internal TF.)
 
 ### ⬜ Milestone 8 — Apple Developer account + TestFlight
-- [ ] 8.1 Enroll in the Apple Developer Program — **Individual** (no D-U-N-S, fast).
-- [ ] 8.2 **Lock the bundle ID** (resolves D-02) and switch Xcode signing to the paid team.
-- [ ] 8.2b Enable **Sign in with Apple** capability + entitlement; set `AuthCapabilities.supportsSignInWithApple = true` (see four-players plan).
-- [ ] 8.3 Create the App Store Connect record (bundle ID, SKU, primary language, category Sports / Health & Fitness).
-- [ ] 8.4 Archive in Xcode → upload via Organizer.
+- [x] 8.1 Enroll in the Apple Developer Program — **Individual** (no D-U-N-S, fast).
+- [x] 8.2 **Lock the bundle ID** (resolves D-02) and switch Xcode signing to the paid team (`com.farcasmc.padelnote` / `.watchkitapp`, team `8C5FKN2L72`).
+- [x] 8.2b Enable **Sign in with Apple** capability + entitlement; set `AuthCapabilities.supportsSignInWithApple = true` (see four-players plan).
+- [x] 8.3 Create the App Store Connect record (bundle ID, SKU, primary language). ASC listing name: **PadelNote Watch** (exact `PadelNote` was taken). → [docs/TESTFLIGHT.md](docs/TESTFLIGHT.md)
+- [x] 8.4 Archive in Xcode → upload via `scripts/upload-testflight.sh` (`build/PadelNote.xcarchive` → App Store Connect).
 - [ ] 8.5 Internal TestFlight round on your iPhone + Watch.
 - [ ] 8.6 Fix bugs; repeat uploads.
 - [ ] 8.7 Optional external TestFlight (light Apple review).
@@ -257,7 +257,7 @@ Four player name fields on match setup and display; `Player` registry with stabl
 - [ ] 9.9 Release.
 
 ### ⬜ Milestone 10 — Post-launch (v1.1+)
-CloudKit history sync (D-05) · share match summary as image · Live Activity / Dynamic Island score · rivals & partners head-to-head stats · Siri Shortcuts ("start a Padel match") · court location for "matches near you" · optional one-time "Pro stats" IAP (v1.2+).
+CloudKit history sync (D-05) · share match summary as image · Live Activity / Dynamic Island score · rivals & partners head-to-head stats · Siri Shortcuts ("start a Padel match") · court location for "matches near you".
 
 ---
 
@@ -267,7 +267,7 @@ Each decision: what was chosen, why, and status. `✅ Locked` · `⏳ Pending` �
 
 - **D-00 — App name: PadelNote.** "Note" positions it as a journaling/history tool, the core differentiator. ✅ Locked
 - **D-01 — Minimum OS: iOS 17 / watchOS 10.** Enables SwiftData, `@Observable`, modern SwiftUI; 90%+ device coverage. ✅ Locked
-- **D-02 — Bundle identifier.** Currently `farca.PadelNote` / `farca.PadelNote.watchkitapp`. Must be final before the first TestFlight upload (cannot change after). ⏳ Pending — confirm before M8.
+- **D-02 — Bundle identifier.** `com.farcasmc.padelnote` / `com.farcasmc.padelnote.watchkitapp` (reverse-DNS under com.farcasmc). Locked before first TestFlight upload. ✅ Locked
 - **D-03 — Default rule preset.** Best-of-3, 6 games, classic tie-break at 6-6, super tie-break in the deciding set, **Golden Point ON**. Matches modern recreational padel. ✅ Locked
 - **D-04 — Languages at launch.** English primary + **Spanish** (largest padel demographic). Spanish `.xcstrings` now shipped. ✅ Locked (was 🔄)
 - **D-05 — CloudKit sync.** Deferred to v1.1; local SwiftData only in v1. SwiftData makes the later switch a one-line config change. ✅ Locked for v1
@@ -275,7 +275,7 @@ Each decision: what was chosen, why, and status. `✅ Locked` · `⏳ Pending` �
 - **D-07 — Watch is source of truth during a live match.** Best UX (wrist), accurate HR, natural Watch→Phone flow. Each point is persisted to mitigate Watch crashes. ✅ Locked
 - **D-08 — HealthKit workout type `.tennis`.** No `.padel` type exists; add `HKMetadataKeyWorkoutBrandName = "Padel"` + `"sport" = "padel"`. Fitness app shows "Tennis" — disclose in reviewer notes. ✅ Locked
 - **D-09 — No analytics SDK in v1.** Simplest privacy label, lowest review risk, aligns with privacy pillar. ✅ Locked for v1
-- **D-10 — Free app, optional one-time IAP later (no subscription).** Removes first-run friction; one-time IAP (advanced stats) planned for v1.2+. ✅ Locked for v1
+- **D-10 — Free core + optional Pro subscription.** Scoring, HealthKit, live mirror, default theme, L/R serve labels, and the last 30 days of history/insights stay free. **PadelNote Pro** (monthly + discounted yearly) unlocks all themes, the moving-ball serve indicator, and full history. See [docs/PRO_SUBSCRIPTION.md](docs/PRO_SUBSCRIPTION.md). ✅ Locked for v1 (revises earlier “no subscription / one-time IAP only” stance)
 - **D-11 — Star Point (third deuce style).** Advantage for the first two deuces, then sudden death; caps game length while rewarding deuce wins. Default stays Golden Point; Star Point is opt-in. Kept the "Star Point" name, with a short "Deuce rules explained" note in Settings clarifying it means limited advantage (2 deuces only). ✅ Locked
 - **D-12 — Optional ME profile (local-first).** Scoring and history require no profile. ME personalization uses an on-device profile (name + linked `Player` record) via Settings. Sign in with Apple is the upgrade path after Apple Developer enrollment (M8); CloudKit sync follows in v1.1. ✅ Locked for v1
 - **D-13 — App color themes.** Theme selection is phone-only and syncs to Apple Watch; the watch persists the last synced theme for offline live matches. Themes are global cosmetic preferences, with serve accent as the app tint and live-match surfaces using team gradients/colors. ✅ Locked for v1
@@ -351,4 +351,4 @@ The Watch can disconnect in Xcode with `CoreDeviceError 4000 … enablePersonali
 - **App icon (M7):** propose a first concept — deferred to M7.
 
 ### Still open
-- **Bundle ID (D-02):** decision deferred to M8, just before enrolling. Choose between `farca.PadelNote` and a reverse-DNS form (e.g. `com.farca.padelnote`). Cannot change after the first TestFlight upload.
+- None for M8 setup — bundle IDs locked to `com.farcasmc.padelnote` / `.watchkitapp`.

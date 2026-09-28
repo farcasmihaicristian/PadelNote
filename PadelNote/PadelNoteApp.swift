@@ -8,6 +8,7 @@ struct PadelNoteApp: App {
     @State private var syncCoordinator = PhoneSyncCoordinator(syncListener: PhoneConnectivityListener())
     @State private var currentUserStore = CurrentUserStore()
     @State private var themeStore = AppThemeStore()
+    @State private var proStore = ProEntitlementStore()
     @State private var showPastMatchLinkDialog = false
 
     init() {
@@ -35,6 +36,7 @@ struct PadelNoteApp: App {
                 .environment(syncCoordinator)
                 .environment(currentUserStore)
                 .environment(themeStore)
+                .environment(proStore)
                 .tint(themeStore.palette.accent)
                 .onAppear {
                     syncCoordinator.activate(modelContext: modelContainer.mainContext)
@@ -48,7 +50,19 @@ struct PadelNoteApp: App {
                     #endif
                     MatchPersistence.backfillCompletionFlags(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
+                    _ = proStore.enforceFreeAppearanceDefaults(themeStore: themeStore)
                     syncCoordinator.syncPhoneContextToWatch()
+                }
+                .task {
+                    await proStore.refresh()
+                    if proStore.enforceFreeAppearanceDefaults(themeStore: themeStore) {
+                        syncCoordinator.syncPhoneContextToWatch()
+                    }
+                }
+                .onChange(of: proStore.isPro) { _, _ in
+                    if proStore.enforceFreeAppearanceDefaults(themeStore: themeStore) {
+                        syncCoordinator.syncPhoneContextToWatch()
+                    }
                 }
                 .onChange(of: currentUserStore.pendingPastMatchLinkCount) { _, count in
                     showPastMatchLinkDialog = count > 0

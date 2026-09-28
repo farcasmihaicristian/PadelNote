@@ -5,10 +5,18 @@ import SwiftUI
 struct MatchHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
+    @Environment(ProEntitlementStore.self) private var proStore
     @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
+    @State private var showPaywall = false
 
     private var completedMatches: [Match] {
         matches
+    }
+
+    private var hasLockedMatches: Bool {
+        !proStore.isPro && completedMatches.contains {
+            !ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: false)
+        }
     }
 
     private var sections: [(title: String, matches: [Match])] {
@@ -30,6 +38,20 @@ struct MatchHistoryView: View {
 
     var body: some View {
         List {
+            if hasLockedMatches {
+                Section {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label(
+                            String(localized: "Older than 30 days requires PadelNote Pro"),
+                            systemImage: "lock.fill"
+                        )
+                    }
+                    .accessibilityHint(String(localized: "Unlock full match history"))
+                }
+            }
+
             if sections.isEmpty {
                 ContentUnavailableView(
                     String(localized: "No match history"),
@@ -40,10 +62,30 @@ struct MatchHistoryView: View {
                 ForEach(sections, id: \.title) { section in
                     Section(section.title) {
                         ForEach(section.matches) { match in
-                            NavigationLink {
-                                MatchDetailView(match: match)
-                            } label: {
-                                MatchRowView(match: match)
+                            let visible = ProAccessPolicy.isMatchVisible(
+                                startedAt: match.startedAt,
+                                isPro: proStore.isPro
+                            )
+                            if visible {
+                                NavigationLink {
+                                    MatchDetailView(match: match)
+                                } label: {
+                                    MatchRowView(match: match)
+                                }
+                            } else {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    HStack {
+                                        MatchRowView(match: match)
+                                            .opacity(0.45)
+                                        Spacer(minLength: 8)
+                                        Image(systemName: "lock.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(String(localized: "Locked match, requires PadelNote Pro"))
                             }
                         }
                         .onDelete { offsets in
@@ -55,6 +97,9 @@ struct MatchHistoryView: View {
         }
         .navigationTitle(String(localized: "History"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+        }
     }
 
     private func deleteMatches(at offsets: IndexSet, in matches: [Match]) {
@@ -77,5 +122,6 @@ struct MatchHistoryView: View {
     }
     .modelContainer(PreviewData.container)
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
+    .environment(ProEntitlementStore())
 }
 #endif

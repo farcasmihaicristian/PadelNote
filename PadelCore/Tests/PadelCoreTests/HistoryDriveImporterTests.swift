@@ -39,8 +39,8 @@ import Testing
     let matches = try context.fetch(FetchDescriptor<Match>())
     #expect(matches.count == 7)
     #expect(matches.allSatisfy { $0.isCompleted })
-    #expect(Set(matches.compactMap(\.playerA1Name)) == Set(["Sergiu"]))
-    #expect(matches.contains { $0.playerB2Name == "Catalin" })
+    #expect(Set(matches.compactMap(\.playerA1Name)) == Set(["Sam"]))
+    #expect(matches.contains { $0.playerB2Name == "Casey" })
 
     let march31 = try #require(matches.first { Calendar.current.component(.month, from: $0.startedAt) == 3 })
     #expect(march31.scoreSummary == "6-2 3-6 6-4 2-6")

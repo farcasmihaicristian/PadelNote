@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(CurrentUserStore.self) private var currentUserStore
     @Environment(AppThemeStore.self) private var themeStore
+    @Environment(ProEntitlementStore.self) private var proStore
     @State private var bestOfSets = MatchRulesSettingsForm.bestOfSets(from: .default)
     @State private var gamePointStyle = MatchRules.default.gamePointStyle
     @State private var setTieBreak = MatchRules.default.setTieBreak
@@ -13,6 +14,7 @@ struct SettingsView: View {
     @State private var workoutActivity = WorkoutActivityPreferences.load()
     @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
     @State private var serveIndicatorStyle = ServeIndicatorStylePreferences.load()
+    @State private var showPaywall = false
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -98,12 +100,20 @@ struct SettingsView: View {
             syncCoordinator.syncPhoneContextToWatch()
         }
         .onChange(of: serveIndicatorStyle) { _, newValue in
-            ServeIndicatorStylePreferences.save(newValue)
-            themeStore.applyServeIndicatorStyle(newValue, persist: false)
-            syncCoordinator.syncPhoneContextToWatch()
+            if ProAccessPolicy.isServeStyleUnlocked(style: newValue, isPro: proStore.isPro) {
+                ServeIndicatorStylePreferences.save(newValue)
+                themeStore.applyServeIndicatorStyle(newValue, persist: false)
+                syncCoordinator.syncPhoneContextToWatch()
+            } else {
+                serveIndicatorStyle = .sideLabels
+                showPaywall = true
+            }
         }
         .onChange(of: currentUserStore.isSignedIn) { _, _ in
             syncCoordinator.syncPhoneContextToWatch()
+        }
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
         }
     }
 
@@ -114,6 +124,14 @@ struct SettingsView: View {
 
     private var themeSection: some View {
         Section(String(localized: "Appearance")) {
+            if !proStore.isPro {
+                Button {
+                    showPaywall = true
+                } label: {
+                    Label(String(localized: "Unlock PadelNote Pro"), systemImage: "star.circle.fill")
+                }
+            }
+
             NavigationLink {
                 ThemeSelectionView()
             } label: {
@@ -123,18 +141,29 @@ struct SettingsView: View {
                     ThemeSwatch(theme: themeStore.activeTheme)
                     Text(verbatim: themeStore.activeTheme.name)
                         .foregroundStyle(.secondary)
+                    if !proStore.isPro {
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    }
                 }
             }
             .accessibilityLabel(String(localized: "App color theme"))
 
             Picker(String(localized: "Serve indicator"), selection: $serveIndicatorStyle) {
                 ForEach(ServeIndicatorStyle.allCases) { style in
-                    Text(style.displayName).tag(style)
+                    HStack {
+                        Text(style.displayName)
+                        if !ProAccessPolicy.isServeStyleUnlocked(style: style, isPro: proStore.isPro) {
+                            Image(systemName: "lock.fill")
+                        }
+                    }
+                    .tag(style)
                 }
             }
             .accessibilityLabel(String(localized: "Serve indicator style"))
 
-            Text(String(localized: "Theme and serve indicator apply to live scoring on iPhone and Apple Watch."))
+            Text(String(localized: "Theme and serve indicator apply to live scoring on iPhone and Apple Watch. Free includes the default theme and Left / Right labels."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -281,4 +310,5 @@ private struct MeSlotSettingsSection: View {
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
     .environment(CurrentUserStore())
     .environment(AppThemeStore())
+    .environment(ProEntitlementStore())
 }

@@ -379,7 +379,7 @@
 				CODE_SIGN_ENTITLEMENTS = PadelNote/PadelNote.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -395,7 +395,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote;
+				PRODUCT_BUNDLE_IDENTIFIER = com.farcasmc.padelnote;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -416,7 +416,7 @@
 				CODE_SIGN_ENTITLEMENTS = PadelNote/PadelNote.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -432,7 +432,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote;
+				PRODUCT_BUNDLE_IDENTIFIER = com.farcasmc.padelnote;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -453,7 +453,7 @@
 				CODE_SIGN_ENTITLEMENTS = PadelNoteWatch/PadelNoteWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -462,13 +462,13 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNote;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.farcasmc.padelnote;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.farcasmc.padelnote.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
@@ -492,7 +492,7 @@
 				CODE_SIGN_ENTITLEMENTS = PadelNoteWatch/PadelNoteWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C5FKN2L72;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -501,13 +501,13 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote reads your heart rate and calories during matches to show accurate workout stats.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote saves your padel matches to Apple Health as workouts.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = farca.PadelNote;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.farcasmc.padelnote;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = farca.PadelNote.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.farcasmc.padelnote.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;

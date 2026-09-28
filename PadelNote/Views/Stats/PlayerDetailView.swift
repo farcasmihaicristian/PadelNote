@@ -5,14 +5,19 @@ import SwiftUI
 struct PlayerDetailView: View {
     let player: Player
 
+    @Environment(ProEntitlementStore.self) private var proStore
     @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @Query(sort: \Player.displayName) private var players: [Player]
+    @State private var showPaywall = false
 
     var body: some View {
         // Derive once per render instead of from computed properties that each
         // re-walked the full match history (this view also recurses into itself
         // for partners).
-        let summaries = matches.map(\.summary)
+        let visibleMatches = matches.filter {
+            ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: proStore.isPro)
+        }
+        let summaries = visibleMatches.map(\.summary)
         let playerByID = Dictionary(players.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let insights = MatchStatistics.playerInsights(
             for: player.id,
@@ -24,12 +29,29 @@ struct PlayerDetailView: View {
             in: summaries,
             displayNames: playerByID.mapValues(\.displayName)
         )
-        let recentMatches = matches
+        let recentMatches = visibleMatches
             .filter { $0.roster.contains(playerID: player.id) }
             .prefix(10)
             .map { $0 }
+        let hasOlderMatches = !proStore.isPro && matches.contains {
+            $0.roster.contains(playerID: player.id)
+                && !ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: false)
+        }
 
         return List {
+            if hasOlderMatches {
+                Section {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label(
+                            String(localized: "Stats use the last 30 days. Unlock Pro for full history."),
+                            systemImage: "lock.fill"
+                        )
+                    }
+                }
+            }
+
             if insights.matchCount == 0 {
                 ContentUnavailableView(
                     String(localized: "No matches yet"),
@@ -126,6 +148,9 @@ struct PlayerDetailView: View {
         }
         .navigationTitle(player.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+        }
     }
 }
 
@@ -157,5 +182,6 @@ private struct PartnerSummaryRowView: View {
         PlayerDetailView(player: Player(displayName: "Alex"))
     }
     .modelContainer(PreviewData.container)
+    .environment(ProEntitlementStore())
 }
 #endif

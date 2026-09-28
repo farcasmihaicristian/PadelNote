@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 enum AuthSessionStore {
-    private static let service = "farca.PadelNote.auth"
+    private static let service = "com.farcasmc.padelnote.auth"
     private static let accountIDKey = "accountID"
 
     static func saveAccountID(_ accountID: String) {

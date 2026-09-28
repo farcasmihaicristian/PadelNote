@@ -4,7 +4,7 @@ overview: Phases 1–3 (local ME profile) are shipped in 0.6e. This file tracks 
 todos:
   - id: siwa
     content: "Enable Sign in with Apple after Apple Developer enrollment (M8)"
-    status: pending
+    status: completed
   - id: cloudkit
     content: "CloudKit private DB sync for AppUser, ME Player, Match, StoredPointEvent"
     status: pending
@@ -42,20 +42,19 @@ isProject: false
 
 ---
 
-## 1. Sign in with Apple (M8 — blocked on Personal Team)
+## 1. Sign in with Apple (M8) ✅ enabled
 
-**Prerequisite:** Apple Developer Program enrollment + paid-team signing.
+**Done for TestFlight prep:**
 
-**Steps when ready:**
-
-1. Add `com.apple.developer.applesignin` to [PadelNote.entitlements](../../PadelNote/PadelNote.entitlements) and enable the capability on the App ID in Xcode.
+1. Added `com.apple.developer.applesignin` to [PadelNote.entitlements](../../PadelNote/PadelNote.entitlements).
 2. Set `AuthCapabilities.supportsSignInWithApple = true` in [AuthCapabilities.swift](../../PadelNote/Services/AuthCapabilities.swift).
-3. Verify [AccountAuthSection.swift](../../PadelNote/Views/AccountAuthSection.swift) SIWA button path on a real device.
-4. Test credential state restore via [CurrentUserStore.swift](../../PadelNote/Services/CurrentUserStore.swift) + [AuthSessionStore.swift](../../PadelNote/Services/AuthSessionStore.swift).
+3. Distribution IPA includes SIWA + HealthKit entitlements (`build/export/PadelNote.ipa`).
+4. Remaining: verify SIWA button path on a **real device** via Internal TestFlight ([docs/TESTFLIGHT.md](../TESTFLIGHT.md)).
 
 **Already wired:** `AppUser`, `UserAccountPersistence`, Keychain session, SIWA handler in `CurrentUserStore`, first-sign-in creates owned `Player`.
 
-**Migration note:** Local profiles use `local.<UUID>` account IDs. Decide whether to offer “Upgrade to Sign in with Apple” and merge/link the existing owned `Player`, or treat as a fresh sign-in.
+**Migration note:** Local profiles use `local.<UUID>` account IDs. v1 TF treats SIWA as a new account identity (no auto-merge of local → SIWA).
+
 
 ---
 

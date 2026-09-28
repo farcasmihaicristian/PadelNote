@@ -9,6 +9,7 @@ xcuserdata/
 # Xcode — build output
 build/
 DerivedData/
+.derivedData/
 
 # Swift Package Manager
 .build/

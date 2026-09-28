@@ -4,13 +4,18 @@ import SwiftUI
 
 struct StatsView: View {
     @Environment(CurrentUserStore.self) private var currentUserStore
+    @Environment(ProEntitlementStore.self) private var proStore
     @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.startedAt, order: .reverse) private var matches: [Match]
     @Query(sort: \Player.displayName) private var players: [Player]
+    @State private var showPaywall = false
 
     var body: some View {
         // Derive everything once per render rather than from several computed
         // properties that each re-walked the full match history.
-        let summaries = matches.map(\.summary)
+        let visibleMatches = matches.filter {
+            ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: proStore.isPro)
+        }
+        let summaries = visibleMatches.map(\.summary)
         let overview = MatchStatistics.insights(for: summaries)
         let playerByID = Dictionary(players.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let nameLookup = playerByID.mapValues(\.displayName)
@@ -22,8 +27,24 @@ struct StatsView: View {
                 in: summaries
             )
         }
+        let hasOlderMatches = !proStore.isPro && matches.contains {
+            !ProAccessPolicy.isMatchVisible(startedAt: $0.startedAt, isPro: false)
+        }
 
         return List {
+            if hasOlderMatches {
+                Section {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label(
+                            String(localized: "Stats use the last 30 days. Unlock Pro for full history."),
+                            systemImage: "lock.fill"
+                        )
+                    }
+                }
+            }
+
             if overview.completedMatchCount == 0 {
                 ContentUnavailableView(
                     String(localized: "No stats yet"),
@@ -99,6 +120,9 @@ struct StatsView: View {
         }
         .navigationTitle(String(localized: "Insights"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+        }
     }
 }
 
@@ -131,5 +155,6 @@ private struct PlayerSummaryRowView: View {
     }
     .modelContainer(PreviewData.container)
     .environment(CurrentUserStore())
+    .environment(ProEntitlementStore())
 }
 #endif

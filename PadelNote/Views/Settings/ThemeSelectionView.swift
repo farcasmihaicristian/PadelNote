@@ -4,6 +4,8 @@ import SwiftUI
 struct ThemeSelectionView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(AppThemeStore.self) private var themeStore
+    @Environment(ProEntitlementStore.self) private var proStore
+    @State private var showPaywall = false
 
     var body: some View {
         List {
@@ -13,28 +15,49 @@ struct ThemeSelectionView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if !proStore.isPro {
+                Section {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label(String(localized: "Unlock all themes with Pro"), systemImage: "lock.fill")
+                    }
+                }
+            }
+
             Section(String(localized: "Themes")) {
                 ForEach(AppThemeCatalog.all) { theme in
+                    let unlocked = ProAccessPolicy.isThemeUnlocked(themeID: theme.id, isPro: proStore.isPro)
                     Button {
-                        select(theme)
+                        if unlocked {
+                            select(theme)
+                        } else {
+                            showPaywall = true
+                        }
                     } label: {
                         ThemePreviewRow(
                             theme: theme,
-                            isSelected: theme.id == themeStore.activeTheme.id
+                            isSelected: theme.id == themeStore.activeTheme.id,
+                            isLocked: !unlocked
                         )
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(String(localized: "\(theme.name) theme"))
                     .accessibilityHint(
-                        theme.id == themeStore.activeTheme.id
-                            ? String(localized: "Currently selected")
-                            : String(localized: "Selects this app theme")
+                        !unlocked
+                            ? String(localized: "Requires PadelNote Pro")
+                            : theme.id == themeStore.activeTheme.id
+                                ? String(localized: "Currently selected")
+                                : String(localized: "Selects this app theme")
                     )
                 }
             }
         }
         .navigationTitle(String(localized: "Theme"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+        }
     }
 
     private func select(_ theme: AppTheme) {
@@ -47,6 +70,7 @@ struct ThemeSelectionView: View {
 private struct ThemePreviewRow: View {
     let theme: AppTheme
     let isSelected: Bool
+    var isLocked: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -56,7 +80,11 @@ private struct ThemePreviewRow: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
                 Spacer()
-                if isSelected {
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                } else if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color(hex: theme.serve))
                         .accessibilityHidden(true)
@@ -64,6 +92,7 @@ private struct ThemePreviewRow: View {
             }
 
             WatchThemePreview(theme: theme)
+                .opacity(isLocked ? 0.55 : 1)
         }
         .padding(.vertical, 6)
     }
@@ -191,4 +220,5 @@ private struct SmallThemeSwatch: View {
     }
     .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
     .environment(AppThemeStore())
+    .environment(ProEntitlementStore())
 }

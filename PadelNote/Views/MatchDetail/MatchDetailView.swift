@@ -4,8 +4,38 @@ import SwiftUI
 
 struct MatchDetailView: View {
     @Bindable var match: Match
+    @Environment(ProEntitlementStore.self) private var proStore
+    @State private var showPaywall = false
+
+    private var isVisible: Bool {
+        ProAccessPolicy.isMatchVisible(startedAt: match.startedAt, isPro: proStore.isPro)
+    }
 
     var body: some View {
+        Group {
+            if isVisible {
+                detailList
+            } else {
+                ContentUnavailableView {
+                    Label(String(localized: "Pro history"), systemImage: "lock.fill")
+                } description: {
+                    Text(String(localized: "Matches older than 30 days require PadelNote Pro."))
+                } actions: {
+                    Button(String(localized: "Unlock PadelNote Pro")) {
+                        showPaywall = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+        .navigationTitle(String(localized: "Match detail"))
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+        }
+    }
+
+    private var detailList: some View {
         let score = MatchScoreText.rendered(for: match)
         let partialSet = match.inProgressSetSummary
         // Replay the engine once for the whole timeline rather than re-replaying a
@@ -111,8 +141,6 @@ struct MatchDetailView: View {
                 }
             }
         }
-        .navigationTitle(String(localized: "Match detail"))
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var ruleStyleLabel: String {
@@ -151,5 +179,6 @@ struct MatchDetailView: View {
         ))
     }
     .modelContainer(PreviewData.container)
+    .environment(ProEntitlementStore())
 }
 #endif
