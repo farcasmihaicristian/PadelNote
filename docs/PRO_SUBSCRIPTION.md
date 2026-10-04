@@ -31,12 +31,26 @@ Subscription group display name: **PadelNote Watch Pro**
 4. Attach both products to the app version for review.
 5. Review notes: “Core scoring is free. Pro is optional: all themes, moving-ball serve indicator, and full match history beyond 30 days.”
 
-## Xcode / local testing
+## TestFlight / device testing (real App Store sandbox)
+
+TestFlight **does not** use `PadelNote.storekit`. Products must exist in App Store Connect.
+
+If the paywall says **0 products / subscriptions unavailable**:
+
+1. **Agreements** — Business → Paid Apps accepted; banking + tax complete.
+2. **App ID** — Identifiers → `com.farcasmc.padelnote` → **In-App Purchase** enabled.
+3. **Products** — App → Subscriptions → group **PadelNote Watch Pro** with exact IDs:
+   - `com.farcasmc.padelnote.pro.monthly`
+   - `com.farcasmc.padelnote.pro.yearly`
+4. Each product needs localization (name + description) and status at least **Ready to Submit**.
+5. Wait a few minutes after creating products, then kill/reopen the TestFlight app and open the paywall again.
+6. Purchase uses **Sandbox** (no real charge). Create a Sandbox tester under Users and Access → Sandbox if prompted.
+
+## Xcode / Simulator testing (local StoreKit file)
 
 - StoreKit config file: [`PadelNote/StoreKit/PadelNote.storekit`](../PadelNote/StoreKit/PadelNote.storekit)
-- In the **PadelNote** scheme → **Run** → **Options** → **StoreKit Configuration** → select `PadelNote.storekit`
-- Enable **In-App Purchase** capability on the iOS App ID in the Developer portal if not already (StoreKit 2 needs no extra entitlements plist key)
-- Sandbox: Settings → App Store → Sandbox Account on device for TestFlight / device testing
+- **PadelNote** scheme → **Run** → **Options** → **StoreKit Configuration** → `PadelNote.storekit`
+- DEBUG builds also have **Settings → Developer → Unlock Pro (Simulator)** as a bypass
 
 ## Code map
 

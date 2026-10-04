@@ -86,7 +86,11 @@ struct ProPaywallView: View {
         if let message = proStore.lastErrorMessage, !message.isEmpty {
             return Text(message)
         }
-        return Text(String(localized: "No StoreKit products loaded. In Xcode: Product → Scheme → Edit Scheme → Run → Options → set StoreKit Configuration to PadelNote.storekit, then delete the app from the Simulator and run again."))
+        #if DEBUG
+        return Text(String(localized: "No StoreKit products loaded. For Simulator: Edit Scheme → Run → Options → StoreKit Configuration → PadelNote.storekit."))
+        #else
+        return Text(String(localized: "No subscriptions found in App Store Connect yet. Create the monthly and yearly Pro products, finish the Paid Apps agreement, then try again."))
+        #endif
     }
 }
 

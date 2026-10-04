@@ -51,9 +51,15 @@ final class ProEntitlementStore {
                 return lhs.displayName < rhs.displayName
             }
             if products.isEmpty {
+                #if DEBUG
                 lastErrorMessage = String(
-                    localized: "StoreKit returned 0 products. The Run scheme must load PadelNote.storekit (not the real App Store)."
+                    localized: "StoreKit returned 0 products. For Simulator: Edit Scheme → Run → Options → StoreKit Configuration → PadelNote.storekit."
                 )
+                #else
+                lastErrorMessage = String(
+                    localized: "No subscriptions found in App Store Connect yet. Create products com.farcasmc.padelnote.pro.monthly and com.farcasmc.padelnote.pro.yearly under PadelNote Watch Pro, finish Paid Apps agreement, and enable In-App Purchase on the App ID."
+                )
+                #endif
             }
         } catch {
             lastErrorMessage = error.localizedDescription
