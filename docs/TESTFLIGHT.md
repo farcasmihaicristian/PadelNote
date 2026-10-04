@@ -66,7 +66,7 @@ See [PRO_SUBSCRIPTION.md](PRO_SUBSCRIPTION.md) for product IDs, free/Pro matrix,
 | iOS bundle ID | `com.farcasmc.padelnote` |
 | Watch bundle ID | `com.farcasmc.padelnote.watchkitapp` |
 | Team | `8C5FKN2L72` (Mihai Farcas) |
-| Version / build | `1.0` / `4` |
+| Version / build | `1.0` / `5` |
 | Archive | `build/PadelNote.xcarchive` |
 | Privacy policy URL | `https://raw.githubusercontent.com/farcasmihaicristian/PadelNote/main/docs/PRIVACY.md` |
 
