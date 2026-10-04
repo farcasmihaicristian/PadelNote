@@ -45,7 +45,7 @@ struct PlayerDetailView: View {
                         showPaywall = true
                     } label: {
                         Label(
-                            String(localized: "Stats use the last 30 days. Unlock Pro for full history."),
+                            String(localized: "Stats use the last 30 days. Unlock PadelNote Watch Pro for full history."),
                             systemImage: "lock.fill"
                         )
                     }

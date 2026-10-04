@@ -63,7 +63,7 @@ The padel scoring category is crowded (Padely, Padel Tally, Padel Point, Padel S
 
 1. **The "Note" angle** — every match is a journal entry. The last 30 days of history are free; older journal + Appearance extras are Pro.
 2. **Rule transparency** — Golden Point vs Advantage vs Star Point, classic vs super tie-break, configurable per match and explained in the UI.
-3. **Core scoring always free** — Watch scoring, HealthKit, live mirror, and recent history never require a subscription. Optional **PadelNote Pro** unlocks themes, moving-ball serve indicator, and full history.
+3. **Core scoring always free** — Watch scoring, HealthKit, live mirror, and recent history never require a subscription. Optional **PadelNote Watch Pro** unlocks themes, moving-ball serve indicator, and full history.
 4. **Apple Watch first** — the Watch app is standalone and the canonical scoring surface.
 5. **Privacy-first** — no analytics SDKs in v1. Scoring and history work without any profile. Optional ME profile is stored on-device; Sign in with Apple available after enrollment.
 
@@ -74,11 +74,11 @@ Keep these pillars visible in the App Store description, screenshots, and review
 ## 3. Product scope (v1)
 
 ### iPhone app
-- Start a new match with configurable rules: sets to win (best-of-1/3/5), games per set (default 6, tie-break at 6–6), tie-break style (classic 7 / super tie-break 10 for deciding set), deuce style (Golden Point / Advantage / Star Point), optional **four player names** (Side A/B × 2) with autocomplete from past players.
-- Live scoring screen with player-aware side labels.
+- Companion journal: Insights, History, live Watch mirror, and Settings (default rules sync to Watch). Scoring starts on Apple Watch.
+- Live Watch score mirror (read-only) with player-aware side labels.
 - Match history list + detail view with point-by-point timeline.
 - Stats/Insights: global overview (matches, duration), **per-player** win rate and golden-point conversion, optional **You** shortcut when a profile is set up, browsable player list with partner stats.
-- Settings: default rules, optional **Account** profile setup, preferred court slot, HealthKit status, about.
+- Settings: default rules, optional **Account** profile setup, preferred court slot, Appearance (themes / serve indicator), HealthKit status, about.
 
 ### Apple Watch app
 - Start a match from the wrist, tap to add a point to either team, undo last point.
@@ -111,8 +111,8 @@ Keep these pillars visible in the App Store description, screenshots, and review
 ```
 PadelNote/
 ├─ PadelNote/              ← iOS app
-│  ├─ Views/               ← Home, NewMatchSetup, LiveMatch, MatchHistory,
-│  │                          MatchDetail, Stats, Settings, WatchLiveMirror, …
+│  ├─ Views/               ← Home, LiveMatch, MatchHistory, MatchDetail,
+│  │                          Stats, Settings, Paywall, WatchLiveMirror, …
 │  ├─ Services/            ← PhoneConnectivityListener, PhoneSyncCoordinator,
 │  │                          MatchSyncListening, HealthKitAuthorizationChecker,
 │  │                          CurrentUserStore, AuthSessionStore
@@ -275,7 +275,7 @@ Each decision: what was chosen, why, and status. `✅ Locked` · `⏳ Pending` �
 - **D-07 — Watch is source of truth during a live match.** Best UX (wrist), accurate HR, natural Watch→Phone flow. Each point is persisted to mitigate Watch crashes. ✅ Locked
 - **D-08 — HealthKit workout type `.tennis`.** No `.padel` type exists; add `HKMetadataKeyWorkoutBrandName = "Padel"` + `"sport" = "padel"`. Fitness app shows "Tennis" — disclose in reviewer notes. ✅ Locked
 - **D-09 — No analytics SDK in v1.** Simplest privacy label, lowest review risk, aligns with privacy pillar. ✅ Locked for v1
-- **D-10 — Free core + optional Pro subscription.** Scoring, HealthKit, live mirror, default theme, L/R serve labels, and the last 30 days of history/insights stay free. **PadelNote Pro** (monthly + discounted yearly) unlocks all themes, the moving-ball serve indicator, and full history. See [docs/PRO_SUBSCRIPTION.md](docs/PRO_SUBSCRIPTION.md). ✅ Locked for v1 (revises earlier “no subscription / one-time IAP only” stance)
+- **D-10 — Free core + optional Pro subscription.** Scoring, HealthKit, live mirror, default theme, L/R serve labels, and the last 30 days of history/insights stay free. **PadelNote Watch Pro** (monthly + discounted yearly) unlocks all themes, the moving-ball serve indicator, and full history. See [docs/PRO_SUBSCRIPTION.md](docs/PRO_SUBSCRIPTION.md). ✅ Locked for v1 (revises earlier “no subscription / one-time IAP only” stance)
 - **D-11 — Star Point (third deuce style).** Advantage for the first two deuces, then sudden death; caps game length while rewarding deuce wins. Default stays Golden Point; Star Point is opt-in. Kept the "Star Point" name, with a short "Deuce rules explained" note in Settings clarifying it means limited advantage (2 deuces only). ✅ Locked
 - **D-12 — Optional ME profile (local-first).** Scoring and history require no profile. ME personalization uses an on-device profile (name + linked `Player` record) via Settings. Sign in with Apple is the upgrade path after Apple Developer enrollment (M8); CloudKit sync follows in v1.1. ✅ Locked for v1
 - **D-13 — App color themes.** Theme selection is phone-only and syncs to Apple Watch; the watch persists the last synced theme for offline live matches. Themes are global cosmetic preferences, with serve accent as the app tint and live-match surfaces using team gradients/colors. ✅ Locked for v1

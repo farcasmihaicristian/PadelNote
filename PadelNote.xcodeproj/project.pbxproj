@@ -386,8 +386,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "PadelNote Watch";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote Watch reads your heart rate and calories during matches to show accurate workout stats.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote Watch saves your padel matches to Apple Health as workouts.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote Watch may check Apple Health authorization status for workouts recorded on Apple Watch during matches.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote Watch does not write workouts from iPhone. Match workouts are saved to Apple Health from Apple Watch.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -426,8 +426,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "PadelNote Watch";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote Watch reads your heart rate and calories during matches to show accurate workout stats.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote Watch saves your padel matches to Apple Health as workouts.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PadelNote Watch may check Apple Health authorization status for workouts recorded on Apple Watch during matches.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PadelNote Watch does not write workouts from iPhone. Match workouts are saved to Apple Health from Apple Watch.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

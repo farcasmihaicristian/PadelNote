@@ -81,7 +81,7 @@ struct SettingsView: View {
 
             Section(String(localized: "About")) {
                 LabeledContent(String(localized: "App")) {
-                    Text("PadelNote Watch")
+                    Text(String(localized: "PadelNote Watch"))
                 }
                 LabeledContent(String(localized: "Version")) {
                     Text(appVersion)

@@ -57,7 +57,7 @@ final class ProEntitlementStore {
                 )
                 #else
                 lastErrorMessage = String(
-                    localized: "No subscriptions found in App Store Connect yet. Create products com.farcasmc.padelnote.pro.monthly and com.farcasmc.padelnote.pro.yearly under PadelNote Watch Pro, finish Paid Apps agreement, and enable In-App Purchase on the App ID."
+                    localized: "Subscriptions are temporarily unavailable. Check your connection and try again, or use Restore Purchases."
                 )
                 #endif
             }

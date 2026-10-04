@@ -53,19 +53,20 @@ Install from TestFlight on a **paired real iPhone + Watch** (Simulator cannot de
 | Insights / ME / reflection survey | |
 | Deny Health — scoring still works | |
 
-## E. PadelNote Pro (StoreKit)
+## E. PadelNote Watch Pro (StoreKit)
 
-See [PRO_SUBSCRIPTION.md](PRO_SUBSCRIPTION.md) for product IDs, free/Pro matrix, and ASC subscription setup.
+See [PRO_SUBSCRIPTION.md](PRO_SUBSCRIPTION.md) for product IDs, free/Pro matrix, and ASC subscription setup. Privacy policy: [PRIVACY.md](PRIVACY.md).
 
 ## Locked project values
 
 | Item | Value |
 |---|---|
-| ASC listing name | `PadelNote Watch` (home-screen can remain PadelNote) |
+| ASC listing name | `PadelNote Watch` |
+| Home-screen display name | `PadelNote Watch` |
 | iOS bundle ID | `com.farcasmc.padelnote` |
 | Watch bundle ID | `com.farcasmc.padelnote.watchkitapp` |
 | Team | `8C5FKN2L72` (Mihai Farcas) |
-| Version / build | `1.0` / `1` |
+| Version / build | `1.0` / `4` |
 | Archive | `build/PadelNote.xcarchive` |
-| Upload | Build **1.0 (1)** uploaded to App Store Connect — wait for processing, then install via TestFlight |
+| Privacy policy URL | `https://raw.githubusercontent.com/farcasmihaicristian/PadelNote/main/docs/PRIVACY.md` |
 

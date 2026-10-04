@@ -20,7 +20,7 @@ struct ThemeSelectionView: View {
                     Button {
                         showPaywall = true
                     } label: {
-                        Label(String(localized: "Unlock all themes with Pro"), systemImage: "lock.fill")
+                        Label(String(localized: "Unlock all themes with PadelNote Watch Pro"), systemImage: "lock.fill")
                     }
                 }
             }

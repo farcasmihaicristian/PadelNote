@@ -30,11 +30,11 @@ struct ProPaywallView: View {
                     }
                     .storeButton(.visible, for: .restorePurchases)
                     .subscriptionStorePolicyDestination(
-                        url: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!,
+                        url: LegalURLs.termsOfService,
                         for: .termsOfService
                     )
                     .subscriptionStorePolicyDestination(
-                        url: URL(string: "https://www.apple.com/privacy/")!,
+                        url: LegalURLs.privacyPolicy,
                         for: .privacyPolicy
                     )
                     .onInAppPurchaseCompletion { _, result in
@@ -89,7 +89,7 @@ struct ProPaywallView: View {
         #if DEBUG
         return Text(String(localized: "No StoreKit products loaded. For Simulator: Edit Scheme → Run → Options → StoreKit Configuration → PadelNote.storekit."))
         #else
-        return Text(String(localized: "No subscriptions found in App Store Connect yet. Create the monthly and yearly Pro products, finish the Paid Apps agreement, then try again."))
+        return Text(String(localized: "Subscriptions are temporarily unavailable. Check your connection and try again, or use Restore Purchases."))
         #endif
     }
 }

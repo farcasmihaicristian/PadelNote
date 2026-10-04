@@ -31,6 +31,11 @@ Subscription group display name: **PadelNote Watch Pro**
 4. Attach both products to the app version for review.
 5. Review notes: “Core scoring is free. Pro is optional: all themes, moving-ball serve indicator, and full match history beyond 30 days.”
 
+## Privacy
+
+In-app and App Store Connect privacy URL: [PRIVACY.md](PRIVACY.md)  
+`https://raw.githubusercontent.com/farcasmihaicristian/PadelNote/main/docs/PRIVACY.md`
+
 ## TestFlight / device testing (real App Store sandbox)
 
 TestFlight **does not** use `PadelNote.storekit`. Products must exist in App Store Connect.

@@ -70,8 +70,8 @@ struct HomeView: View {
                     if recentMatches.isEmpty {
                         ContentUnavailableView(
                             String(localized: "No matches yet"),
-                            systemImage: "sportscourt",
-                            description: Text(String(localized: "Your completed matches will appear here."))
+                            systemImage: "applewatch",
+                            description: Text(String(localized: "Score matches on Apple Watch. When you save a match, it appears here on iPhone."))
                         )
                     } else {
                         ForEach(recentMatches) { match in

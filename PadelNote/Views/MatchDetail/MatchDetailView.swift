@@ -17,7 +17,7 @@ struct MatchDetailView: View {
                 detailList
             } else {
                 ContentUnavailableView {
-                    Label(String(localized: "Pro history"), systemImage: "lock.fill")
+                    Label(String(localized: "PadelNote Watch Pro history"), systemImage: "lock.fill")
                 } description: {
                     Text(String(localized: "Matches older than 30 days require PadelNote Watch Pro."))
                 } actions: {
