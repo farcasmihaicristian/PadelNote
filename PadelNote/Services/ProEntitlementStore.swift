@@ -11,9 +11,24 @@ final class ProEntitlementStore {
     private(set) var isLoading = false
     private(set) var lastErrorMessage: String?
 
+    #if DEBUG
+    /// Simulator/dev bypass when StoreKit Configuration fails to load products.
+    private static let debugForceProKey = "debug.forceProUnlocked"
+    var debugForceProUnlocked: Bool = false {
+        didSet {
+            UserDefaults.standard.set(debugForceProUnlocked, forKey: Self.debugForceProKey)
+            isPro = debugForceProUnlocked || storeKitEntitled
+        }
+    }
+    #endif
+
+    private var storeKitEntitled = false
     private var updatesTask: Task<Void, Never>?
 
     init() {
+        #if DEBUG
+        debugForceProUnlocked = UserDefaults.standard.bool(forKey: Self.debugForceProKey)
+        #endif
         updatesTask = Task { [weak self] in
             for await update in Transaction.updates {
                 await self?.handle(update)
@@ -28,13 +43,18 @@ final class ProEntitlementStore {
         lastErrorMessage = nil
 
         do {
-            products = try await Product.products(for: ProProductIDs.all)
-                .sorted { lhs, rhs in
-                    // Monthly first, then yearly.
-                    if lhs.id == ProProductIDs.monthly { return true }
-                    if rhs.id == ProProductIDs.monthly { return false }
-                    return lhs.displayName < rhs.displayName
-                }
+            let loaded = try await Product.products(for: Array(ProProductIDs.all))
+            products = loaded.sorted { lhs, rhs in
+                // Monthly first, then yearly.
+                if lhs.id == ProProductIDs.monthly { return true }
+                if rhs.id == ProProductIDs.monthly { return false }
+                return lhs.displayName < rhs.displayName
+            }
+            if products.isEmpty {
+                lastErrorMessage = String(
+                    localized: "StoreKit returned 0 products. The Run scheme must load PadelNote.storekit (not the real App Store)."
+                )
+            }
         } catch {
             lastErrorMessage = error.localizedDescription
         }
@@ -91,7 +111,12 @@ final class ProEntitlementStore {
                 break
             }
         }
-        isPro = entitled
+        storeKitEntitled = entitled
+        #if DEBUG
+        isPro = debugForceProUnlocked || storeKitEntitled
+        #else
+        isPro = storeKitEntitled
+        #endif
     }
 
     private func handle(_ result: VerificationResult<Transaction>) async {

@@ -65,6 +65,20 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            #if DEBUG
+            Section {
+                Toggle(
+                    String(localized: "Unlock Pro (Simulator)"),
+                    isOn: Bindable(proStore).debugForceProUnlocked
+                )
+                Text(String(localized: "Debug only. Use this when StoreKit Configuration fails to load products in the Simulator."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text(String(localized: "Developer"))
+            }
+            #endif
+
             Section(String(localized: "About")) {
                 LabeledContent(String(localized: "App")) {
                     Text("PadelNote Watch")
