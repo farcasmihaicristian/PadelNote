@@ -34,19 +34,22 @@ import Testing
 
 // MARK: - P2-1 — serve-order alignment
 
-@Test func serveOrderAlignmentDerivesTruncatesAndInherits() {
+@Test func serveOrderAlignmentDerivesTruncatesAndContinuesFIP() {
     // First set derives from firstServer.
-    let one = ServeOrder.aligned([], completedSetCount: 0, firstServer: .sideBPlayer1)
+    let one = ServeOrder.aligned([], completedSets: [], firstServer: .sideBPlayer1)
     #expect(one.count == 1)
     #expect(one[0] == ServeOrder.standard(firstServer: .sideBPlayer1))
 
-    // A new set inherits the previous set's order.
-    let two = ServeOrder.aligned(one, completedSetCount: 1, firstServer: .sideBPlayer1)
+    // 6-4 (10 games), B1-first rotation B1→A1→B2→A2: next opener is B2.
+    let set14 = SetScore(gamesA: 6, gamesB: 4)
+    let two = ServeOrder.aligned(one, completedSets: [set14], firstServer: .sideBPlayer1)
     #expect(two.count == 2)
-    #expect(two[1] == two[0])
+    #expect(two[1] == one[0].orderStartingNextSet(afterGamesPlayed: 10))
+    #expect(two[1].firstServer == .sideBPlayer2)
+    #expect(two[1] != two[0])
 
     // Undoing back into an earlier set trims later orders.
-    let trimmed = ServeOrder.aligned(two, completedSetCount: 0, firstServer: .sideBPlayer1)
+    let trimmed = ServeOrder.aligned(two, completedSets: [], firstServer: .sideBPlayer1)
     #expect(trimmed.count == 1)
     #expect(trimmed[0] == one[0])
 }

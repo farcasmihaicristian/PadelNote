@@ -158,3 +158,62 @@ private func timeline(_ teams: [Team], rules: MatchRules = .default, orders: [Se
     #expect(upcoming.servingSlot == .sideBPlayer2)
     #expect(upcoming.servingTeam == .b)
 }
+
+// MARK: - FIP between-set handoff
+
+@Test func nextSetOpensWithFIPContinuationAfterSixFour() {
+    // Default A1→B1→A2→B2. After 10 games (6-4), next is A2 (team A again).
+    let set1 = ServeOrder.default
+    let set2 = set1.orderStartingNextSet(afterGamesPlayed: 10)
+    #expect(set2.firstServer == .sideAPlayer2)
+    #expect(set2.rotation == [.sideAPlayer2, .sideBPlayer2, .sideAPlayer1, .sideBPlayer1])
+
+    let events = reachGameScore(gamesA: 6, gamesB: 4)
+    let orders = ServeOrder.aligned([set1], completedSets: [SetScore(gamesA: 6, gamesB: 4)], firstServer: .sideAPlayer1)
+    let upcoming = timeline(events, orders: orders).upcoming
+    #expect(upcoming.servingSlot == .sideAPlayer2)
+    #expect(upcoming.servingTeam == .a)
+    #expect(!upcoming.isTieBreak)
+}
+
+@Test func nextSetOpensWithOtherTeamAfterSixThree() {
+    // 9 games with A1→B1→A2→B2: last server A1, next B1 (other team).
+    let set1 = ServeOrder.default
+    let set2 = set1.orderStartingNextSet(afterGamesPlayed: 9)
+    #expect(set2.firstServer == .sideBPlayer1)
+
+    let events = reachGameScore(gamesA: 6, gamesB: 3)
+    let orders = ServeOrder.aligned(
+        [set1],
+        completedSets: [SetScore(gamesA: 6, gamesB: 3)],
+        firstServer: .sideAPlayer1
+    )
+    #expect(timeline(events, orders: orders).upcoming.servingSlot == .sideBPlayer1)
+}
+
+@Test func nextSetAfterTieBreakStartsWithPairThatDidNotOpenTieBreak() {
+    // At 6-6, TB opens with A1. FIP: next set opened by the other pair → B.
+    // 7+6 = 13 games in the SetScore → server(13) = B1.
+    let set1 = ServeOrder.default
+    #expect(set1.server(forGameInSet: 12) == .sideAPlayer1)
+    let set2 = set1.orderStartingNextSet(afterGamesPlayed: 13)
+    #expect(set2.firstServer == .sideBPlayer1)
+    #expect(set2.firstServer.team == .b)
+
+    var events = reachGameScore(gamesA: 6, gamesB: 6)
+    // Win TB 7-0 for A.
+    events += Array(repeating: Team.a, count: 7)
+    let finished = ScoringEngine.replay(
+        events: events.map { PointEvent(team: $0) },
+        rules: .default
+    )
+    #expect(finished.completedSets.count == 1)
+    #expect(finished.completedSets[0].gamesA == 7 && finished.completedSets[0].gamesB == 6)
+
+    let orders = ServeOrder.aligned(
+        [set1],
+        completedSets: finished.completedSets,
+        firstServer: .sideAPlayer1
+    )
+    #expect(timeline(events, orders: orders).upcoming.servingSlot == .sideBPlayer1)
+}

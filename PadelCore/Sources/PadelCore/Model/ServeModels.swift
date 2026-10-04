@@ -47,23 +47,43 @@ public struct ServeOrder: Codable, Hashable, Sendable {
         return order[((gameIndexInSet % order.count) + order.count) % order.count]
     }
 
-    /// Aligns a per-set serve-order list to the sets played so far. The serving
-    /// order is fixed once a set starts: new sets inherit the previous set's
-    /// order (or derive from `firstServer` for the very first set), and orders
-    /// beyond the active set are trimmed. Shared by the iOS live view and the
-    /// watch coordinator so the rotation rule lives in one tested place.
+    /// FIP handoff into the next set: keep the four-player cycle, starting with
+    /// whoever is due after `gamesPlayed` games of the previous set (including
+    /// the tie-break game when the set finished 7–6). That pair may still change
+    /// which partner opens at the set boundary; this is the automatic default.
+    public func orderStartingNextSet(afterGamesPlayed gamesPlayed: Int) -> ServeOrder {
+        let nextFirst = server(forGameInSet: gamesPlayed)
+        let rot = rotation
+        guard let idx = rot.firstIndex(of: nextFirst) else {
+            return .standard(firstServer: nextFirst)
+        }
+        let rotated = Array(rot[idx...]) + Array(rot[..<idx])
+        return ServeOrder(firstServer: rotated[0], firstReceiverServer: rotated[1])
+    }
+
+    /// Aligns a per-set serve-order list to the sets played so far. New sets use
+    /// FIP continuation from the previous set’s game count (not a full restart).
+    /// The first set derives from `firstServer`. Orders beyond the active set are
+    /// trimmed (undo). Shared by the watch coordinator so the rule lives in one
+    /// tested place.
     public static func aligned(
         _ orders: [ServeOrder],
-        completedSetCount: Int,
+        completedSets: [SetScore],
         firstServer: PlayerSlot
     ) -> [ServeOrder] {
-        let targetCount = completedSetCount + 1
+        let targetCount = completedSets.count + 1
         var result = orders
         if result.count > targetCount {
             result = Array(result.prefix(targetCount))
         }
         while result.count < targetCount {
-            result.append(result.last ?? ServeOrder.standard(firstServer: firstServer))
+            if let previous = result.last, result.count <= completedSets.count {
+                let finished = completedSets[result.count - 1]
+                let gamesPlayed = finished.gamesA + finished.gamesB
+                result.append(previous.orderStartingNextSet(afterGamesPlayed: gamesPlayed))
+            } else {
+                result.append(result.last ?? ServeOrder.standard(firstServer: firstServer))
+            }
         }
         return result
     }

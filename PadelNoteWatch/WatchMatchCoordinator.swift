@@ -261,9 +261,10 @@ final class WatchMatchCoordinator {
         setLineups[activeSetIndex] = activePlayerNames
     }
 
-    /// Keeps `setServeOrders` aligned with the sets played so far. Unlike the
-    /// lineup, the serving order is fixed once a set starts: new sets inherit the
-    /// previous set's order (or derive from `firstServer` for the first set).
+    /// Keeps `setServeOrders` aligned with the sets played so far. New sets follow
+    /// FIP continuation (next team/player due after the previous set), or derive
+    /// from `firstServer` for the first set. Manual first-server changes at 0-0
+    /// still override the active set’s entry.
     private func syncSetServeOrders() {
         guard let session else {
             setServeOrders = []
@@ -272,9 +273,13 @@ final class WatchMatchCoordinator {
 
         setServeOrders = ServeOrder.aligned(
             setServeOrders,
-            completedSetCount: session.state.completedSets.count,
+            completedSets: session.state.completedSets,
             firstServer: firstServer
         )
+        let activeSetIndex = session.state.completedSets.count
+        if activeSetIndex < setServeOrders.count {
+            firstServer = setServeOrders[activeSetIndex].firstServer
+        }
     }
 
     private func makeSetup(from names: MatchPlayerNames) -> MatchPlayerSetup {
