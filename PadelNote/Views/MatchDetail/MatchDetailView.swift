@@ -19,9 +19,9 @@ struct MatchDetailView: View {
                 ContentUnavailableView {
                     Label(String(localized: "Pro history"), systemImage: "lock.fill")
                 } description: {
-                    Text(String(localized: "Matches older than 30 days require PadelNote Pro."))
+                    Text(String(localized: "Matches older than 30 days require PadelNote Watch Pro."))
                 } actions: {
-                    Button(String(localized: "Unlock PadelNote Pro")) {
+                    Button(String(localized: "Unlock PadelNote Watch Pro")) {
                         showPaywall = true
                     }
                     .buttonStyle(.borderedProminent)

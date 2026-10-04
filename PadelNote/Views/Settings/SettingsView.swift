@@ -67,7 +67,7 @@ struct SettingsView: View {
 
             Section(String(localized: "About")) {
                 LabeledContent(String(localized: "App")) {
-                    Text("PadelNote")
+                    Text("PadelNote Watch")
                 }
                 LabeledContent(String(localized: "Version")) {
                     Text(appVersion)
@@ -128,7 +128,7 @@ struct SettingsView: View {
                 Button {
                     showPaywall = true
                 } label: {
-                    Label(String(localized: "Unlock PadelNote Pro"), systemImage: "star.circle.fill")
+                    Label(String(localized: "Unlock PadelNote Watch Pro"), systemImage: "star.circle.fill")
                 }
             }
 

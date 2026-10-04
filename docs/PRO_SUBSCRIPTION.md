@@ -1,4 +1,4 @@
-# PadelNote Pro subscription
+# PadelNote Watch Pro subscription
 
 Pro unlocks Appearance extras and match history older than 30 days. Scoring, HealthKit, live mirror, and the last 30 days of journal stay free.
 
@@ -9,7 +9,7 @@ Pro unlocks Appearance extras and match history older than 30 days. Scoring, Hea
 | `com.farcasmc.padelnote.pro.monthly` | 1 month | $2.99 |
 | `com.farcasmc.padelnote.pro.yearly` | 1 year | $19.99 (~44% off) |
 
-Subscription group display name: **PadelNote Pro**
+Subscription group display name: **PadelNote Watch Pro**
 
 ## Free vs Pro
 
@@ -26,7 +26,7 @@ Subscription group display name: **PadelNote Pro**
 ## App Store Connect setup
 
 1. Open [App Store Connect](https://appstoreconnect.apple.com) → **PadelNote Watch** → **Subscriptions**.
-2. Create subscription group **PadelNote Pro**.
+2. Create subscription group **PadelNote Watch Pro**.
 3. Add auto-renewable subscriptions with the product IDs above (localize display names / descriptions).
 4. Attach both products to the app version for review.
 5. Review notes: “Core scoring is free. Pro is optional: all themes, moving-ball serve indicator, and full match history beyond 30 days.”

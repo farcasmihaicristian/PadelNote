@@ -51,15 +51,18 @@ struct PadelNoteApp: App {
                     MatchPersistence.backfillCompletionFlags(context: modelContainer.mainContext)
                     PlayerPersistence.backfillUnlinkedMatches(context: modelContainer.mainContext)
                     _ = proStore.enforceFreeAppearanceDefaults(themeStore: themeStore)
+                    AppIconController.sync(isPro: proStore.isPro)
                     syncCoordinator.syncPhoneContextToWatch()
                 }
                 .task {
                     await proStore.refresh()
+                    AppIconController.sync(isPro: proStore.isPro)
                     if proStore.enforceFreeAppearanceDefaults(themeStore: themeStore) {
                         syncCoordinator.syncPhoneContextToWatch()
                     }
                 }
-                .onChange(of: proStore.isPro) { _, _ in
+                .onChange(of: proStore.isPro) { _, isPro in
+                    AppIconController.sync(isPro: isPro)
                     if proStore.enforceFreeAppearanceDefaults(themeStore: themeStore) {
                         syncCoordinator.syncPhoneContextToWatch()
                     }

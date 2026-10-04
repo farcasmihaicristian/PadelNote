@@ -67,11 +67,11 @@
       "localizations" : [
         {
           "description" : "Themes, ball serve indicator, and full match history.",
-          "displayName" : "PadelNote Pro",
+          "displayName" : "PadelNote Watch Pro",
           "locale" : "en_US"
         }
       ],
-      "name" : "PadelNote Pro",
+      "name" : "PadelNote Watch Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [

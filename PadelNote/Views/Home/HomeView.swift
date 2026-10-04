@@ -87,7 +87,7 @@ struct HomeView: View {
             .refreshable {
                 await syncCoordinator.refresh()
             }
-            .navigationTitle(String(localized: "PadelNote"))
+            .navigationTitle(String(localized: "PadelNote Watch"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {

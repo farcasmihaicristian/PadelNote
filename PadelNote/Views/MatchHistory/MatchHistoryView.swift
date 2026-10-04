@@ -44,7 +44,7 @@ struct MatchHistoryView: View {
                         showPaywall = true
                     } label: {
                         Label(
-                            String(localized: "Older than 30 days requires PadelNote Pro"),
+                            String(localized: "Older than 30 days requires PadelNote Watch Pro"),
                             systemImage: "lock.fill"
                         )
                     }
@@ -85,7 +85,7 @@ struct MatchHistoryView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel(String(localized: "Locked match, requires PadelNote Pro"))
+                                .accessibilityLabel(String(localized: "Locked match, requires PadelNote Watch Pro"))
                             }
                         }
                         .onDelete { offsets in

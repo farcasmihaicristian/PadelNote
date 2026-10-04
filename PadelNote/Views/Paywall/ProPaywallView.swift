@@ -9,7 +9,7 @@ struct ProPaywallView: View {
         NavigationStack {
             SubscriptionStoreView(productIDs: ProProductIDs.all) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(String(localized: "PadelNote Pro"))
+                    Text(String(localized: "PadelNote Watch Pro"))
                         .font(.largeTitle.bold())
 
                     Text(String(localized: "Unlock every court theme, the moving-ball serve indicator, and your full match journal beyond the last 30 days."))

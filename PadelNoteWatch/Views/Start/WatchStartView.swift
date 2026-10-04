@@ -104,7 +104,7 @@ struct WatchStartView: View {
                 .accessibilityLabel(String(localized: "Start match"))
             }
         }
-        .navigationTitle(String(localized: "PadelNote"))
+        .navigationTitle(String(localized: "PadelNote Watch"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

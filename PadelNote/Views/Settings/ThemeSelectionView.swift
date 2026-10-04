@@ -45,7 +45,7 @@ struct ThemeSelectionView: View {
                     .accessibilityLabel(String(localized: "\(theme.name) theme"))
                     .accessibilityHint(
                         !unlocked
-                            ? String(localized: "Requires PadelNote Pro")
+                            ? String(localized: "Requires PadelNote Watch Pro")
                             : theme.id == themeStore.activeTheme.id
                                 ? String(localized: "Currently selected")
                                 : String(localized: "Selects this app theme")
