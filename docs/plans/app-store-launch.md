@@ -7,7 +7,7 @@ status: active
 
 ## Context
 
-The app is on TestFlight (v1.0, build 6, Individual team `8C5FKN2L72`) and needs to go live on the App Store. Enrollment, the ASC app record ("PadelNote Watch", bundle `com.farcasmc.padelnote`), Sign in with Apple, HealthKit, app icons, and English + Spanish strings are already in place. What remains: fold in the latest unshipped code, a few code/config fixes, the App Store Connect metadata + privacy + IAP setup, store assets, and the submission itself.
+The app is on TestFlight (v1.0, build 6, Individual team `8C5FKN2L72`) and needs to go live on the App Store. Enrollment, the ASC app record ("PadelNote Watch", bundle `com.farcasmc.padelnote`), Sign in with Apple, HealthKit, app icons, and a now-complete English + Spanish string catalog are all in place. What remains: a few code/config fixes, the App Store Connect metadata + privacy + IAP setup, store assets, and the submission itself.
 
 **Decisions:** ship v1 **with** the PadelNote Watch Pro subscription · support **iPhone + Apple Watch only** (drop iPad).
 
@@ -15,19 +15,15 @@ Lean on the existing docs (don't duplicate): [TESTFLIGHT.md](../TESTFLIGHT.md), 
 
 ---
 
-## Phase 0 — Mac build & smoke-test the unshipped delta
+## Phase 0 — Branch state (no build gate)
 
-The app already builds and ships from a Mac — TestFlight build 6 was Mac-built and verified, so the app as a whole is in good shape (the old "not compile-verified" framing in [mac-build-verification.md](mac-build-verification.md) is stale). The only code not yet on a TestFlight build is the recent cleanup commit (`24eead3`), authored on Windows. Fold it into the next normal Mac build:
-
-- [ ] `cd PadelCore && swift build && swift test` — all green (incl. the `servingSlot` codec assertion added in that commit).
-- [ ] Build both schemes in Xcode. The one architectural change to sanity-check is the `ThemeUI.swift` move into PadelCore (themes/serve indicator still render on both targets).
-- [ ] Smoke-test the areas it touched: launch (ModelContainer fallback), live-match mirror serving highlight, theme picker, Spanish strings — no full regression needed; build 6 already covered the rest.
+`main` is the Mac-built, TestFlight-verified **build-6 line** and already contains the cleanup: the `#if DEBUG` re-seed guard, an anonymized seed CSV (no real names), `ThemeUI.swift` consolidated into PadelCore (app copies removed), and the Form-based watch start screen. The earlier Windows cleanup commits (`24eead3`, `c6b5a57`) were a parallel effort, are **not** on `main`, and were superseded by that equivalent Mac work — so there is nothing to fold in. Archive from the Mac as usual for each submission build; the old "not compile-verified" framing in [mac-build-verification.md](mac-build-verification.md) is stale.
 
 ## Phase 1 — Code & config fixes before archiving
 
 1. **Account deletion (hard App Review requirement, 5.1.1(v)).** The app enables Sign in with Apple and creates an `AppUser`, but there is **no in-app delete path** — only Sign out (doesn't delete) and per-match swipe-delete. Add a "Delete account & erase data" action in `PadelNote/Views/Settings/SettingsView.swift` that deletes the `AppUser`, clears the Keychain session (`AuthSessionStore`, service `com.farcasmc.padelnote.auth`), unlinks/deletes the owned `Player`, and offers to erase local matches. Start from `CurrentUserStore.signOut` + `UserAccountPersistence`.
 2. **Narrow to iPhone.** Set `TARGETED_DEVICE_FAMILY = 1` for the iOS target (both configs) in `PadelNote.xcodeproj/project.pbxproj`; drop the iPad orientation keys. (Watch target stays `4`.)
-3. **Advertise Spanish.** Add `es` to `knownRegions` in project.pbxproj — the `.xcstrings` has full `es` but the project only declares `en`/`Base`, so Spanish won't show as a supported App Store language otherwise.
+3. **Advertise Spanish.** The in-app string catalog is now 100% translated (all 269 keys, including the Pro paywall strings — completed in this pass). But `project.pbxproj` only declares `en`/`Base` in `knownRegions`; add `es` there or Spanish won't show as a supported App Store language. (Store-listing copy is localized separately in Phase 5.)
 4. **Confirm the iPhone home-screen name.** `INFOPLIST_KEY_CFBundleDisplayName = "PadelNote Watch"` on the iOS target — decide whether the iPhone icon should read "PadelNote" (cleaner) or stay "PadelNote Watch" (matches the ASC listing).
 5. **Audit the paywall for subscription compliance (3.1.2).** Verify `PadelNote/Views/Paywall/ProPaywallView.swift` shows, before purchase: title + duration + price of each plan, auto-renew disclosure, a **Restore Purchases** button, and tappable **Privacy Policy** and **Terms of Use (EULA)** links. Add any missing — frequent rejection cause.
 6. **Bump the build** to 7 (`CURRENT_PROJECT_VERSION`), re-archive, upload a fresh TestFlight build for final validation.
