@@ -14,6 +14,9 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
     /// Optional for backward compatibility with payloads sent before the serve
     /// indicator style was configurable. Consumers should fall back to `.default`.
     public var serveIndicatorStyle: ServeIndicatorStyle?
+    /// Optional for backward compatibility with payloads sent before watch
+    /// haptics were configurable. Consumers should fall back to `false`.
+    public var watchHapticsEnabled: Bool?
 
     public init(
         rules: MatchRules,
@@ -21,7 +24,8 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
         meProfile: WatchMeProfile? = nil,
         workoutActivity: WorkoutActivityKind? = nil,
         themeID: String? = nil,
-        serveIndicatorStyle: ServeIndicatorStyle? = nil
+        serveIndicatorStyle: ServeIndicatorStyle? = nil,
+        watchHapticsEnabled: Bool? = nil
     ) {
         self.rules = rules
         self.knownPlayerNames = knownPlayerNames
@@ -29,5 +33,6 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
         self.workoutActivity = workoutActivity
         self.themeID = themeID
         self.serveIndicatorStyle = serveIndicatorStyle
+        self.watchHapticsEnabled = watchHapticsEnabled
     }
 }

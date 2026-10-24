@@ -4,9 +4,19 @@ import SwiftUI
 struct WatchLiveMatchOptionsView: View {
     @Bindable var coordinator: WatchMatchCoordinator
     @Binding var isPresented: Bool
+    @State private var showEndConfirmation = false
 
     var body: some View {
         List {
+            Button(role: .destructive) {
+                showEndConfirmation = true
+            } label: {
+                Text(String(localized: "End match"))
+                    .font(.headline)
+            }
+            .disabled(coordinator.session?.events.isEmpty ?? true)
+            .accessibilityLabel(String(localized: "End match"))
+
             optionButton(
                 title: String(localized: "Swap Top Team Players")
             ) {
@@ -42,6 +52,17 @@ struct WatchLiveMatchOptionsView: View {
         }
         .navigationTitle(String(localized: "Court"))
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            String(localized: "End this match?"),
+            isPresented: $showEndConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "End match"), role: .destructive) {
+                isPresented = false
+                coordinator.endMatchEarly()
+            }
+            Button(String(localized: "Cancel"), role: .cancel) {}
+        }
     }
 
     private func optionButton(

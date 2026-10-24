@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import PadelCore
+import WatchKit
 
 @Observable
 @MainActor
@@ -111,6 +112,7 @@ final class WatchMatchCoordinator {
             ServeIndicatorStylePreferences.save(serveIndicatorStyle)
             onServeIndicatorStyleChanged?(serveIndicatorStyle)
         }
+        WatchHapticsPreferences.save(payload.watchHapticsEnabled ?? false)
         knownPlayerNames = payload.knownPlayerNames
         meProfile = payload.meProfile
         guard phase == .idle else { return }
@@ -187,6 +189,7 @@ final class WatchMatchCoordinator {
     /// Picks the receiver's serve side for the upcoming deciding point.
     func chooseDecidingSide(_ side: ServeSide) {
         decidingSideOverride = side
+        WatchHaptics.play(.click)
         publishSnapshot()
     }
 
@@ -205,6 +208,7 @@ final class WatchMatchCoordinator {
                 setServeOrders[activeSetIndex] = order
             }
         }
+        WatchHaptics.play(.click)
         persistLiveState()
         publishSnapshot()
     }
@@ -232,6 +236,7 @@ final class WatchMatchCoordinator {
         }
         playerSetup = setup
         syncSetLineups()
+        WatchHaptics.play(.click)
         persistLiveState()
         publishSnapshot()
     }
@@ -404,8 +409,10 @@ final class WatchMatchCoordinator {
         persistLiveState()
 
         if session.state.isMatchOver {
+            WatchHaptics.play(.success)
             transitionToSummary(endedEarly: false)
         } else {
+            WatchHaptics.play(.click)
             publishSnapshot()
         }
     }
@@ -414,6 +421,7 @@ final class WatchMatchCoordinator {
         guard var session, phase == .live else { return }
         guard session.undo() else { return }
         self.session = session
+        WatchHaptics.play(.directionDown)
         decidingSideOverride = nil
         syncSetLineups()
         syncSetServeOrders()
@@ -431,10 +439,12 @@ final class WatchMatchCoordinator {
             rules = originalRules
             session = ScoringSession(rules: originalRules, events: events)
             continuation = .none
+            WatchHaptics.play(.stop)
             transitionToSummary(endedEarly: false)
             return
         }
 
+        WatchHaptics.play(.stop)
         transitionToSummary(endedEarly: true)
     }
 

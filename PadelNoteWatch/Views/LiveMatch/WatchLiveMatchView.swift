@@ -4,7 +4,6 @@ import SwiftUI
 struct WatchLiveMatchView: View {
     @Environment(AppThemeStore.self) private var themeStore
     @Bindable var coordinator: WatchMatchCoordinator
-    @State private var showEndConfirmation = false
     @State private var showCourtOptions = false
     @State private var showServeSidePrompt = false
 
@@ -55,14 +54,6 @@ struct WatchLiveMatchView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                liveControlButton(String(localized: "End")) {
-                    showEndConfirmation = true
-                }
-                .disabled(coordinator.session?.events.isEmpty ?? true)
-                .accessibilityLabel(String(localized: "End match"))
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
                 liveControlButton(String(localized: "Undo")) {
                     coordinator.undo()
                 }
@@ -72,16 +63,6 @@ struct WatchLiveMatchView: View {
         }
         .navigationDestination(isPresented: $showCourtOptions) {
             WatchLiveMatchOptionsView(coordinator: coordinator, isPresented: $showCourtOptions)
-        }
-        .confirmationDialog(
-            String(localized: "End this match?"),
-            isPresented: $showEndConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button(String(localized: "End match"), role: .destructive) {
-                coordinator.endMatchEarly()
-            }
-            Button(String(localized: "Cancel"), role: .cancel) {}
         }
         .confirmationDialog(
             String(localized: "Deciding point — receiver picks the serve side"),

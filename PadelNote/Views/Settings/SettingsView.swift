@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var workoutActivity = WorkoutActivityPreferences.load()
     @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
     @State private var serveIndicatorStyle = ServeIndicatorStylePreferences.load()
+    @State private var watchHapticsEnabled = WatchHapticsPreferences.load()
     @State private var showPaywall = false
 
     private var appVersion: String {
@@ -42,6 +43,15 @@ struct SettingsView: View {
             meSlotSection
 
             themeSection
+
+            Section(String(localized: "Apple Watch")) {
+                Toggle(String(localized: "Vibration feedback"), isOn: $watchHapticsEnabled)
+                    .accessibilityLabel(String(localized: "Vibration feedback on Apple Watch"))
+
+                Text(String(localized: "Apple Watch vibrates when you score a point, undo, or change the court setup during a match."))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             Section(String(localized: "Health")) {
                 LabeledContent(String(localized: "HealthKit access")) {
@@ -107,6 +117,10 @@ struct SettingsView: View {
         .onChange(of: finalSetTieBreak) { _, _ in saveDefaults() }
         .onChange(of: workoutActivity) { _, newValue in
             WorkoutActivityPreferences.save(newValue)
+            syncCoordinator.syncPhoneContextToWatch()
+        }
+        .onChange(of: watchHapticsEnabled) { _, newValue in
+            WatchHapticsPreferences.save(newValue)
             syncCoordinator.syncPhoneContextToWatch()
         }
         .onChange(of: preferredMeSlot) { _, newValue in

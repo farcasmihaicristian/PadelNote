@@ -47,7 +47,8 @@ final class PhoneSyncCoordinator {
             meProfile: PlayerPersistence.watchMeProfile(context: modelContext),
             workoutActivity: WorkoutActivityPreferences.load(),
             themeID: AppThemePreferences.loadID(),
-            serveIndicatorStyle: ServeIndicatorStylePreferences.load()
+            serveIndicatorStyle: ServeIndicatorStylePreferences.load(),
+            watchHapticsEnabled: WatchHapticsPreferences.load()
         )
         listener.publishPhoneContext(payload)
     }
