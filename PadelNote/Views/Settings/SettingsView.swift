@@ -1,4 +1,6 @@
+import MessageUI
 import PadelCore
+import StoreKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -17,6 +19,10 @@ struct SettingsView: View {
     @State private var undoButtonPosition = UndoButtonPositionPreferences.load()
     @State private var watchHapticsEnabled = WatchHapticsPreferences.load()
     @State private var showPaywall = false
+    @State private var mailDraft: FeedbackDraft?
+    @State private var showNoMailAlert = false
+    @Environment(\.openURL) private var openURL
+    @Environment(\.requestReview) private var requestReview
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -90,6 +96,8 @@ struct SettingsView: View {
             }
             #endif
 
+            feedbackSection
+
             Section(String(localized: "About")) {
                 LabeledContent(String(localized: "App")) {
                     Text(String(localized: "PadelNote Watch"))
@@ -156,6 +164,63 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showPaywall) {
             ProPaywallView()
+        }
+        .sheet(item: $mailDraft) { draft in
+            MailComposeView(draft: draft)
+                .ignoresSafeArea()
+        }
+        .alert(String(localized: "No email app found"), isPresented: $showNoMailAlert) {
+            Button(String(localized: "Copy address")) {
+                UIPasteboard.general.string = LegalURLs.feedbackEmail
+            }
+            Button(String(localized: "OK"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "Send your message to \(LegalURLs.feedbackEmail) from any email app."))
+        }
+    }
+
+    private var feedbackSection: some View {
+        Section {
+            Button {
+                composeFeedback(.feedback)
+            } label: {
+                Label(String(localized: "Send feedback"), systemImage: "envelope")
+            }
+
+            Button {
+                composeFeedback(.problem)
+            } label: {
+                Label(String(localized: "Report a problem"), systemImage: "ladybug")
+            }
+
+            Button {
+                if let url = LegalURLs.writeReview {
+                    openURL(url)
+                } else {
+                    requestReview()
+                }
+            } label: {
+                Label(String(localized: "Rate PadelNote"), systemImage: "star")
+            }
+        } header: {
+            Text(String(localized: "Feedback & Support"))
+        } footer: {
+            Text(String(localized: "Messages go to \(LegalURLs.feedbackEmail). App and device details are added so we can help faster; you can edit them before sending."))
+        }
+    }
+
+    private func composeFeedback(_ kind: FeedbackDraft.Kind) {
+        let draft = FeedbackComposer.draft(kind, isPro: proStore.isPro)
+        if MFMailComposeViewController.canSendMail() {
+            mailDraft = draft
+        } else if let url = draft.mailtoURL {
+            openURL(url) { accepted in
+                if !accepted {
+                    showNoMailAlert = true
+                }
+            }
+        } else {
+            showNoMailAlert = true
         }
     }
 

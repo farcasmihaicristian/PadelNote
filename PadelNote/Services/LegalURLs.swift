@@ -10,4 +10,14 @@ enum LegalURLs {
     static let privacyPolicy = URL(
         string: "https://raw.githubusercontent.com/farcasmihaicristian/PadelNote/main/docs/PRIVACY.md"
     )!
+
+    static let feedbackEmail = "padelnote@proton.me"
+
+    /// Numeric Apple ID from App Store Connect → App Information. While `nil`,
+    /// "Rate PadelNote" falls back to the system rating prompt.
+    static let appStoreID: String? = nil
+
+    static var writeReview: URL? {
+        appStoreID.flatMap { URL(string: "https://apps.apple.com/app/id\($0)?action=write-review") }
+    }
 }

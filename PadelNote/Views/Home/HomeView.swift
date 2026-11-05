@@ -1,10 +1,13 @@
 import PadelCore
+import StoreKit
 import SwiftData
 import SwiftUI
 
 struct HomeView: View {
     @Environment(PhoneSyncCoordinator.self) private var syncCoordinator
     @Environment(ProEntitlementStore.self) private var proStore
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.requestReview) private var requestReview
     @Query private var matches: [Match]
 
     private var recentMatches: [Match] {
@@ -98,7 +101,28 @@ struct HomeView: View {
                     .accessibilityLabel(String(localized: "Settings"))
                 }
             }
+            .onChange(of: matches.first?.startedAt) { previous, latest in
+                // Only a newer match arriving counts; deletions or the
+                // initial load must not trigger the prompt.
+                guard let previous, let latest, latest > previous else { return }
+                requestReviewIfEligible()
+            }
         }
+    }
+
+    private func requestReviewIfEligible() {
+        let completedCount = (try? modelContext.fetchCount(
+            FetchDescriptor<Match>(predicate: #Predicate { $0.isComplete })
+        )) ?? 0
+        let version = FeedbackComposer.appVersion
+        guard ReviewPromptPolicy.shouldPrompt(
+            completedMatchCount: completedCount,
+            currentVersion: version,
+            lastPromptedVersion: ReviewPromptPolicy.lastPromptedVersion()
+        ) else { return }
+
+        ReviewPromptPolicy.markPrompted(version: version)
+        requestReview()
     }
 }
 
