@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var workoutActivity = WorkoutActivityPreferences.load()
     @State private var preferredMeSlot = MeProfilePreferences.preferredSlot()
     @State private var serveIndicatorStyle = ServeIndicatorStylePreferences.load()
+    @State private var undoButtonPosition = UndoButtonPositionPreferences.load()
     @State private var watchHapticsEnabled = WatchHapticsPreferences.load()
     @State private var showPaywall = false
 
@@ -110,6 +111,7 @@ struct SettingsView: View {
             syncCoordinator.syncDefaultRulesToWatch()
             preferredMeSlot = MeProfilePreferences.preferredSlot()
             serveIndicatorStyle = themeStore.serveIndicatorStyle
+            undoButtonPosition = themeStore.undoButtonPosition
         }
         .onChange(of: bestOfSets) { _, _ in saveDefaults() }
         .onChange(of: gamePointStyle) { _, _ in saveDefaults() }
@@ -136,6 +138,18 @@ struct SettingsView: View {
                 serveIndicatorStyle = .sideLabels
                 showPaywall = true
             }
+        }
+        .onChange(of: undoButtonPosition) { _, newValue in
+            if ProAccessPolicy.isUndoPositionUnlocked(position: newValue, isPro: proStore.isPro) {
+                themeStore.applyUndoButtonPosition(newValue)
+                syncCoordinator.syncPhoneContextToWatch()
+            } else {
+                undoButtonPosition = .default
+                showPaywall = true
+            }
+        }
+        .onChange(of: themeStore.undoButtonPosition) { _, newValue in
+            undoButtonPosition = newValue
         }
         .onChange(of: currentUserStore.isSignedIn) { _, _ in
             syncCoordinator.syncPhoneContextToWatch()
@@ -191,7 +205,20 @@ struct SettingsView: View {
             }
             .accessibilityLabel(String(localized: "Serve indicator style"))
 
-            Text(String(localized: "Theme and serve indicator apply to live scoring on iPhone and Apple Watch. Free includes the default theme and Left / Right labels."))
+            Picker(String(localized: "Watch Undo button"), selection: $undoButtonPosition) {
+                ForEach(UndoButtonPosition.allCases) { position in
+                    HStack {
+                        Text(position.displayName)
+                        if !ProAccessPolicy.isUndoPositionUnlocked(position: position, isPro: proStore.isPro) {
+                            Image(systemName: "lock.fill")
+                        }
+                    }
+                    .tag(position)
+                }
+            }
+            .accessibilityLabel(String(localized: "Undo button side on Apple Watch"))
+
+            Text(String(localized: "Theme and serve indicator apply to live scoring on iPhone and Apple Watch. Free includes the default theme, Left / Right labels, and Undo on the left."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

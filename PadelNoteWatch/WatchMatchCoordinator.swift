@@ -80,6 +80,7 @@ final class WatchMatchCoordinator {
     let syncService: any MatchSyncPublishing
     var onThemeChanged: ((AppTheme) -> Void)?
     var onServeIndicatorStyleChanged: ((ServeIndicatorStyle) -> Void)?
+    var onUndoButtonPositionChanged: ((UndoButtonPosition) -> Void)?
 
     init(workoutRecorder: any WorkoutRecording, syncService: any MatchSyncPublishing) {
         self.workoutRecorder = workoutRecorder
@@ -113,6 +114,7 @@ final class WatchMatchCoordinator {
             onServeIndicatorStyleChanged?(serveIndicatorStyle)
         }
         WatchHapticsPreferences.save(payload.watchHapticsEnabled ?? false)
+        onUndoButtonPositionChanged?(payload.undoButtonPosition ?? .default)
         knownPlayerNames = payload.knownPlayerNames
         meProfile = payload.meProfile
         guard phase == .idle else { return }

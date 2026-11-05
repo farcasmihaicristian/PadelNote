@@ -5,7 +5,17 @@ import SwiftUI
 struct MatchDetailView: View {
     @Bindable var match: Match
     @Environment(ProEntitlementStore.self) private var proStore
+    @Environment(CurrentUserStore.self) private var currentUserStore
     @State private var showPaywall = false
+    @State private var showPlayersEditor = false
+
+    private var perspective: MatchPerspective? {
+        MatchPerspective(
+            roster: match.roster,
+            mePlayerID: currentUserStore.mePlayer?.id,
+            meName: currentUserStore.mePlayer?.displayName
+        )
+    }
 
     private var isVisible: Bool {
         ProAccessPolicy.isMatchVisible(startedAt: match.startedAt, isPro: proStore.isPro)
@@ -36,23 +46,17 @@ struct MatchDetailView: View {
     }
 
     private var detailList: some View {
-        let score = MatchScoreText.rendered(for: match)
         let partialSet = match.inProgressSetSummary
+        let perspective = perspective
         // Replay the engine once for the whole timeline rather than re-replaying a
         // growing prefix for every point.
         let scoreLines = match.scoreLinesBySequence()
         return List {
-            Section(String(localized: "Final score")) {
-                score.text
-                    .font(.title2.bold())
-                    .accessibilityLabel(String(localized: "Final score \(score.accessibilityLabel)"))
+            MatchScoreboardSection(match: match, perspective: perspective)
 
-                LabeledContent(String(localized: "Winner")) {
-                    Text(MatchFormatting.winnerLabel(for: match))
-                }
+            MatchPlayersSection(match: match, perspective: perspective) {
+                showPlayersEditor = true
             }
-
-            MatchPlayersEditSection(match: match)
 
             Section(String(localized: "Sets")) {
                 if match.completedSets.isEmpty && partialSet == nil {
@@ -141,6 +145,9 @@ struct MatchDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showPlayersEditor) {
+            MatchPlayersEditSheet(match: match, perspective: perspective)
+        }
     }
 
     private var ruleStyleLabel: String {
@@ -180,5 +187,8 @@ struct MatchDetailView: View {
     }
     .modelContainer(PreviewData.container)
     .environment(ProEntitlementStore())
+    .environment(CurrentUserStore())
+    .environment(AppThemeStore())
+    .environment(PhoneSyncCoordinator(syncListener: PhoneConnectivityListener()))
 }
 #endif

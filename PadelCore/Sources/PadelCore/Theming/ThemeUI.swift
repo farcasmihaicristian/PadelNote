@@ -64,13 +64,16 @@ public struct ThemePalette {
 public final class AppThemeStore {
     public var activeTheme: AppTheme
     public var serveIndicatorStyle: ServeIndicatorStyle
+    public var undoButtonPosition: UndoButtonPosition
 
     public init(
         activeTheme: AppTheme = AppThemePreferences.load(),
-        serveIndicatorStyle: ServeIndicatorStyle = ServeIndicatorStylePreferences.load()
+        serveIndicatorStyle: ServeIndicatorStyle = ServeIndicatorStylePreferences.load(),
+        undoButtonPosition: UndoButtonPosition = UndoButtonPositionPreferences.load()
     ) {
         self.activeTheme = activeTheme
         self.serveIndicatorStyle = serveIndicatorStyle
+        self.undoButtonPosition = undoButtonPosition
     }
 
     public var palette: ThemePalette {
@@ -92,6 +95,13 @@ public final class AppThemeStore {
         serveIndicatorStyle = style
         if persist {
             ServeIndicatorStylePreferences.save(style)
+        }
+    }
+
+    public func applyUndoButtonPosition(_ position: UndoButtonPosition, persist: Bool = true) {
+        undoButtonPosition = position
+        if persist {
+            UndoButtonPositionPreferences.save(position)
         }
     }
 }

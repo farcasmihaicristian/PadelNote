@@ -17,6 +17,9 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
     /// Optional for backward compatibility with payloads sent before watch
     /// haptics were configurable. Consumers should fall back to `false`.
     public var watchHapticsEnabled: Bool?
+    /// Optional for backward compatibility with payloads sent before the Undo
+    /// position was configurable. Consumers should fall back to `.default`.
+    public var undoButtonPosition: UndoButtonPosition?
 
     public init(
         rules: MatchRules,
@@ -25,7 +28,8 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
         workoutActivity: WorkoutActivityKind? = nil,
         themeID: String? = nil,
         serveIndicatorStyle: ServeIndicatorStyle? = nil,
-        watchHapticsEnabled: Bool? = nil
+        watchHapticsEnabled: Bool? = nil,
+        undoButtonPosition: UndoButtonPosition? = nil
     ) {
         self.rules = rules
         self.knownPlayerNames = knownPlayerNames
@@ -34,5 +38,6 @@ public struct PhoneWatchSyncPayload: Codable, Sendable, Hashable {
         self.themeID = themeID
         self.serveIndicatorStyle = serveIndicatorStyle
         self.watchHapticsEnabled = watchHapticsEnabled
+        self.undoButtonPosition = undoButtonPosition
     }
 }

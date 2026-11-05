@@ -31,3 +31,9 @@ import Testing
     #expect(!ProAccessPolicy.isServeStyleUnlocked(style: .movingBall, isPro: false))
     #expect(ProAccessPolicy.isServeStyleUnlocked(style: .movingBall, isPro: true))
 }
+
+@Test func proAccessPolicyLocksRightUndoPositionWhenFree() {
+    #expect(ProAccessPolicy.isUndoPositionUnlocked(position: .left, isPro: false))
+    #expect(!ProAccessPolicy.isUndoPositionUnlocked(position: .right, isPro: false))
+    #expect(ProAccessPolicy.isUndoPositionUnlocked(position: .right, isPro: true))
+}

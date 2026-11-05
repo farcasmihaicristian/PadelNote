@@ -48,7 +48,8 @@ final class PhoneSyncCoordinator {
             workoutActivity: WorkoutActivityPreferences.load(),
             themeID: AppThemePreferences.loadID(),
             serveIndicatorStyle: ServeIndicatorStylePreferences.load(),
-            watchHapticsEnabled: WatchHapticsPreferences.load()
+            watchHapticsEnabled: WatchHapticsPreferences.load(),
+            undoButtonPosition: UndoButtonPositionPreferences.load()
         )
         listener.publishPhoneContext(payload)
     }

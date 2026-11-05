@@ -105,6 +105,10 @@ final class ProEntitlementStore {
             themeStore.applyServeIndicatorStyle(.sideLabels)
             didChange = true
         }
+        if !ProAccessPolicy.isUndoPositionUnlocked(position: themeStore.undoButtonPosition, isPro: false) {
+            themeStore.applyUndoButtonPosition(.default)
+            didChange = true
+        }
         return didChange
     }
 

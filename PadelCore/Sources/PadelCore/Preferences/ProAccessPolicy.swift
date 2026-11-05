@@ -28,4 +28,9 @@ public enum ProAccessPolicy {
         if isPro { return true }
         return style == .sideLabels
     }
+
+    public static func isUndoPositionUnlocked(position: UndoButtonPosition, isPro: Bool) -> Bool {
+        if isPro { return true }
+        return position == .default
+    }
 }

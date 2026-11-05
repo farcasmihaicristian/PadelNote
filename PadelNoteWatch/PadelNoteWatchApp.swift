@@ -23,6 +23,9 @@ struct PadelNoteWatchApp: App {
                 coordinator.onServeIndicatorStyleChanged = { style in
                     themeStore.applyServeIndicatorStyle(style)
                 }
+                coordinator.onUndoButtonPositionChanged = { position in
+                    themeStore.applyUndoButtonPosition(position)
+                }
             }
         }
     }

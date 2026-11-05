@@ -53,7 +53,7 @@ struct WatchLiveMatchView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: themeStore.undoButtonPosition == .right ? .topBarTrailing : .topBarLeading) {
                 liveControlButton(String(localized: "Undo")) {
                     coordinator.undo()
                 }
